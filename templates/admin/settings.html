@@ -1,0 +1,158 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}System Settings | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <div class="page-header">
+        <div>
+            <h1>System Settings</h1>
+            <p>Manage SMTP, SEO, and core security controls.</p>
+        </div>
+    </div>
+
+    {% if request.args.get('saved') %}
+    <div class="ops-alert success">Settings saved successfully.</div>
+    {% endif %}
+    {% if request.args.get('error') %}
+    <div class="ops-alert error">Unable to save settings. Check values and try again.</div>
+    {% endif %}
+
+    <form class="ops-card ops-form-grid" action="/admin/settings/update" method="POST">
+        <h2 class="full">SMTP Integration</h2>
+        <label>
+            SMTP Server
+            <input type="text" name="smtp_server" value="{{ settings.smtp.server }}" required>
+        </label>
+        <label>
+            SMTP Port
+            <input type="number" name="smtp_port" value="{{ settings.smtp.port }}" min="1" max="65535" required>
+        </label>
+        <label>
+            SMTP Username
+            <input type="text" name="smtp_username" value="{{ settings.smtp.username }}" required>
+        </label>
+        <label>
+            SMTP Password
+            <input type="password" name="smtp_password" value="{{ settings.smtp.password }}" autocomplete="new-password" required>
+        </label>
+        <label>
+            Default Sender Email
+            <input type="email" name="smtp_default_sender" value="{{ settings.smtp.default_sender }}" required>
+        </label>
+        <label>
+            Admin Notification Email
+            <input type="email" name="smtp_admin_email" value="{{ settings.smtp.admin_email }}" required>
+        </label>
+        <label class="full" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" name="smtp_use_tls" value="1" {% if settings.smtp.use_tls %}checked{% endif %} style="width:auto;">
+            Enable TLS for SMTP transport
+        </label>
+
+        <h2 class="full" style="margin-top:6px;">SEO Defaults</h2>
+        <label>
+            Site Name
+            <input type="text" name="seo_site_name" value="{{ settings.seo.site_name }}" required>
+        </label>
+        <label>
+            Default Open Graph Image
+            <input type="text" name="seo_default_og_image" value="{{ settings.seo.default_og_image }}" placeholder="/static/images/landvista-logo.png">
+        </label>
+        <label class="full">
+            Default Meta Description
+            <textarea name="seo_default_description" rows="3" required>{{ settings.seo.default_description }}</textarea>
+        </label>
+        <label class="full">
+            Default Meta Keywords
+            <input type="text" name="seo_default_keywords" value="{{ settings.seo.default_keywords }}" placeholder="comma,separated,keywords">
+        </label>
+        <label>
+            Twitter Handle
+            <input type="text" name="seo_twitter_handle" value="{{ settings.seo.twitter_handle }}" placeholder="@landvista">
+        </label>
+
+        <h2 class="full" style="margin-top:6px;">Security Baselines</h2>
+        <label>
+            Admin Session Timeout (minutes)
+            <input type="number" name="security_session_timeout_minutes" value="{{ settings.security.session_timeout_minutes }}" min="10" max="1440" required>
+        </label>
+        <label>
+            Login Attempt Limit
+            <input type="number" name="security_login_attempt_limit" value="{{ settings.security.login_attempt_limit }}" min="3" max="50" required>
+        </label>
+        <label>
+            Login Attempt Window (seconds)
+            <input type="number" name="security_login_attempt_window_seconds" value="{{ settings.security.login_attempt_window_seconds }}" min="60" max="86400" required>
+        </label>
+
+        <div class="full ops-row">
+            <button type="submit" class="ops-btn" style="width:auto;">Save Settings</button>
+            <button type="button" class="ops-btn secondary" id="smtpTestBtn" style="width:auto;">Send SMTP Test</button>
+        </div>
+    </form>
+
+    <section class="ops-card">
+        <h3>SMTP Test</h3>
+        <p class="ops-subtext">Send a test email using current saved SMTP settings.</p>
+        <div class="ops-row" style="margin-top:10px;">
+            <input type="email" id="smtpTestEmail" value="{{ settings.smtp.admin_email }}" placeholder="recipient@email.com" style="max-width:380px;">
+            <button type="button" class="ops-btn" id="smtpTestSendBtn" style="width:auto;">Send Test Email</button>
+        </div>
+        <p id="smtpTestFeedback" class="ops-alert" style="margin-top:10px; display:none;"></p>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function () {
+    const sendBtn = document.getElementById('smtpTestSendBtn');
+    const testBtnTop = document.getElementById('smtpTestBtn');
+    const emailInput = document.getElementById('smtpTestEmail');
+    const feedback = document.getElementById('smtpTestFeedback');
+
+    async function sendTest() {
+        const email = (emailInput?.value || '').trim();
+        if (!email) return;
+
+        sendBtn.disabled = true;
+        if (testBtnTop) testBtnTop.disabled = true;
+        feedback.style.display = 'block';
+        feedback.className = 'ops-alert';
+        feedback.textContent = 'Sending test email...';
+
+        try {
+            const body = new URLSearchParams({ email });
+            const res = await fetch('/admin/settings/test-smtp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString()
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || data.message || 'SMTP test failed');
+            }
+            feedback.className = 'ops-alert success';
+            feedback.textContent = data.message || 'SMTP test sent.';
+        } catch (error) {
+            feedback.className = 'ops-alert error';
+            feedback.textContent = error.message || 'SMTP test failed';
+        } finally {
+            sendBtn.disabled = false;
+            if (testBtnTop) testBtnTop.disabled = false;
+        }
+    }
+
+    sendBtn?.addEventListener('click', sendTest);
+    testBtnTop?.addEventListener('click', function () {
+        document.getElementById('smtpTestEmail')?.focus();
+        sendTest();
+    });
+})();
+</script>
+{% endblock %}

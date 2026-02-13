@@ -19,6 +19,9 @@
     const consultationModal = document.getElementById("consultationModal");
     const modalOpeners = document.querySelectorAll("[data-modal-open]");
     const modalClosers = document.querySelectorAll("[data-modal-close]");
+    const heroPropertySearchForm = document.getElementById("heroPropertySearchForm");
+    const heroSearchInput = document.getElementById("heroSearchInput");
+    const heroSearchStatus = document.getElementById("heroSearchStatus");
 
     let testimonialIndex = 0;
     let testimonialTimer = null;
@@ -586,6 +589,29 @@
         });
     }
 
+    function setupHeroPropertySearch() {
+        if (!heroPropertySearchForm) {
+            return;
+        }
+
+        heroPropertySearchForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const params = new URLSearchParams();
+            const keyword = (heroSearchInput?.value || "").trim();
+            const status = (heroSearchStatus?.value || "").trim();
+
+            if (keyword) {
+                params.set("q", keyword);
+            }
+            if (status) {
+                params.set("status", status);
+            }
+
+            const query = params.toString();
+            window.location.href = query ? `/properties?${query}` : "/properties";
+        });
+    }
+
     function setupRealtimeRefresh() {
         if (typeof io !== "function") {
             return;
@@ -632,6 +658,7 @@
     setupModal();
     setupConsultationForm();
     setupCalculator();
+    setupHeroPropertySearch();
     setupNewsletter();
     setupGuideRequestForm();
     setupRealtimeRefresh();

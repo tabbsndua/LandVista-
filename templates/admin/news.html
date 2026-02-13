@@ -185,6 +185,7 @@
                 <label for="articleContent">Article Content <span class="required">*</span></label>
                 <textarea 
                     id="articleContent" 
+                    class="rich-text"
                     rows="12"
                     placeholder="Write the full article content here..."
                     required
@@ -639,6 +640,9 @@ function editArticle(id) {
     document.getElementById('readTime').value = article.readTime;
     document.getElementById('articleExcerpt').value = article.excerpt;
     document.getElementById('articleContent').value = article.content || '';
+    if (window.tinymce && tinymce.get('articleContent')) {
+        tinymce.get('articleContent').setContent(article.content || '');
+    }
     document.getElementById('articleStatus').value = article.status;
     document.getElementById('isFeatured').checked = article.featured || false;
     
@@ -659,6 +663,9 @@ function clearArticleForm() {
     document.getElementById('readTime').value = '';
     document.getElementById('articleExcerpt').value = '';
     document.getElementById('articleContent').value = '';
+    if (window.tinymce && tinymce.get('articleContent')) {
+        tinymce.get('articleContent').setContent('');
+    }
     document.getElementById('articleStatus').value = 'draft';
     document.getElementById('isFeatured').checked = false;
 }
@@ -667,6 +674,10 @@ function clearArticleForm() {
 // SAVE ARTICLE
 // ============================================================
 function saveArticle() {
+    if (window.tinymce) {
+        window.tinymce.triggerSave();
+    }
+
     const title = document.getElementById('articleTitle').value.trim();
     const slug = document.getElementById('articleSlug').value.trim();
     const author = document.getElementById('articleAuthor').value.trim();

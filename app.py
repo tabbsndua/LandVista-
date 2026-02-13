@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, Response, jsonify, session
+from flask import Flask, render_template, request, redirect, Response, jsonify, session, url_for, has_request_context
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
@@ -10,7 +10,7 @@ except Exception:
     certifi = None
     CA_BUNDLE = None
     print("certifi not installed; proceeding without explicit tlsCAFile. Install 'certifi' to avoid TLS CA issues.")
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from bson import ObjectId
 import json
@@ -22,6 +22,13 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import threading
 import uuid
+import hashlib
+import hmac
+import secrets
+import re
+from collections import Counter
+from functools import wraps
+from xml.sax.saxutils import escape as xml_escape
 
 load_dotenv()
 
@@ -52,6 +59,24 @@ ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@landvista.com')
 # ============================
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'landvista2025')  # Change in .env file
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')  # Change in .env file
+ADMIN_DEFAULT_ROLE = os.getenv('ADMIN_DEFAULT_ROLE', 'super_admin').strip() or 'super_admin'
+ADMIN_SESSION_TIMEOUT_MINUTES = int(os.getenv('ADMIN_SESSION_TIMEOUT_MINUTES', '120'))
+LOGIN_ATTEMPT_LIMIT = int(os.getenv('LOGIN_ATTEMPT_LIMIT', '7'))
+LOGIN_ATTEMPT_WINDOW_SECONDS = int(os.getenv('LOGIN_ATTEMPT_WINDOW_SECONDS', '900'))
+ADMIN_PASSWORD_RESET_BYTES = int(os.getenv('ADMIN_PASSWORD_RESET_BYTES', '6'))
+
+ROLE_LABELS = {
+    "super_admin": "Super Admin",
+    "operations_admin": "Operations Admin",
+    "content_admin": "Content Admin",
+    "finance_admin": "Finance Admin",
+    "support_admin": "Support Admin",
+    "viewer": "Viewer"
+}
+
+ALLOWED_ADMIN_ROLES = set(ROLE_LABELS.keys())
+LOGIN_ATTEMPTS = {}
+EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 # ============================
 # PAYSTACK CONFIG
@@ -80,6 +105,13 @@ def set_cache_headers(response):
         response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
         response.headers.pop("Pragma", None)
         response.headers.pop("Expires", None)
+
+    # Baseline security headers for both public and admin pages.
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     return response
 
 # ============================
@@ -88,6 +120,12 @@ def set_cache_headers(response):
 UPLOAD_FOLDER = "static/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+CLIENT_FILES_FOLDER = os.path.join(UPLOAD_FOLDER, "client_files")
+os.makedirs(CLIENT_FILES_FOLDER, exist_ok=True)
+ALLOWED_CLIENT_FILE_EXTENSIONS = {
+    "pdf", "doc", "docx", "txt", "xlsx", "xls", "csv",
+    "png", "jpg", "jpeg", "webp"
+}
 
 # ============================
 # MONGODB ATLAS CONNECTION
@@ -155,6 +193,307 @@ def safe_db_operation(operation, default=None):
     except Exception as e:
         print(f"Database operation error: {e}")
         return default
+
+
+def get_admin_users_collection():
+    return db.admin_users if db is not None else None
+
+
+def hash_password(password, salt=None):
+    """Hash passwords using PBKDF2 for role-based admin accounts."""
+    if password is None:
+        password = ""
+    if salt is None:
+        salt = secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        str(password).encode("utf-8"),
+        bytes.fromhex(salt),
+        120000
+    ).hex()
+    return f"pbkdf2_sha256${salt}${digest}"
+
+
+def verify_password(password, stored_hash):
+    if not stored_hash:
+        return False
+
+    if stored_hash.startswith("pbkdf2_sha256$"):
+        try:
+            _, salt, expected = stored_hash.split("$", 2)
+            candidate = hashlib.pbkdf2_hmac(
+                "sha256",
+                str(password or "").encode("utf-8"),
+                bytes.fromhex(salt),
+                120000
+            ).hex()
+            return hmac.compare_digest(candidate, expected)
+        except Exception:
+            return False
+
+    # Backward compatibility for legacy/plain values.
+    return hmac.compare_digest(str(password or ""), str(stored_hash))
+
+
+def sanitize_username(value):
+    text = (value or "").strip().lower()
+    return re.sub(r"[^a-z0-9._-]", "", text)
+
+
+def sanitize_role(value):
+    role = (value or "").strip().lower()
+    return role if role in ALLOWED_ADMIN_ROLES else "viewer"
+
+
+def normalize_email(value):
+    return (value or "").strip().lower()
+
+
+def is_valid_email(value):
+    return bool(EMAIL_REGEX.match(normalize_email(value)))
+
+
+def coerce_datetime(value):
+    if isinstance(value, datetime):
+        return value
+
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+
+        # Handle ISO strings with trailing Z.
+        iso_candidate = text.replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(iso_candidate)
+            if parsed.tzinfo is not None:
+                return parsed.replace(tzinfo=None)
+            return parsed
+        except Exception:
+            pass
+
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(text, fmt)
+            except Exception:
+                continue
+
+    return None
+
+
+def get_system_settings():
+    default_settings = {
+        "smtp": {
+            "server": MAIL_SERVER,
+            "port": MAIL_PORT,
+            "use_tls": MAIL_USE_TLS,
+            "username": MAIL_USERNAME,
+            "password": MAIL_PASSWORD,
+            "default_sender": MAIL_DEFAULT_SENDER,
+            "admin_email": ADMIN_EMAIL
+        },
+        "seo": {
+            "site_name": "LandVista Properties Limited",
+            "default_description": "LandVista provides verified land listings, advisory support, and legal guidance for secure land investment.",
+            "default_keywords": "land for sale Kenya, property investment Kenya, land advisory Kenya, verified plots Kenya",
+            "default_og_image": "/static/images/landvista-logo.png",
+            "twitter_handle": "@landvista",
+            "canonical_base_url": "",
+            "google_verification": "",
+            "bing_verification": ""
+        },
+        "security": {
+            "session_timeout_minutes": ADMIN_SESSION_TIMEOUT_MINUTES,
+            "login_attempt_limit": LOGIN_ATTEMPT_LIMIT,
+            "login_attempt_window_seconds": LOGIN_ATTEMPT_WINDOW_SECONDS
+        }
+    }
+
+    doc = safe_db_operation(lambda: db.system_settings.find_one({"_id": "system"}), None)
+    if not isinstance(doc, dict):
+        return default_settings
+
+    for section, values in default_settings.items():
+        if section not in doc or not isinstance(doc.get(section), dict):
+            doc[section] = values
+            continue
+        for key, fallback in values.items():
+            doc[section].setdefault(key, fallback)
+    return doc
+
+
+def upsert_system_settings(payload):
+    if db is None:
+        return False
+    try:
+        db.system_settings.update_one(
+            {"_id": "system"},
+            {"$set": payload, "$setOnInsert": {"created_at": datetime.utcnow()}},
+            upsert=True
+        )
+        return True
+    except Exception as e:
+        print(f"Error updating system settings: {e}")
+        return False
+
+
+def get_effective_smtp_config():
+    settings = get_system_settings()
+    smtp = settings.get("smtp", {})
+    return {
+        "server": (smtp.get("server") or MAIL_SERVER).strip(),
+        "port": int(smtp.get("port") or MAIL_PORT),
+        "use_tls": bool(smtp.get("use_tls")) if isinstance(smtp.get("use_tls"), bool) else str(smtp.get("use_tls", MAIL_USE_TLS)).lower() == "true",
+        "username": (smtp.get("username") or MAIL_USERNAME).strip(),
+        "password": (smtp.get("password") or MAIL_PASSWORD),
+        "default_sender": (smtp.get("default_sender") or MAIL_DEFAULT_SENDER).strip(),
+        "admin_email": (smtp.get("admin_email") or ADMIN_EMAIL).strip()
+    }
+
+
+def record_activity(action, metadata=None, level="info"):
+    """Persist mutation/audit trail for admin operations."""
+    if db is None:
+        return
+    username = "system"
+    role = "system"
+    ip_address = None
+    if has_request_context():
+        username = session.get("admin_username", "system")
+        role = session.get("admin_role", "system")
+        ip_address = request.headers.get("X-Forwarded-For", request.remote_addr)
+
+    payload = {
+        "action": action,
+        "level": level,
+        "username": username,
+        "role": role,
+        "ip": ip_address,
+        "metadata": metadata or {},
+        "created_at": datetime.utcnow()
+    }
+    safe_db_operation(lambda: db.activity_logs.insert_one(payload), None)
+
+
+def ensure_default_admin_user():
+    collection = get_admin_users_collection()
+    if collection is None:
+        return
+
+    username = sanitize_username(ADMIN_USERNAME)
+    if not username:
+        return
+
+    existing = safe_db_operation(lambda: collection.find_one({"username": username}), None)
+    if existing:
+        return
+
+    doc = {
+        "username": username,
+        "display_name": "System Administrator",
+        "password_hash": hash_password(ADMIN_PASSWORD),
+        "role": sanitize_role(ADMIN_DEFAULT_ROLE),
+        "is_active": True,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "created_by": "bootstrap"
+    }
+    safe_db_operation(lambda: collection.insert_one(doc), None)
+
+
+def get_client_files_collection():
+    return db.client_files if db is not None else None
+
+
+def allowed_client_file(filename):
+    if not filename or "." not in filename:
+        return False
+    ext = filename.rsplit(".", 1)[-1].lower()
+    return ext in ALLOWED_CLIENT_FILE_EXTENSIONS
+
+
+def track_failed_login(ip):
+    security = get_system_settings().get("security", {})
+    window_seconds = int(security.get("login_attempt_window_seconds", LOGIN_ATTEMPT_WINDOW_SECONDS))
+    now = time.time()
+    attempts = LOGIN_ATTEMPTS.get(ip, [])
+    attempts = [ts for ts in attempts if now - ts <= window_seconds]
+    attempts.append(now)
+    LOGIN_ATTEMPTS[ip] = attempts
+    return len(attempts)
+
+
+def clear_failed_login(ip):
+    LOGIN_ATTEMPTS.pop(ip, None)
+
+
+def can_attempt_login(ip):
+    security = get_system_settings().get("security", {})
+    attempt_limit = int(security.get("login_attempt_limit", LOGIN_ATTEMPT_LIMIT))
+    window_seconds = int(security.get("login_attempt_window_seconds", LOGIN_ATTEMPT_WINDOW_SECONDS))
+
+    now = time.time()
+    attempts = LOGIN_ATTEMPTS.get(ip, [])
+    attempts = [ts for ts in attempts if now - ts <= window_seconds]
+    LOGIN_ATTEMPTS[ip] = attempts
+    if len(attempts) >= attempt_limit:
+        retry_after = int(window_seconds - (now - attempts[0]))
+        return False, max(retry_after, 1)
+    return True, 0
+
+
+def refresh_admin_session():
+    session["last_active_at"] = int(time.time())
+
+
+def admin_session_expired():
+    last_active = int(session.get("last_active_at") or 0)
+    if last_active <= 0:
+        return False
+    timeout_seconds = int(get_system_settings().get("security", {}).get("session_timeout_minutes", ADMIN_SESSION_TIMEOUT_MINUTES)) * 60
+    return (int(time.time()) - last_active) > max(timeout_seconds, 300)
+
+
+def current_admin_role():
+    role = sanitize_role(session.get("admin_role"))
+    return role if role in ALLOWED_ADMIN_ROLES else "viewer"
+
+
+def require_admin_roles(*allowed_roles):
+    allowed = {sanitize_role(r) for r in allowed_roles if sanitize_role(r)}
+
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            if "admin_logged_in" not in session:
+                return redirect("/admin/login")
+
+            if admin_session_expired():
+                session.clear()
+                return redirect("/admin/login?expired=1")
+
+            refresh_admin_session()
+
+            role = current_admin_role()
+            if allowed and role not in allowed:
+                wants_json = (
+                    request.headers.get("X-Requested-With") == "XMLHttpRequest"
+                    or request.is_json
+                    or request.path.startswith("/api/")
+                    or request.accept_mimetypes["application/json"] >= request.accept_mimetypes["text/html"]
+                )
+                if wants_json:
+                    return jsonify({"success": False, "error": "Insufficient permissions"}), 403
+                return render_template("admin/forbidden.html", required_roles=sorted(allowed), current_role=role), 403
+
+            return f(*args, **kwargs)
+
+        return wrapped
+
+    return decorator
+
+
+ensure_default_admin_user()
 
 
 def serialize_content_item(item):
@@ -271,13 +610,18 @@ def send_email_async(recipient, subject, body, html_body=None):
     """Send email asynchronously using SMTP"""
     def send():
         try:
-            if not MAIL_USERNAME or not MAIL_PASSWORD:
+            smtp_config = get_effective_smtp_config()
+            smtp_username = smtp_config.get("username")
+            smtp_password = smtp_config.get("password")
+            smtp_sender = smtp_config.get("default_sender") or MAIL_DEFAULT_SENDER
+
+            if not smtp_username or not smtp_password:
                 print("Email credentials not configured. Skipping email send.")
                 return False
             
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
-            msg['From'] = MAIL_DEFAULT_SENDER
+            msg['From'] = smtp_sender
             msg['To'] = recipient if isinstance(recipient, str) else ', '.join(recipient)
             
             # Attach plain text version
@@ -288,10 +632,10 @@ def send_email_async(recipient, subject, body, html_body=None):
                 msg.attach(MIMEText(html_body, 'html'))
             
             # Send via SMTP
-            with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
-                if MAIL_USE_TLS:
+            with smtplib.SMTP(smtp_config.get("server", MAIL_SERVER), int(smtp_config.get("port", MAIL_PORT))) as server:
+                if smtp_config.get("use_tls", MAIL_USE_TLS):
                     server.starttls()
-                server.login(MAIL_USERNAME, MAIL_PASSWORD)
+                server.login(smtp_username, smtp_password)
                 server.send_message(msg)
             
             print(f"Email sent successfully to {recipient}")
@@ -309,13 +653,18 @@ def send_email_async(recipient, subject, body, html_body=None):
 def send_email(recipient, subject, body, html_body=None):
     """Send email using SMTP"""
     try:
-        if not MAIL_USERNAME or not MAIL_PASSWORD:
+        smtp_config = get_effective_smtp_config()
+        smtp_username = smtp_config.get("username")
+        smtp_password = smtp_config.get("password")
+        smtp_sender = smtp_config.get("default_sender") or MAIL_DEFAULT_SENDER
+
+        if not smtp_username or not smtp_password:
             print("Email credentials not configured. Skipping email send.")
             return False
         
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
-        msg['From'] = MAIL_DEFAULT_SENDER
+        msg['From'] = smtp_sender
         msg['To'] = recipient if isinstance(recipient, str) else ', '.join(recipient)
         
         # Attach plain text version
@@ -326,10 +675,10 @@ def send_email(recipient, subject, body, html_body=None):
             msg.attach(MIMEText(html_body, 'html'))
         
         # Send via SMTP
-        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
-            if MAIL_USE_TLS:
+        with smtplib.SMTP(smtp_config.get("server", MAIL_SERVER), int(smtp_config.get("port", MAIL_PORT))) as server:
+            if smtp_config.get("use_tls", MAIL_USE_TLS):
                 server.starttls()
-            server.login(MAIL_USERNAME, MAIL_PASSWORD)
+            server.login(smtp_username, smtp_password)
             server.send_message(msg)
         
         print(f"Email sent successfully to {recipient}")
@@ -455,33 +804,74 @@ def send_site_visit_notification_to_admin(visit_doc):
 # ============================
 def require_admin_login(f):
     """Decorator to protect admin routes"""
+    @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'admin_logged_in' not in session:
             return redirect('/admin/login')
+
+        if admin_session_expired():
+            session.clear()
+            return redirect('/admin/login?expired=1')
+
+        refresh_admin_session()
         return f(*args, **kwargs)
-    decorated_function.__name__ = f.__name__
+
     return decorated_function
 
 @app.route("/admin/login", methods=["GET", "POST"])
 def admin_login():
     """Admin login page"""
     if request.method == "POST":
-        username = request.form.get("username", "").strip()
+        username = sanitize_username(request.form.get("username", ""))
         password = request.form.get("password", "").strip()
-        
-        # Validate credentials
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+
+        requester_ip = request.headers.get("X-Forwarded-For", request.remote_addr) or "unknown"
+        allowed, retry_after = can_attempt_login(requester_ip)
+        if not allowed:
+            return render_template(
+                'admin_login.html',
+                error=f"Too many failed attempts. Try again in {retry_after} seconds."
+            )
+
+        account = None
+        collection = get_admin_users_collection()
+        if collection is not None:
+            account = safe_db_operation(lambda: collection.find_one({"username": username, "is_active": {"$ne": False}}), None)
+
+        login_ok = False
+        role = sanitize_role(ADMIN_DEFAULT_ROLE)
+        display_name = "Administrator"
+
+        if account:
+            if verify_password(password, account.get("password_hash")):
+                login_ok = True
+                role = sanitize_role(account.get("role"))
+                display_name = (account.get("display_name") or username).strip()
+        elif username == sanitize_username(ADMIN_USERNAME) and password == ADMIN_PASSWORD:
+            # Backward compatibility if DB user records are unavailable.
+            login_ok = True
+
+        if login_ok:
+            clear_failed_login(requester_ip)
             session['admin_logged_in'] = True
             session['admin_username'] = username
+            session['admin_display_name'] = display_name
+            session['admin_role'] = role
+            refresh_admin_session()
+            record_activity("auth.login.success", {"username": username, "role": role})
             return redirect('/admin')
-        else:
-            return render_template('admin_login.html', error="Invalid username or password")
+
+        failed_count = track_failed_login(requester_ip)
+        record_activity("auth.login.failed", {"username": username, "failed_count": failed_count}, level="warning")
+        return render_template('admin_login.html', error="Invalid username or password")
     
     return render_template('admin_login.html')
 
 @app.route("/admin/logout")
 def admin_logout():
     """Admin logout"""
+    if session.get("admin_logged_in"):
+        record_activity("auth.logout", {"username": session.get("admin_username")})
     session.clear()
     return redirect('/admin/login')
 
@@ -499,6 +889,18 @@ def track_page_views():
             )
         except Exception as e:
             print(f"Error tracking page views: {e}")
+
+
+@app.context_processor
+def inject_template_globals():
+    settings = get_system_settings()
+    seo = settings.get("seo", {})
+    return {
+        "seo_defaults": seo,
+        "current_admin_user": session.get("admin_username"),
+        "current_admin_role": current_admin_role() if session.get("admin_logged_in") else None,
+        "role_labels": ROLE_LABELS
+    }
 
 # ============================
 # PUBLIC ROUTES
@@ -532,11 +934,116 @@ def privacy_policy():
 
 @app.route("/properties")
 def properties_page():
+    search_query = (request.args.get("q") or "").strip()
+    status_filter = (request.args.get("status") or "").strip().lower()
+
+    db_filter = {"status": {"$ne": "draft"}}
+    if status_filter in {"available", "sold"}:
+        db_filter["status"] = status_filter
+
+    if search_query:
+        db_filter["$or"] = [
+            {"title": {"$regex": re.escape(search_query), "$options": "i"}},
+            {"location": {"$regex": re.escape(search_query), "$options": "i"}},
+            {"description": {"$regex": re.escape(search_query), "$options": "i"}}
+        ]
+
     properties = safe_db_operation(
-        lambda: list(db.properties.find({"status": {"$ne": "draft"}}).sort("_id", -1)),
+        lambda: list(db.properties.find(db_filter).sort("_id", -1)),
         []
     )
     return render_template("properties.html", properties=properties)
+
+
+@app.route("/products")
+def products_redirect():
+    query = request.query_string.decode("utf-8") if request.query_string else ""
+    return redirect(f"/properties{f'?{query}' if query else ''}")
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    sitemap_url = f"{request.url_root.rstrip('/')}{url_for('sitemap_xml')}"
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin",
+        "Disallow: /admin/",
+        f"Sitemap: {sitemap_url}"
+    ]
+    return Response("\n".join(lines), mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    base_url = request.url_root.rstrip("/")
+    urls = [
+        ("/", "daily", "1.0"),
+        ("/home", "daily", "1.0"),
+        ("/about", "weekly", "0.8"),
+        ("/properties", "daily", "0.9"),
+        ("/products", "daily", "0.8"),
+        ("/news", "daily", "0.85"),
+        ("/legal-guides", "weekly", "0.8"),
+        ("/contact", "monthly", "0.7"),
+        ("/privacy-policy", "yearly", "0.4"),
+        ("/terms-of-service", "yearly", "0.3"),
+        ("/terms-of-use", "yearly", "0.3")
+    ]
+
+    properties_rows = safe_db_operation(
+        lambda: list(db.properties.find({"status": {"$ne": "draft"}}, {"_id": 1, "updated_at": 1, "created_at": 1}).limit(3000)),
+        []
+    )
+    for row in properties_rows:
+        lastmod = row.get("updated_at") or row.get("created_at")
+        urls.append((f"/properties/{row.get('_id')}", "weekly", "0.75", lastmod))
+
+    article_rows = safe_db_operation(
+        lambda: list(db.news.find({"status": "published"}, {"slug": 1, "_id": 1, "updated_at": 1, "created_at": 1}).limit(3000)),
+        []
+    )
+    for row in article_rows:
+        slug = row.get("slug") or str(row.get("_id"))
+        lastmod = row.get("updated_at") or row.get("created_at")
+        urls.append((f"/news/{slug}", "weekly", "0.72", lastmod))
+
+    guide_rows = safe_db_operation(
+        lambda: list(db.legal_guides.find({"status": "published"}, {"slug": 1, "_id": 1, "updated_at": 1, "created_at": 1}).limit(3000)),
+        []
+    )
+    for row in guide_rows:
+        slug = row.get("slug") or str(row.get("_id"))
+        lastmod = row.get("updated_at") or row.get("created_at")
+        urls.append((f"/legal-guides/{slug}", "weekly", "0.7", lastmod))
+
+    rows = []
+    for item in urls:
+        if len(item) == 3:
+            path, changefreq, priority = item
+            lastmod = None
+        else:
+            path, changefreq, priority, lastmod = item
+
+        lastmod_text = ""
+        if lastmod:
+            if isinstance(lastmod, str):
+                lastmod_text = lastmod
+            elif hasattr(lastmod, "isoformat"):
+                try:
+                    lastmod_text = lastmod.isoformat()
+                except Exception:
+                    lastmod_text = ""
+
+        rows.append(
+            f"<url><loc>{xml_escape(base_url + path)}</loc>"
+            f"{f'<lastmod>{xml_escape(lastmod_text)}</lastmod>' if lastmod_text else ''}"
+            f"<changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>"
+        )
+
+    xml = f'<?xml version="1.0" encoding="UTF-8"?>' \
+          f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{"".join(rows)}</urlset>'
+    return Response(xml, mimetype="application/xml")
 @app.route("/properties/<property_id>")
 def public_property_details(property_id):
     try:
@@ -828,7 +1335,7 @@ def api_testimonials_admin():
 # ============================
 
 @app.route("/admin/payments")
-@require_admin_login
+@require_admin_roles("super_admin", "finance_admin")
 def admin_payments_page():
     payment_records = safe_db_operation(
         lambda: list(db.payments.find().sort("created_at", -1).limit(50)),
@@ -848,7 +1355,7 @@ def admin_payments_page():
     )
 
 @app.route("/admin/payments/initialize", methods=["POST"])
-@require_admin_login
+@require_admin_roles("super_admin", "finance_admin")
 def admin_initialize_paystack_payment():
     data = request.get_json(silent=True) or {}
     email = (data.get("email") or "").strip().lower()
@@ -934,7 +1441,7 @@ def admin_initialize_paystack_payment():
     })
 
 @app.route("/admin/payments/verify", methods=["POST"])
-@require_admin_login
+@require_admin_roles("super_admin", "finance_admin")
 def admin_verify_paystack_payment():
     data = request.get_json(silent=True) or {}
     reference = (data.get("reference") or "").strip()
@@ -1075,9 +1582,681 @@ def admin_dashboard():
             latest_guides=[]
         )
 
+
+# ============================
+# ADMIN - USERS / SETTINGS / SECURITY / INTEGRATIONS
+# ============================
+
+@app.route("/admin/users")
+@require_admin_roles("super_admin")
+def admin_users_page():
+    users = safe_db_operation(
+        lambda: list(db.admin_users.find().sort("created_at", -1)),
+        []
+    )
+    for user in users:
+        user["_id"] = str(user.get("_id", ""))
+        user["role_label"] = ROLE_LABELS.get(user.get("role"), user.get("role", "Unknown"))
+    return render_template("admin/users.html", users=users, current_user=session.get("admin_username"))
+
+
+@app.route("/admin/users/create", methods=["POST"])
+@require_admin_roles("super_admin")
+def admin_users_create():
+    username = sanitize_username(request.form.get("username", ""))
+    display_name = (request.form.get("display_name") or "").strip()
+    role = sanitize_role(request.form.get("role"))
+    password = request.form.get("password", "")
+
+    if not username or len(password) < 8:
+        return redirect("/admin/users?error=invalid_user_data")
+
+    collection = get_admin_users_collection()
+    if collection is None:
+        return redirect("/admin/users?error=db_unavailable")
+
+    exists = safe_db_operation(lambda: collection.find_one({"username": username}), None)
+    if exists:
+        return redirect("/admin/users?error=username_exists")
+
+    doc = {
+        "username": username,
+        "display_name": display_name or username,
+        "password_hash": hash_password(password),
+        "role": role,
+        "is_active": True,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "created_by": session.get("admin_username")
+    }
+    safe_db_operation(lambda: collection.insert_one(doc), None)
+    record_activity("admin.user.create", {"username": username, "role": role})
+    return redirect("/admin/users?success=created")
+
+
+@app.route("/admin/users/toggle/<user_id>", methods=["POST"])
+@require_admin_roles("super_admin")
+def admin_users_toggle(user_id):
+    try:
+        obj_id = ObjectId(user_id)
+    except Exception:
+        return redirect("/admin/users?error=invalid_user_id")
+
+    collection = get_admin_users_collection()
+    if collection is None:
+        return redirect("/admin/users?error=db_unavailable")
+
+    user = safe_db_operation(lambda: collection.find_one({"_id": obj_id}), None)
+    if not user:
+        return redirect("/admin/users?error=user_not_found")
+
+    if user.get("username") == session.get("admin_username"):
+        return redirect("/admin/users?error=cannot_disable_current_user")
+
+    next_state = not bool(user.get("is_active", True))
+    safe_db_operation(
+        lambda: collection.update_one(
+            {"_id": obj_id},
+            {"$set": {"is_active": next_state, "updated_at": datetime.utcnow()}}
+        ),
+        None
+    )
+    record_activity("admin.user.toggle", {"username": user.get("username"), "is_active": next_state})
+    return redirect("/admin/users?success=updated")
+
+
+@app.route("/admin/users/reset-password/<user_id>", methods=["POST"])
+@require_admin_roles("super_admin")
+def admin_users_reset_password(user_id):
+    try:
+        obj_id = ObjectId(user_id)
+    except Exception:
+        return jsonify({"success": False, "error": "Invalid user id"}), 400
+
+    collection = get_admin_users_collection()
+    if collection is None:
+        return jsonify({"success": False, "error": "Database unavailable"}), 500
+
+    user = safe_db_operation(lambda: collection.find_one({"_id": obj_id}), None)
+    if not user:
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+    new_password = secrets.token_urlsafe(ADMIN_PASSWORD_RESET_BYTES)
+    safe_db_operation(
+        lambda: collection.update_one(
+            {"_id": obj_id},
+            {"$set": {"password_hash": hash_password(new_password), "updated_at": datetime.utcnow()}}
+        ),
+        None
+    )
+    record_activity("admin.user.password_reset", {"username": user.get("username")}, level="warning")
+    return jsonify({"success": True, "username": user.get("username"), "new_password": new_password})
+
+
+@app.route("/admin/settings")
+@require_admin_roles("super_admin", "operations_admin")
+def admin_settings_page():
+    settings = get_system_settings()
+    return render_template("admin/settings.html", settings=settings)
+
+
+@app.route("/admin/settings/update", methods=["POST"])
+@require_admin_roles("super_admin", "operations_admin")
+def admin_settings_update():
+    def to_int(value, fallback):
+        try:
+            return int(value)
+        except Exception:
+            return fallback
+
+    settings = get_system_settings()
+    smtp = settings.get("smtp", {})
+    seo = settings.get("seo", {})
+    security = settings.get("security", {})
+
+    smtp["server"] = (request.form.get("smtp_server") or smtp.get("server") or "").strip()
+    smtp["port"] = to_int(request.form.get("smtp_port") or smtp.get("port") or 587, 587)
+    smtp["use_tls"] = (request.form.get("smtp_use_tls") or "false").lower() in {"1", "true", "yes", "on"}
+    smtp["username"] = (request.form.get("smtp_username") or "").strip()
+    smtp["password"] = (request.form.get("smtp_password") or smtp.get("password") or "")
+    smtp["default_sender"] = (request.form.get("smtp_default_sender") or smtp.get("default_sender") or "").strip()
+    smtp["admin_email"] = (request.form.get("smtp_admin_email") or smtp.get("admin_email") or "").strip()
+
+    seo["site_name"] = (request.form.get("seo_site_name") or seo.get("site_name") or "").strip()
+    seo["default_description"] = (request.form.get("seo_default_description") or seo.get("default_description") or "").strip()
+    seo["default_keywords"] = (request.form.get("seo_default_keywords") or seo.get("default_keywords") or "").strip()
+    seo["default_og_image"] = (request.form.get("seo_default_og_image") or seo.get("default_og_image") or "").strip()
+    seo["twitter_handle"] = (request.form.get("seo_twitter_handle") or seo.get("twitter_handle") or "").strip()
+
+    timeout_minutes = to_int(request.form.get("security_session_timeout_minutes") or security.get("session_timeout_minutes") or ADMIN_SESSION_TIMEOUT_MINUTES, ADMIN_SESSION_TIMEOUT_MINUTES)
+    login_limit = to_int(request.form.get("security_login_attempt_limit") or security.get("login_attempt_limit") or LOGIN_ATTEMPT_LIMIT, LOGIN_ATTEMPT_LIMIT)
+    login_window = to_int(request.form.get("security_login_attempt_window_seconds") or security.get("login_attempt_window_seconds") or LOGIN_ATTEMPT_WINDOW_SECONDS, LOGIN_ATTEMPT_WINDOW_SECONDS)
+    security["session_timeout_minutes"] = max(timeout_minutes, 10)
+    security["login_attempt_limit"] = max(login_limit, 3)
+    security["login_attempt_window_seconds"] = max(login_window, 60)
+
+    payload = {
+        "smtp": smtp,
+        "seo": seo,
+        "security": security,
+        "updated_at": datetime.utcnow(),
+        "updated_by": session.get("admin_username")
+    }
+
+    if upsert_system_settings(payload):
+        record_activity("settings.update", {"sections": ["smtp", "seo", "security"]})
+        return redirect("/admin/settings?saved=1")
+    return redirect("/admin/settings?error=1")
+
+
+@app.route("/admin/settings/test-smtp", methods=["POST"])
+@require_admin_roles("super_admin", "operations_admin")
+def admin_settings_test_smtp():
+    payload = request.get_json(silent=True) or {}
+    recipient = (request.form.get("email") or payload.get("email") or "").strip().lower()
+    if not recipient or "@" not in recipient:
+        return jsonify({"success": False, "error": "Valid recipient email is required"}), 400
+
+    result = send_email(
+        recipient,
+        "LandVista SMTP Test",
+        "SMTP integration test from LandVista admin settings.",
+        "<p>SMTP integration test from <strong>LandVista admin settings</strong>.</p>"
+    )
+    if not result:
+        return jsonify({"success": False, "error": "SMTP test failed. Check credentials/settings."}), 400
+
+    record_activity("settings.smtp.test", {"recipient": recipient})
+    return jsonify({"success": True, "message": f"SMTP test email sent to {recipient}"})
+
+
+@app.route("/admin/reports")
+@require_admin_roles("super_admin", "operations_admin", "finance_admin", "content_admin", "support_admin", "viewer")
+def admin_reports_page():
+    days = 30
+    try:
+        days = int(request.args.get("days") or 30)
+    except Exception:
+        days = 30
+    days = max(7, min(days, 365))
+    since = datetime.utcnow() - timedelta(days=days)
+
+    metrics = {
+        "total_properties": safe_db_operation(lambda: db.properties.count_documents({}), 0),
+        "total_clients": safe_db_operation(lambda: db.clients.count_documents({}), 0),
+        "total_inquiries": safe_db_operation(lambda: db.inquiries.count_documents({}), 0),
+        "total_site_visits": safe_db_operation(lambda: db.site_visits.count_documents({}), 0),
+        "published_news": safe_db_operation(lambda: db.news.count_documents({"status": "published"}), 0),
+        "published_guides": safe_db_operation(lambda: db.legal_guides.count_documents({"status": "published"}), 0),
+        "active_newsletter_subscribers": safe_db_operation(lambda: db.newsletter_subscribers.count_documents({"status": "active"}), 0),
+        "payments_success": safe_db_operation(lambda: db.payments.count_documents({"status": {"$in": ["success", "paid"]}}), 0),
+        "payments_initialized": safe_db_operation(lambda: db.payments.count_documents({"status": "initialized"}), 0),
+        "inquiries_in_window": 0,
+        "payment_volume_kes": 0.0
+    }
+
+    properties = safe_db_operation(
+        lambda: list(db.properties.find({}, {"location": 1, "status": 1}).sort("_id", -1).limit(10000)),
+        []
+    )
+    location_counter = Counter()
+    property_status_counter = Counter()
+    for row in properties:
+        location = (row.get("location") or "Unspecified").strip()
+        location_counter[location] += 1
+        property_status_counter[(row.get("status") or "unspecified").strip().lower()] += 1
+
+    inquiries_docs = safe_db_operation(
+        lambda: list(db.inquiries.find({}, {"created_at": 1, "priority": 1, "status": 1, "email": 1}).sort("_id", -1).limit(6000)),
+        []
+    )
+    priority_counter = Counter()
+    status_counter = Counter()
+
+    now = datetime.utcnow()
+    month_pairs = []
+    year_cursor = now.year
+    month_cursor = now.month
+    for _ in range(6):
+        month_pairs.append((year_cursor, month_cursor))
+        month_cursor -= 1
+        if month_cursor == 0:
+            month_cursor = 12
+            year_cursor -= 1
+    month_pairs.reverse()
+    month_keys = [f"{year}-{month:02d}" for year, month in month_pairs]
+    monthly_counter = {key: 0 for key in month_keys}
+
+    for row in inquiries_docs:
+        dt = coerce_datetime(row.get("created_at"))
+        if dt is None and isinstance(row.get("_id"), ObjectId):
+            dt = row.get("_id").generation_time.replace(tzinfo=None)
+
+        priority = (row.get("priority") or "medium").strip().lower()
+        if priority not in {"low", "medium", "high", "urgent"}:
+            priority = "medium"
+        priority_counter[priority] += 1
+        status_counter[(row.get("status") or "new").strip().lower()] += 1
+
+        if dt and dt >= since:
+            metrics["inquiries_in_window"] += 1
+
+        if dt:
+            key = f"{dt.year}-{dt.month:02d}"
+            if key in monthly_counter:
+                monthly_counter[key] += 1
+
+    payments_docs = safe_db_operation(
+        lambda: list(db.payments.find({}, {"status": 1, "amount_kobo": 1, "created_at": 1}).sort("_id", -1).limit(6000)),
+        []
+    )
+    payment_status_counter = Counter()
+    successful_total_kobo = 0
+    for row in payments_docs:
+        status = (row.get("status") or "unknown").strip().lower()
+        payment_status_counter[status] += 1
+        if status in {"success", "paid"}:
+            try:
+                successful_total_kobo += int(row.get("amount_kobo") or 0)
+            except Exception:
+                pass
+
+    metrics["payment_volume_kes"] = round(successful_total_kobo / 100, 2)
+
+    sold_count = property_status_counter.get("sold", 0)
+    metrics["property_conversion_percent"] = round((sold_count / metrics["total_properties"]) * 100, 1) if metrics["total_properties"] else 0
+
+    monthly_trend = []
+    for key in month_keys:
+        year_text, month_text = key.split("-")
+        monthly_trend.append({
+            "label": f"{month_text}/{year_text[-2:]}",
+            "count": monthly_counter.get(key, 0)
+        })
+
+    top_locations = [{"location": name, "count": count} for name, count in location_counter.most_common(8)]
+    record_activity("reports.view", {"days": days})
+
+    return render_template(
+        "admin/reports.html",
+        metrics=metrics,
+        selected_days=days,
+        top_locations=top_locations,
+        monthly_trend=monthly_trend,
+        priority_breakdown=dict(priority_counter),
+        inquiry_status_breakdown=dict(status_counter),
+        payment_status_breakdown=dict(payment_status_counter),
+        property_status_breakdown=dict(property_status_counter)
+    )
+
+
+@app.route("/admin/seo")
+@require_admin_roles("super_admin", "operations_admin", "content_admin")
+def admin_seo_page():
+    settings = get_system_settings()
+    seo = settings.get("seo", {})
+    canonical_base = (seo.get("canonical_base_url") or request.url_root.rstrip("/")).rstrip("/")
+
+    index_counts = {
+        "properties": safe_db_operation(lambda: db.properties.count_documents({"status": {"$ne": "draft"}}), 0),
+        "news": safe_db_operation(lambda: db.news.count_documents({"status": "published"}), 0),
+        "guides": safe_db_operation(lambda: db.legal_guides.count_documents({"status": "published"}), 0)
+    }
+
+    recent_content = {
+        "properties": safe_db_operation(
+            lambda: list(db.properties.find({"status": {"$ne": "draft"}}, {"title": 1}).sort("_id", -1).limit(5)),
+            []
+        ),
+        "news": safe_db_operation(
+            lambda: list(db.news.find({"status": "published"}, {"title": 1}).sort("created_at", -1).limit(5)),
+            []
+        ),
+        "guides": safe_db_operation(
+            lambda: list(db.legal_guides.find({"status": "published"}, {"title": 1}).sort("created_at", -1).limit(5)),
+            []
+        )
+    }
+
+    return render_template(
+        "admin/seo.html",
+        seo=seo,
+        canonical_base=canonical_base,
+        index_counts=index_counts,
+        recent_content=recent_content
+    )
+
+
+@app.route("/admin/seo/update", methods=["POST"])
+@require_admin_roles("super_admin", "operations_admin", "content_admin")
+def admin_seo_update():
+    settings = get_system_settings()
+    seo = settings.get("seo", {})
+
+    seo["site_name"] = (request.form.get("site_name") or seo.get("site_name") or "").strip()
+    seo["default_description"] = (request.form.get("default_description") or seo.get("default_description") or "").strip()
+    seo["default_keywords"] = (request.form.get("default_keywords") or seo.get("default_keywords") or "").strip()
+    seo["default_og_image"] = (request.form.get("default_og_image") or seo.get("default_og_image") or "").strip()
+    seo["twitter_handle"] = (request.form.get("twitter_handle") or seo.get("twitter_handle") or "").strip()
+    seo["canonical_base_url"] = (request.form.get("canonical_base_url") or "").strip().rstrip("/")
+    seo["google_verification"] = (request.form.get("google_verification") or "").strip()
+    seo["bing_verification"] = (request.form.get("bing_verification") or "").strip()
+
+    payload = {
+        "smtp": settings.get("smtp", {}),
+        "seo": seo,
+        "security": settings.get("security", {}),
+        "updated_at": datetime.utcnow(),
+        "updated_by": session.get("admin_username")
+    }
+
+    if upsert_system_settings(payload):
+        record_activity("seo.update", {"updated_fields": ["site_name", "description", "keywords", "canonical"]})
+        return redirect("/admin/seo?saved=1")
+    return redirect("/admin/seo?error=1")
+
+
+@app.route("/admin/communications")
+@require_admin_roles("super_admin", "operations_admin", "content_admin", "support_admin")
+def admin_communications_page():
+    subscribers = safe_db_operation(
+        lambda: list(db.newsletter_subscribers.find({"status": "active"}).sort("created_at", -1).limit(120)),
+        []
+    )
+    inquiries_recipients = safe_db_operation(
+        lambda: list(db.inquiries.find({"email": {"$exists": True, "$ne": ""}}, {"name": 1, "email": 1, "created_at": 1}).sort("_id", -1).limit(120)),
+        []
+    )
+
+    for row in subscribers:
+        row["_id"] = str(row.get("_id", ""))
+    for row in inquiries_recipients:
+        row["_id"] = str(row.get("_id", ""))
+
+    status = (request.args.get("status") or "").strip().lower()
+    try:
+        sent = int(request.args.get("sent") or 0)
+    except Exception:
+        sent = 0
+    try:
+        failed = int(request.args.get("failed") or 0)
+    except Exception:
+        failed = 0
+
+    return render_template(
+        "admin/communications.html",
+        subscribers=subscribers,
+        inquiries_recipients=inquiries_recipients,
+        status=status,
+        sent=sent,
+        failed=failed
+    )
+
+
+@app.route("/admin/communications/send", methods=["POST"])
+@require_admin_roles("super_admin", "operations_admin", "content_admin", "support_admin")
+def admin_communications_send():
+    target = (request.form.get("target") or "custom").strip().lower()
+    subject = (request.form.get("subject") or "").strip()
+    message = (request.form.get("message") or "").strip()
+    recipients_raw = request.form.get("recipients") or ""
+
+    if not subject or not message:
+        return redirect(url_for("admin_communications_page", status="error"))
+
+    candidates = []
+    if target == "newsletter":
+        rows = safe_db_operation(
+            lambda: list(db.newsletter_subscribers.find({"status": "active"}, {"email": 1}).limit(400)),
+            []
+        )
+        candidates = [normalize_email(row.get("email")) for row in rows]
+    elif target == "inquiries":
+        rows = safe_db_operation(
+            lambda: list(db.inquiries.find({"email": {"$exists": True, "$ne": ""}}, {"email": 1}).sort("_id", -1).limit(400)),
+            []
+        )
+        candidates = [normalize_email(row.get("email")) for row in rows]
+    else:
+        chunks = re.split(r"[,\n;\s]+", recipients_raw)
+        candidates = [normalize_email(item) for item in chunks]
+
+    recipients = []
+    seen = set()
+    for item in candidates:
+        if not is_valid_email(item):
+            continue
+        if item in seen:
+            continue
+        recipients.append(item)
+        seen.add(item)
+        if len(recipients) >= 150:
+            break
+
+    if not recipients:
+        return redirect(url_for("admin_communications_page", status="invalid"))
+
+    html_body = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.65; color: #1f2937;">
+            <div style="max-width: 640px; margin: 0 auto; padding: 22px;">
+                <h2 style="color: #0f766e;">{subject}</h2>
+                <div style="white-space: pre-wrap;">{message}</div>
+                <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 28px 0;">
+                <p style="font-size: 12px; color: #6b7280;">Sent from LandVista Admin Communications.</p>
+            </div>
+        </body>
+    </html>
+    """
+
+    sent = 0
+    failed = 0
+    for recipient in recipients:
+        if send_email(recipient, subject, message, html_body):
+            sent += 1
+        else:
+            failed += 1
+
+    record_activity("communications.send", {"target": target, "sent": sent, "failed": failed})
+    return redirect(url_for("admin_communications_page", status="sent", sent=sent, failed=failed))
+
+
+@app.route("/admin/integrations")
+@require_admin_roles("super_admin", "operations_admin", "finance_admin")
+def admin_integrations_page():
+    smtp = get_effective_smtp_config()
+    settings = get_system_settings()
+    integrations = {
+        "mongodb": {
+            "name": "MongoDB",
+            "configured": bool(MONGO_URI),
+            "healthy": db is not None
+        },
+        "smtp": {
+            "name": "SMTP",
+            "configured": bool(smtp.get("server") and smtp.get("username") and smtp.get("password")),
+            "healthy": bool(smtp.get("server") and smtp.get("port"))
+        },
+        "paystack": {
+            "name": "Paystack",
+            "configured": bool(PAYSTACK_PUBLIC_KEY and PAYSTACK_SECRET_KEY),
+            "healthy": bool(PAYSTACK_PUBLIC_KEY and PAYSTACK_SECRET_KEY)
+        },
+        "socketio": {
+            "name": "Socket.IO",
+            "configured": True,
+            "healthy": True
+        },
+        "editor": {
+            "name": "TinyMCE",
+            "configured": True,
+            "healthy": True
+        }
+    }
+    return render_template("admin/integrations.html", integrations=integrations, settings=settings)
+
+
+@app.route("/admin/security")
+@require_admin_roles("super_admin", "operations_admin")
+def admin_security_page():
+    security = get_system_settings().get("security", {})
+    users_count = safe_db_operation(lambda: db.admin_users.count_documents({}), 0)
+    recent_activity = safe_db_operation(
+        lambda: list(db.activity_logs.find().sort("created_at", -1).limit(30)),
+        []
+    )
+    for row in recent_activity:
+        row["_id"] = str(row.get("_id", ""))
+    return render_template(
+        "admin/security.html",
+        users_count=users_count,
+        recent_activity=recent_activity,
+        security_settings=security,
+        in_memory_failed_attempts=len(LOGIN_ATTEMPTS)
+    )
+
+
+@app.route("/admin/mutations")
+@require_admin_roles("super_admin", "operations_admin", "content_admin", "finance_admin")
+def admin_mutations_page():
+    level = (request.args.get("level") or "").strip().lower()
+    filter_doc = {}
+    if level in {"info", "warning", "error"}:
+        filter_doc["level"] = level
+
+    logs = safe_db_operation(
+        lambda: list(db.activity_logs.find(filter_doc).sort("created_at", -1).limit(300)),
+        []
+    )
+    for row in logs:
+        row["_id"] = str(row.get("_id", ""))
+    return render_template("admin/mutations.html", logs=logs, selected_level=level)
+
+
+@app.route("/admin/client-files")
+@require_admin_roles("super_admin", "operations_admin", "support_admin")
+def admin_client_files_page():
+    clients = safe_db_operation(
+        lambda: list(db.clients.find({}, {"name": 1, "email": 1}).sort("name", 1).limit(500)),
+        []
+    )
+    for client in clients:
+        client["_id"] = str(client.get("_id", ""))
+    return render_template("admin/client_files.html", clients=clients)
+
+
+@app.route("/admin/client-files/list")
+@require_admin_roles("super_admin", "operations_admin", "support_admin")
+def admin_client_files_list():
+    query = {}
+    client_id = (request.args.get("client_id") or "").strip()
+    if client_id:
+        query["client_id"] = client_id
+
+    files = safe_db_operation(
+        lambda: list(db.client_files.find(query).sort("created_at", -1).limit(1000)),
+        []
+    )
+    for item in files:
+        item["_id"] = str(item.get("_id", ""))
+    return jsonify(files)
+
+
+@app.route("/admin/client-files/upload", methods=["POST"])
+@require_admin_roles("super_admin", "operations_admin", "support_admin")
+def admin_client_files_upload():
+    if db is None:
+        return jsonify({"success": False, "error": "Database unavailable"}), 500
+
+    file = request.files.get("file")
+    if not file or not file.filename:
+        return jsonify({"success": False, "error": "File is required"}), 400
+
+    if not allowed_client_file(file.filename):
+        return jsonify({"success": False, "error": "Unsupported file type"}), 400
+
+    client_id = (request.form.get("client_id") or "").strip()
+    category = (request.form.get("category") or "general").strip().lower()
+    notes = (request.form.get("notes") or "").strip()
+
+    original_name = secure_filename(file.filename)
+    date_path = datetime.utcnow().strftime("%Y/%m")
+    target_dir = os.path.join(CLIENT_FILES_FOLDER, date_path)
+    os.makedirs(target_dir, exist_ok=True)
+    saved_name = f"{int(time.time())}_{uuid.uuid4().hex[:8]}_{original_name}"
+    saved_path = os.path.join(target_dir, saved_name)
+    file.save(saved_path)
+
+    storage_path = os.path.relpath(saved_path, "static").replace("\\", "/")
+    doc = {
+        "client_id": client_id,
+        "category": category,
+        "notes": notes,
+        "filename": original_name,
+        "storage_path": storage_path,
+        "public_url": f"/static/{storage_path}",
+        "uploaded_by": session.get("admin_username"),
+        "created_at": datetime.utcnow()
+    }
+    result = safe_db_operation(lambda: db.client_files.insert_one(doc), None)
+    if result and getattr(result, "inserted_id", None):
+        record_activity("client_files.upload", {"filename": original_name, "client_id": client_id})
+        return jsonify({"success": True, "file_id": str(result.inserted_id), "public_url": doc["public_url"]})
+
+    return jsonify({"success": False, "error": "Failed to store file metadata"}), 500
+
+
+@app.route("/admin/client-files/delete/<file_id>", methods=["POST", "DELETE"])
+@require_admin_roles("super_admin", "operations_admin", "support_admin")
+def admin_client_files_delete(file_id):
+    try:
+        obj_id = ObjectId(file_id)
+    except Exception:
+        return jsonify({"success": False, "error": "Invalid file id"}), 400
+
+    file_doc = safe_db_operation(lambda: db.client_files.find_one({"_id": obj_id}), None)
+    if not file_doc:
+        return jsonify({"success": False, "error": "File record not found"}), 404
+
+    storage_path = file_doc.get("storage_path") or ""
+    absolute_path = os.path.join("static", storage_path.replace("/", os.sep))
+    if storage_path and os.path.exists(absolute_path):
+        try:
+            os.remove(absolute_path)
+        except Exception as e:
+            print(f"Failed to remove client file from disk: {e}")
+
+    safe_db_operation(lambda: db.client_files.delete_one({"_id": obj_id}), None)
+    record_activity("client_files.delete", {"file_id": file_id, "filename": file_doc.get("filename")}, level="warning")
+    return jsonify({"success": True})
+
+
+@app.route("/admin/client-files/download/<file_id>")
+@require_admin_roles("super_admin", "operations_admin", "support_admin")
+def admin_client_files_download(file_id):
+    try:
+        obj_id = ObjectId(file_id)
+    except Exception:
+        return redirect("/admin/client-files?error=invalid_file")
+
+    file_doc = safe_db_operation(lambda: db.client_files.find_one({"_id": obj_id}), None)
+    if not file_doc:
+        return redirect("/admin/client-files?error=file_not_found")
+
+    public_url = file_doc.get("public_url")
+    if not public_url:
+        return redirect("/admin/client-files?error=file_not_available")
+    return redirect(public_url)
+
 # ============================
 # ADMIN – PROPERTIES MANAGEMENT
 # ============================
+
+@app.route("/admin/products")
+@require_admin_login
+def admin_products_alias():
+    return redirect("/admin/properties")
+
 
 @app.route("/admin/properties")
 @require_admin_login
@@ -1702,8 +2881,8 @@ def edit_property(property_id):
 
     return render_template("admin/edit-property.html", property=property_item)
 
-@require_admin_login
 @app.route("/admin/properties/delete/<property_id>", methods=["POST"])
+@require_admin_login
 def delete_property(property_id):
     try:
         obj_id = ObjectId(property_id)
@@ -1719,7 +2898,6 @@ def delete_property(property_id):
 
 
 # Admin: delete individual image from property
-@require_admin_login
 @app.route("/admin/properties/<property_id>/delete-image/<image_name>", methods=["POST"])
 @require_admin_login
 def delete_image(property_id, image_name):
@@ -1839,8 +3017,8 @@ def delete_image_form(property_id):
 
 
 # Admin: mark property sold
-@require_admin_login
 @app.route('/admin/properties/mark-sold/<property_id>', methods=['POST'])
+@require_admin_login
 def mark_property_sold(property_id):
     try:
         obj_id = ObjectId(property_id)
@@ -1868,8 +3046,8 @@ def mark_property_sold(property_id):
 
 
 # Admin: mark property available/published again
-@require_admin_login
 @app.route('/admin/properties/mark-available/<property_id>', methods=['POST'])
+@require_admin_login
 def mark_property_available(property_id):
     try:
         obj_id = ObjectId(property_id)
@@ -2173,8 +3351,8 @@ def add_testimonial_form():
 # NEWS & BLOGS
 # =========================
 
-@require_admin_login
 @app.route("/admin/news")
+@require_admin_login
 def admin_news():
      return render_template("admin/news.html")
 
@@ -2189,6 +3367,7 @@ def api_news():
         return jsonify([])
 
 @app.route("/api/news/admin")
+@require_admin_login
 def api_news_admin():
     """Get all news articles (admin view - draft + published)"""
     try:
@@ -2520,8 +3699,8 @@ def update_news_article(article_id):
         print(f"Error updating article: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-@require_admin_login
 @app.route("/admin/news/delete/<article_id>", methods=["DELETE"])
+@require_admin_login
 def delete_news_article(article_id):
     """Delete news article"""
     try:
@@ -2565,6 +3744,7 @@ def api_legal_guides():
         return jsonify([])
 
 @app.route("/api/legal-guides/admin")
+@require_admin_login
 def api_legal_guides_admin():
     """Get all legal guides (admin view - draft + published)"""
     try:
@@ -2853,8 +4033,8 @@ def delete_testimonial(id):
         print(f"Error deleting testimonial: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
-@require_admin_login
 @app.route("/admin/testimonials/stream")
+@require_admin_login
 def testimonials_stream():
     def stream():
         last_count = 0

@@ -1,0 +1,144 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Communications | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <div class="page-header">
+        <div>
+            <h1>Communications Center</h1>
+            <p class="ops-subtext">Send targeted updates to newsletter subscribers, inquiry leads, or custom recipients.</p>
+        </div>
+    </div>
+
+    {% if status == 'sent' %}
+    <div class="ops-alert success">Dispatch completed. Sent: {{ sent }} | Failed: {{ failed }}</div>
+    {% elif status == 'invalid' %}
+    <div class="ops-alert error">No valid recipient emails were found for this target.</div>
+    {% elif status == 'error' %}
+    <div class="ops-alert error">Subject and message are required.</div>
+    {% endif %}
+
+    <section class="ops-card">
+        <div class="ops-kpi-grid">
+            <article class="ops-kpi">
+                <span>Active Subscribers</span>
+                <strong>{{ subscribers|length }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Recent Inquiry Emails</span>
+                <strong>{{ inquiries_recipients|length }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Target Cap</span>
+                <strong>150 recipients</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Transport</span>
+                <strong>SMTP (System Settings)</strong>
+            </article>
+        </div>
+    </section>
+
+    <form class="ops-card ops-form-grid" action="/admin/communications/send" method="POST">
+        <h3 class="full">Create Broadcast</h3>
+
+        <label>Audience
+            <select id="audienceTarget" name="target" required>
+                <option value="custom">Custom recipients</option>
+                <option value="newsletter">Newsletter subscribers</option>
+                <option value="inquiries">Recent inquiry emails</option>
+            </select>
+        </label>
+
+        <label>Subject
+            <input type="text" name="subject" maxlength="180" required placeholder="Update subject">
+        </label>
+
+        <label class="full" id="customRecipientsField">Recipients (comma/new line separated)
+            <textarea name="recipients" rows="3" placeholder="name@example.com, second@example.com"></textarea>
+        </label>
+
+        <label class="full">Message
+            <textarea name="message" rows="8" required placeholder="Write your update message"></textarea>
+        </label>
+
+        <button class="full" type="submit">Send Broadcast</button>
+    </form>
+
+    <section class="ops-card">
+        <h3>Newsletter Audience Preview</h3>
+        <div class="ops-table-wrap" style="margin-top:10px;">
+            <table class="ops-table" style="min-width:760px;">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Subscribed At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in subscribers %}
+                    <tr>
+                        <td>{{ item.email }}</td>
+                        <td><span class="ops-pill on">{{ item.status or 'active' }}</span></td>
+                        <td>{{ item.created_at or 'n/a' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3">No active subscribers found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="ops-card">
+        <h3>Inquiry Recipients Preview</h3>
+        <div class="ops-table-wrap" style="margin-top:10px;">
+            <table class="ops-table" style="min-width:760px;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in inquiries_recipients %}
+                    <tr>
+                        <td>{{ item.name or 'Lead' }}</td>
+                        <td>{{ item.email }}</td>
+                        <td>{{ item.created_at or 'n/a' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3">No inquiry recipients found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(() => {
+    const target = document.getElementById('audienceTarget');
+    const customRecipientsField = document.getElementById('customRecipientsField');
+    if (!target || !customRecipientsField) return;
+
+    function toggleRecipients() {
+        const showCustom = target.value === 'custom';
+        customRecipientsField.style.display = showCustom ? 'grid' : 'none';
+    }
+
+    target.addEventListener('change', toggleRecipients);
+    toggleRecipients();
+})();
+</script>
+{% endblock %}

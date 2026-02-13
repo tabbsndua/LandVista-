@@ -1,0 +1,188 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Reports | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <div class="page-header ops-row">
+        <div>
+            <h1>Reports & Analytics</h1>
+            <p class="ops-subtext">Operational and conversion metrics across listings, leads, visits, and payments.</p>
+        </div>
+        <form method="GET" class="ops-row" style="gap:8px;">
+            <label style="font-weight:700; color:#315349;">Range
+                <select name="days" style="margin-left:6px; width:auto; padding:8px 10px; border-radius:8px; border:1px solid #d2e1db;">
+                    <option value="7" {% if selected_days == 7 %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if selected_days == 30 %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if selected_days == 90 %}selected{% endif %}>Last 90 days</option>
+                    <option value="180" {% if selected_days == 180 %}selected{% endif %}>Last 180 days</option>
+                    <option value="365" {% if selected_days == 365 %}selected{% endif %}>Last 365 days</option>
+                </select>
+            </label>
+            <button class="ops-btn" style="width:auto;" type="submit">Refresh</button>
+        </form>
+    </div>
+
+    <section class="ops-card">
+        <div class="ops-kpi-grid">
+            <article class="ops-kpi">
+                <span>Total Properties</span>
+                <strong>{{ metrics.total_properties }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Total Clients</span>
+                <strong>{{ metrics.total_clients }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Inquiries ({{ selected_days }}d)</span>
+                <strong>{{ metrics.inquiries_in_window }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Site Visits</span>
+                <strong>{{ metrics.total_site_visits }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Payments (Success)</span>
+                <strong>{{ metrics.payments_success }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Revenue (KES)</span>
+                <strong>{{ '{:,.2f}'.format(metrics.payment_volume_kes) }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Property Conversion</span>
+                <strong>{{ metrics.property_conversion_percent }}%</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Newsletter Active</span>
+                <strong>{{ metrics.active_newsletter_subscribers }}</strong>
+            </article>
+        </div>
+    </section>
+
+    <section class="ops-card">
+        <div class="ops-row" style="margin-bottom:10px;">
+            <h3 style="margin:0;">Inquiries Trend (6 Months)</h3>
+            <p class="ops-subtext" style="margin:0;">Monthly lead intake trend for demand tracking.</p>
+        </div>
+        <div class="ops-log" style="max-height:none;">
+            {% for item in monthly_trend %}
+            <div class="ops-log-item">
+                <div class="ops-row" style="align-items:center;">
+                    <strong style="width:66px;">{{ item.label }}</strong>
+                    <div style="flex:1; background:#edf5f2; border-radius:999px; overflow:hidden; height:10px;">
+                        <span class="trend-bar" data-value="{{ item.count }}" style="display:block; width:0; height:100%; background:linear-gradient(120deg,#0f766e,#0f9b78);"></span>
+                    </div>
+                    <span style="min-width:42px; text-align:right; color:#33574b; font-weight:700;">{{ item.count }}</span>
+                </div>
+            </div>
+            {% else %}
+            <div class="ops-log-item">
+                <p>No trend data available yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="ops-card">
+        <div class="ops-row" style="margin-bottom:10px;">
+            <h3 style="margin:0;">Top Property Locations</h3>
+            <p class="ops-subtext" style="margin:0;">Most active listing zones in the catalog.</p>
+        </div>
+        <div class="ops-table-wrap">
+            <table class="ops-table" style="min-width:540px;">
+                <thead>
+                    <tr>
+                        <th>Location</th>
+                        <th>Listings</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in top_locations %}
+                    <tr>
+                        <td>{{ item.location }}</td>
+                        <td>{{ item.count }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2">No location data available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="ops-card">
+        <div class="ops-row" style="margin-bottom:10px;">
+            <h3 style="margin:0;">Breakdowns</h3>
+            <p class="ops-subtext" style="margin:0;">Status and priority distribution snapshots.</p>
+        </div>
+
+        <div class="ops-table-wrap">
+            <table class="ops-table" style="min-width:760px;">
+                <thead>
+                    <tr>
+                        <th>Inquiry Priorities</th>
+                        <th>Inquiry Statuses</th>
+                        <th>Payment Statuses</th>
+                        <th>Property Statuses</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            {% for key, value in priority_breakdown.items() %}
+                                <span class="ops-pill role" style="margin:2px 4px 2px 0;">{{ key }}: {{ value }}</span>
+                            {% else %}
+                                <span class="ops-subtext">No data</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for key, value in inquiry_status_breakdown.items() %}
+                                <span class="ops-pill on" style="margin:2px 4px 2px 0;">{{ key }}: {{ value }}</span>
+                            {% else %}
+                                <span class="ops-subtext">No data</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for key, value in payment_status_breakdown.items() %}
+                                <span class="ops-pill {{ 'on' if key in ['success', 'paid'] else 'off' }}" style="margin:2px 4px 2px 0;">{{ key }}: {{ value }}</span>
+                            {% else %}
+                                <span class="ops-subtext">No data</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for key, value in property_status_breakdown.items() %}
+                                <span class="ops-pill role" style="margin:2px 4px 2px 0;">{{ key }}: {{ value }}</span>
+                            {% else %}
+                                <span class="ops-subtext">No data</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(() => {
+    const bars = Array.from(document.querySelectorAll('.trend-bar'));
+    if (!bars.length) return;
+    const max = Math.max(...bars.map((bar) => Number(bar.dataset.value || 0)), 1);
+    bars.forEach((bar) => {
+        const value = Number(bar.dataset.value || 0);
+        const width = Math.max(4, Math.round((value / max) * 100));
+        bar.style.width = `${width}%`;
+    });
+})();
+</script>
+{% endblock %}

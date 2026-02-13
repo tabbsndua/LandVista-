@@ -129,7 +129,7 @@
 
                 <div class="form-group">
                     <label for="guideContent">Guide Content <span class="required">*</span></label>
-                    <textarea id="guideContent" rows="12" placeholder="Write the full guide content here..." required style="width:100%"></textarea>
+                    <textarea id="guideContent" class="rich-text" rows="12" placeholder="Write the full guide content here..." required style="width:100%"></textarea>
                 </div>
 
                 <div class="form-group">
@@ -319,6 +319,9 @@ function editGuide(id){
     document.getElementById('guideSlug').value = g.slug || '';
     document.getElementById('guideExcerpt').value = g.excerpt || '';
     document.getElementById('guideContent').value = g.content || '';
+    if (window.tinymce && tinymce.get('guideContent')) {
+        tinymce.get('guideContent').setContent(g.content || '');
+    }
     document.getElementById('guideAuthor').value = g.author || '';
     document.getElementById('guideCategory').value = g.category || '';
     document.getElementById('publishDate').value = g.date || '';
@@ -338,6 +341,9 @@ function clearGuideForm(){
     document.getElementById('readTime').value = '';
     document.getElementById('guideExcerpt').value = '';
     document.getElementById('guideContent').value = '';
+    if (window.tinymce && tinymce.get('guideContent')) {
+        tinymce.get('guideContent').setContent('');
+    }
     document.getElementById('guideStatus').value = 'draft';
     document.getElementById('guideIsFeatured').checked = false;
     const f = document.getElementById('guideFeaturedImage'); if(f) f.value='';
@@ -345,6 +351,10 @@ function clearGuideForm(){
 }
 
 function saveGuide(){
+    if (window.tinymce) {
+        window.tinymce.triggerSave();
+    }
+
     const title = document.getElementById('guideTitle').value.trim();
     const slug = document.getElementById('guideSlug').value.trim();
     const author = document.getElementById('guideAuthor').value.trim();

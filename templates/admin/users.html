@@ -1,0 +1,135 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Admin Users | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <div class="page-header">
+        <div>
+            <h1>Admin Users</h1>
+            <p>Create role-based accounts and enforce least-privilege access.</p>
+        </div>
+    </div>
+
+    {% if request.args.get('success') %}
+    <div class="ops-alert success">User operation completed successfully.</div>
+    {% endif %}
+    {% if request.args.get('error') %}
+    <div class="ops-alert error">User operation failed: {{ request.args.get('error') }}</div>
+    {% endif %}
+
+    <section class="ops-card">
+        <h3>Create Admin User</h3>
+        <form action="/admin/users/create" method="POST" class="ops-form-grid" style="margin-top:10px;">
+            <label>
+                Username
+                <input type="text" name="username" minlength="3" required>
+            </label>
+            <label>
+                Display Name
+                <input type="text" name="display_name" required>
+            </label>
+            <label>
+                Role
+                <select name="role" required>
+                    <option value="operations_admin">Operations Admin</option>
+                    <option value="content_admin">Content Admin</option>
+                    <option value="finance_admin">Finance Admin</option>
+                    <option value="support_admin">Support Admin</option>
+                    <option value="viewer">Viewer</option>
+                    <option value="super_admin">Super Admin</option>
+                </select>
+            </label>
+            <label>
+                Initial Password
+                <input type="password" name="password" minlength="8" required>
+            </label>
+            <div class="full">
+                <button type="submit" class="ops-btn" style="width:auto;">Create User</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="ops-card ops-table-wrap">
+        <h3 style="margin-bottom:10px;">Existing Admin Users</h3>
+        <table class="ops-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Display Name</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.display_name }}</td>
+                    <td><span class="ops-pill role">{{ user.role_label }}</span></td>
+                    <td>
+                        <span class="ops-pill {{ 'on' if user.is_active else 'off' }}">
+                            {{ 'Active' if user.is_active else 'Disabled' }}
+                        </span>
+                    </td>
+                    <td>{{ user.created_at }}</td>
+                    <td>
+                        <div class="ops-row" style="justify-content:flex-start;">
+                            {% if user.username != current_user %}
+                            <form method="POST" action="/admin/users/toggle/{{ user._id }}">
+                                <button class="ops-btn secondary" style="width:auto;">{{ 'Disable' if user.is_active else 'Enable' }}</button>
+                            </form>
+                            {% endif %}
+                            <button class="ops-btn warn" style="width:auto;" data-reset-password="{{ user._id }}" data-username="{{ user.username }}">Reset Password</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p id="userResetFeedback" class="ops-alert" style="display:none; margin-top:10px;"></p>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function () {
+    const feedback = document.getElementById('userResetFeedback');
+    document.querySelectorAll('[data-reset-password]').forEach((button) => {
+        button.addEventListener('click', async function () {
+            const userId = button.getAttribute('data-reset-password');
+            const username = button.getAttribute('data-username');
+            if (!userId || !confirm(`Reset password for ${username}?`)) return;
+
+            button.disabled = true;
+            feedback.style.display = 'block';
+            feedback.className = 'ops-alert';
+            feedback.textContent = 'Resetting password...';
+
+            try {
+                const res = await fetch(`/admin/users/reset-password/${userId}`, { method: 'POST' });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Password reset failed');
+                }
+                feedback.className = 'ops-alert success';
+                feedback.textContent = `New password for ${data.username}: ${data.new_password}`;
+            } catch (error) {
+                feedback.className = 'ops-alert error';
+                feedback.textContent = error.message || 'Password reset failed';
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block title %}{{ property.title }} | LandVista{% endblock %}
+{% block meta_description %}{{ (property.description or ('Explore ' ~ property.title ~ ' in ' ~ property.location ~ ' with verified due diligence support and flexible acquisition guidance.'))[:155] }}{% endblock %}
+{% block meta_keywords %}{{ property.title }}, {{ property.location }}, land for sale kenya, verified property listing{% endblock %}
 {% block body_class %}property-modern-body{% endblock %}
 
 {% block extra_css %}

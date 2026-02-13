@@ -1,0 +1,89 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Client Files | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <div class="page-header">
+        <div>
+            <h1>Client Files</h1>
+            <p>Upload and manage client documents with searchable metadata.</p>
+        </div>
+    </div>
+
+    <section class="ops-card">
+        <form id="clientFileUploadForm" class="ops-form-grid" enctype="multipart/form-data">
+            <label>
+                Client
+                <select name="client_id" id="clientFileClientId">
+                    <option value="">General / Unassigned</option>
+                    {% for client in clients %}
+                    <option value="{{ client._id }}">{{ client.name }}{% if client.email %} ({{ client.email }}){% endif %}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Category
+                <select name="category">
+                    <option value="general">General</option>
+                    <option value="id_docs">ID Documents</option>
+                    <option value="payments">Payments</option>
+                    <option value="contracts">Contracts</option>
+                    <option value="site_visit">Site Visit</option>
+                </select>
+            </label>
+            <label class="full">
+                Notes
+                <input type="text" name="notes" placeholder="Optional notes for this file">
+            </label>
+            <label class="full">
+                Upload File
+                <input type="file" name="file" required>
+            </label>
+            <div class="full ops-row">
+                <button type="submit" class="ops-btn" style="width:auto;" id="clientFileUploadBtn">Upload File</button>
+                <button type="button" class="ops-btn secondary" style="width:auto;" id="clientFileRefreshBtn">Refresh List</button>
+            </div>
+        </form>
+        <p id="clientFilesFeedback" class="ops-alert" style="display:none; margin-top:10px;"></p>
+    </section>
+
+    <section class="ops-card">
+        <div class="ops-row" style="margin-bottom:10px;">
+            <h3 style="margin:0;">Stored Files</h3>
+            <select id="clientFilesFilter" style="width:auto; padding:8px 10px; border-radius:8px; border:1px solid #d2e1db;">
+                <option value="">All clients</option>
+                {% for client in clients %}
+                <option value="{{ client._id }}">{{ client.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="ops-table-wrap">
+            <table class="ops-table" id="clientFilesTable">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Client</th>
+                        <th>Category</th>
+                        <th>Uploaded By</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clientFilesBody">
+                    <tr><td colspan="6">Loading files...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script defer src="{{ url_for('static', filename='js/admin-client-files.js') }}"></script>
+{% endblock %}

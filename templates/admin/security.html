@@ -1,0 +1,77 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Security Center | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <div class="page-header">
+        <div>
+            <h1>Security Center</h1>
+            <p>Role controls, session policy, and authentication activity overview.</p>
+        </div>
+    </div>
+
+    <section class="ops-card">
+        <div class="ops-kpi-grid">
+            <article class="ops-kpi">
+                <span>Admin Users</span>
+                <strong>{{ users_count }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Session Timeout</span>
+                <strong>{{ security_settings.session_timeout_minutes }} min</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Login Limit</span>
+                <strong>{{ security_settings.login_attempt_limit }} attempts</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Active Lockouts (memory)</span>
+                <strong>{{ in_memory_failed_attempts }}</strong>
+            </article>
+        </div>
+    </section>
+
+    <section class="ops-card">
+        <h3>Role Matrix</h3>
+        <div class="ops-table-wrap" style="margin-top:10px;">
+            <table class="ops-table">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Typical Access</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><span class="ops-pill role">Super Admin</span></td><td>All modules, users, security, and settings.</td></tr>
+                    <tr><td><span class="ops-pill role">Operations Admin</span></td><td>Listings, visits, clients, files, settings, and logs.</td></tr>
+                    <tr><td><span class="ops-pill role">Finance Admin</span></td><td>Payments, integrations, financial workflows.</td></tr>
+                    <tr><td><span class="ops-pill role">Content Admin</span></td><td>News, guides, testimonials, content updates.</td></tr>
+                    <tr><td><span class="ops-pill role">Support Admin</span></td><td>Inquiries, client files, site visit coordination.</td></tr>
+                    <tr><td><span class="ops-pill role">Viewer</span></td><td>Read-only operational visibility.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="ops-card">
+        <h3>Recent Security Activity</h3>
+        <div class="ops-log" style="margin-top:10px;">
+            {% if recent_activity %}
+                {% for item in recent_activity %}
+                <div class="ops-log-item">
+                    <strong>{{ item.action }}</strong>
+                    <p>{{ item.username }} ({{ item.role }}) | {{ item.level }} | {{ item.created_at }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="ops-log-item"><p>No security activity found.</p></div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

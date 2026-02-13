@@ -80,23 +80,36 @@
     const commandInput = document.getElementById('adminCommandInput');
     const commandList = document.getElementById('adminCommandList');
     const commandClose = document.getElementById('adminCommandClose');
+    const currentRole = (document.body?.dataset?.adminRole || '').trim();
 
     const actions = [
         { label: 'Dashboard', hint: 'Realtime KPIs', href: '/admin', icon: 'fa-chart-line' },
+        { label: 'Reports', hint: 'Analytics and funnel metrics', href: '/admin/reports', icon: 'fa-chart-pie' },
         { label: 'Properties', hint: 'Manage inventory', href: '/admin/properties', icon: 'fa-building' },
         { label: 'Clients', hint: 'Client records', href: '/admin/clients', icon: 'fa-users' },
         { label: 'Inquiries', hint: 'Leads and follow-up', href: '/admin/inquiries', icon: 'fa-envelope-open-text' },
         { label: 'Site Visits', hint: 'Bookings and tours', href: '/admin/site-visits', icon: 'fa-calendar-check' },
-        { label: 'Payments', hint: 'Paystack activity', href: '/admin/payments', icon: 'fa-credit-card' },
+        { label: 'Payments', hint: 'Paystack activity', href: '/admin/payments', icon: 'fa-credit-card', roles: ['super_admin', 'finance_admin'] },
         { label: 'News & Blogs', hint: 'Content publishing', href: '/admin/news', icon: 'fa-newspaper' },
+        { label: 'Communications', hint: 'Email updates and broadcasts', href: '/admin/communications', icon: 'fa-paper-plane', roles: ['super_admin', 'operations_admin', 'content_admin', 'support_admin'] },
         { label: 'Legal Guides', hint: 'Legal content', href: '/admin/legal-guides', icon: 'fa-scale-balanced' },
         { label: 'Testimonials', hint: 'Social proof', href: '/admin/testimonials', icon: 'fa-comment-dots' },
+        { label: 'Client Files', hint: 'Document management', href: '/admin/client-files', icon: 'fa-folder-open', roles: ['super_admin', 'operations_admin', 'support_admin'] },
+        { label: 'Mutations Log', hint: 'Audit and mutation trail', href: '/admin/mutations', icon: 'fa-wave-square', roles: ['super_admin', 'operations_admin', 'content_admin', 'finance_admin'] },
+        { label: 'Integrations', hint: 'System connectors', href: '/admin/integrations', icon: 'fa-plug-circle-bolt', roles: ['super_admin', 'operations_admin', 'finance_admin'] },
+        { label: 'Security', hint: 'Access and auth activity', href: '/admin/security', icon: 'fa-user-shield', roles: ['super_admin', 'operations_admin'] },
+        { label: 'Settings', hint: 'SMTP, SEO and controls', href: '/admin/settings', icon: 'fa-sliders', roles: ['super_admin', 'operations_admin'] },
+        { label: 'SEO Manager', hint: 'Metadata and indexing defaults', href: '/admin/seo', icon: 'fa-magnifying-glass-chart', roles: ['super_admin', 'operations_admin', 'content_admin'] },
+        { label: 'Admin Users', hint: 'Role-based accounts', href: '/admin/users', icon: 'fa-user-gear', roles: ['super_admin'] },
         { label: 'Public Website', hint: 'Open live site', href: '/home', icon: 'fa-globe' }
     ];
 
     function renderActionList(filter = '') {
         const query = filter.trim().toLowerCase();
         const filtered = actions.filter((action) => {
+            if (Array.isArray(action.roles) && action.roles.length && !action.roles.includes(currentRole)) {
+                return false;
+            }
             if (!query) return true;
             return action.label.toLowerCase().includes(query) || action.hint.toLowerCase().includes(query);
         });

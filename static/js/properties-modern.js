@@ -330,6 +330,48 @@
         });
     }
 
+    function applyQueryPreset() {
+        const params = new URLSearchParams(window.location.search);
+        const keyword = (params.get("q") || params.get("location") || "").trim();
+        const status = (params.get("status") || "").trim().toLowerCase();
+        const maxBudget = Number(params.get("max_budget") || "");
+        const sort = (params.get("sort") || "").trim();
+        const view = (params.get("view") || "").trim();
+
+        if (keyword && locationInput) {
+            locationInput.value = keyword;
+        }
+
+        if (availabilitySelect && ["available", "sold", "all"].includes(status)) {
+            availabilitySelect.value = status;
+            syncChips(status);
+        } else if (availabilitySelect && keyword) {
+            availabilitySelect.value = "all";
+            syncChips("all");
+        }
+
+        if (maxBudgetRange && Number.isFinite(maxBudget) && maxBudget > 0) {
+            const min = Number(maxBudgetRange.min || 500000);
+            const max = Number(maxBudgetRange.max || 10000000);
+            const bounded = Math.max(min, Math.min(max, maxBudget));
+            maxBudgetRange.value = String(bounded);
+            if (maxBudgetValue) {
+                maxBudgetValue.textContent = bounded >= max ? "Any budget" : `Up to KSh ${bounded.toLocaleString()}`;
+            }
+        }
+
+        if (sortSelect && sort) {
+            const exists = Array.from(sortSelect.options).some((opt) => opt.value === sort);
+            if (exists) {
+                sortSelect.value = sort;
+            }
+        }
+
+        if (view === "list" || view === "grid") {
+            setView(view);
+        }
+    }
+
     function setupRealtime() {
         if (typeof io !== "function") return;
         const socket = io();
@@ -358,6 +400,7 @@
     }
     syncChips((availabilitySelect?.value || "available").toLowerCase());
     setView("grid");
+    applyQueryPreset();
     setupEvents();
     setupRealtime();
     fetchProperties();

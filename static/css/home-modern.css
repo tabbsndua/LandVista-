@@ -129,6 +129,49 @@
     max-width: 580px;
 }
 
+.hero-search-form {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 170px auto;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(234, 247, 239, 0.26);
+    border-radius: 14px;
+    padding: 10px;
+    max-width: 760px;
+}
+
+.hero-search-form input,
+.hero-search-form select,
+.hero-search-form button {
+    border-radius: 10px;
+    border: 1px solid rgba(226, 241, 233, 0.32);
+    padding: 10px 12px;
+    font: inherit;
+}
+
+.hero-search-form input,
+.hero-search-form select {
+    background: rgba(255, 255, 255, 0.14);
+    color: #f7fff9;
+}
+
+.hero-search-form input::placeholder {
+    color: rgba(229, 242, 236, 0.74);
+}
+
+.hero-search-form select option {
+    color: #0a3c28;
+}
+
+.hero-search-form button {
+    border-color: transparent;
+    background: linear-gradient(135deg, #e4c772, #d4af37);
+    color: #0a3c28;
+    font-weight: 800;
+    cursor: pointer;
+}
+
 .hero-actions {
     margin-top: 28px;
     display: flex;
@@ -265,6 +308,63 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
+}
+
+.hero-listing-strip {
+    padding-top: 24px;
+}
+
+.hero-listing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.hero-listing-card {
+    border-radius: 18px;
+    padding: 18px;
+}
+
+.hero-listing-card h3 {
+    margin: 0 0 8px;
+    color: #0a3c28;
+}
+
+.hero-listing-card p {
+    margin: 0;
+    color: #54706a;
+    font-size: 0.9rem;
+}
+
+.hero-listing-card p i {
+    color: #d4af37;
+    margin-right: 5px;
+}
+
+.hero-listing-meta {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.hero-listing-meta strong {
+    color: #0a3c28;
+}
+
+.hero-listing-meta span {
+    color: #61817a;
+    font-size: 0.82rem;
+}
+
+.hero-listing-card a {
+    margin-top: 12px;
+    display: inline-flex;
+    text-decoration: none;
+    font-size: 0.84rem;
+    color: #0a3c28;
+    font-weight: 800;
 }
 
 .modern-feature-section {
@@ -964,6 +1064,14 @@
     .comparison-table {
         min-width: 640px;
     }
+
+    .hero-search-form {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-listing-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 @media (max-width: 760px) {
@@ -1005,6 +1113,10 @@
     }
 
     .newsletter-modern-form {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-listing-grid {
         grid-template-columns: 1fr;
     }
 }

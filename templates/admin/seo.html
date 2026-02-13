@@ -1,0 +1,133 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}SEO Manager | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <div class="page-header">
+        <div>
+            <h1>SEO Manager</h1>
+            <p class="ops-subtext">Manage global metadata defaults, verification tags, and index coverage.</p>
+        </div>
+    </div>
+
+    {% if request.args.get('saved') %}
+    <div class="ops-alert success">SEO settings updated successfully.</div>
+    {% elif request.args.get('error') %}
+    <div class="ops-alert error">Unable to save SEO settings. Please retry.</div>
+    {% endif %}
+
+    <section class="ops-card">
+        <div class="ops-kpi-grid">
+            <article class="ops-kpi">
+                <span>Indexable Properties</span>
+                <strong>{{ index_counts.properties }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Published News</span>
+                <strong>{{ index_counts.news }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Published Guides</span>
+                <strong>{{ index_counts.guides }}</strong>
+            </article>
+            <article class="ops-kpi">
+                <span>Canonical Base URL</span>
+                <strong style="font-size:0.95rem; word-break:break-all;">{{ canonical_base }}</strong>
+            </article>
+        </div>
+    </section>
+
+    <form class="ops-card ops-form-grid" action="/admin/seo/update" method="POST">
+        <h3 class="full">Global SEO Defaults</h3>
+
+        <label>Site Name
+            <input type="text" name="site_name" value="{{ seo.site_name }}" required>
+        </label>
+        <label>Twitter Handle
+            <input type="text" name="twitter_handle" value="{{ seo.twitter_handle }}" placeholder="@landvista">
+        </label>
+
+        <label class="full">Default Description
+            <textarea name="default_description" rows="3" required>{{ seo.default_description }}</textarea>
+        </label>
+        <label class="full">Default Keywords
+            <input type="text" name="default_keywords" value="{{ seo.default_keywords }}" placeholder="keyword1, keyword2, keyword3">
+        </label>
+
+        <label class="full">Default OG Image Path
+            <input type="text" name="default_og_image" value="{{ seo.default_og_image }}" placeholder="/static/images/landvista-logo.png">
+        </label>
+
+        <label class="full">Canonical Base URL
+            <input type="text" name="canonical_base_url" value="{{ seo.canonical_base_url or canonical_base }}" placeholder="https://your-domain.com">
+        </label>
+
+        <label class="full">Google Site Verification Token
+            <input type="text" name="google_verification" value="{{ seo.google_verification }}" placeholder="google-site-verification token">
+        </label>
+
+        <label class="full">Bing Site Verification Token
+            <input type="text" name="bing_verification" value="{{ seo.bing_verification }}" placeholder="bing verification token">
+        </label>
+
+        <button class="full" type="submit">Save SEO Settings</button>
+    </form>
+
+    <section class="ops-card">
+        <div class="ops-row" style="margin-bottom:10px;">
+            <h3 style="margin:0;">Index Utilities</h3>
+            <div class="ops-row" style="gap:8px;">
+                <a class="ops-btn secondary" href="/sitemap.xml" target="_blank" rel="noopener" style="text-decoration:none; width:auto;">Open Sitemap</a>
+                <a class="ops-btn secondary" href="/robots.txt" target="_blank" rel="noopener" style="text-decoration:none; width:auto;">Open Robots</a>
+            </div>
+        </div>
+        <div class="ops-table-wrap">
+            <table class="ops-table" style="min-width:760px;">
+                <thead>
+                    <tr>
+                        <th>Collection</th>
+                        <th>Recent Entries</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Properties</td>
+                        <td>
+                            {% for item in recent_content.properties %}
+                                <span class="ops-pill role" style="margin:2px 4px 2px 0;">{{ item.title or 'Untitled' }}</span>
+                            {% else %}
+                                <span class="ops-subtext">No properties yet.</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>News & Blogs</td>
+                        <td>
+                            {% for item in recent_content.news %}
+                                <span class="ops-pill on" style="margin:2px 4px 2px 0;">{{ item.title or 'Untitled' }}</span>
+                            {% else %}
+                                <span class="ops-subtext">No news posts yet.</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Legal Guides</td>
+                        <td>
+                            {% for item in recent_content.guides %}
+                                <span class="ops-pill on" style="margin:2px 4px 2px 0;">{{ item.title or 'Untitled' }}</span>
+                            {% else %}
+                                <span class="ops-subtext">No guides yet.</span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

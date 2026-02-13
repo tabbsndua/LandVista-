@@ -1,0 +1,20 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Access Denied | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <section class="ops-card" style="text-align:center; padding:34px 18px;">
+        <h2>Access Denied</h2>
+        <p class="ops-subtext">Your account role <strong>{{ role_labels.get(current_role, current_role) }}</strong> does not include this area.</p>
+        <p class="ops-subtext" style="margin-top:8px;">Required roles: {{ required_roles|join(', ') }}</p>
+        <div style="margin-top:16px;">
+            <a class="ops-btn secondary" href="/admin" style="display:inline-flex; text-decoration:none; width:auto;">Return to Dashboard</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

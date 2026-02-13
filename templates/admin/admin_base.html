@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-shell.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
-<body class="admin-body">
+<body class="admin-body" data-admin-role="{{ current_admin_role or '' }}">
 <div class="admin-shell">
     <div class="admin-overlay" id="adminOverlay"></div>
 
@@ -35,6 +35,12 @@
                 <a href="/admin">
                     <i class="fa-solid fa-chart-line"></i>
                     <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if request.path.startswith('/admin/reports') else '' }}">
+                <a href="/admin/reports">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Reports</span>
                 </a>
             </li>
             <li class="{{ 'active' if request.path.startswith('/admin/properties') else '' }}">
@@ -61,18 +67,28 @@
                     <span>Site Visits</span>
                 </a>
             </li>
+            {% if current_admin_role in ['super_admin', 'finance_admin'] %}
             <li class="{{ 'active' if request.path.startswith('/admin/payments') else '' }}">
                 <a href="/admin/payments">
                     <i class="fa-solid fa-credit-card"></i>
                     <span>Payments</span>
                 </a>
             </li>
+            {% endif %}
             <li class="{{ 'active' if request.path.startswith('/admin/news') else '' }}">
                 <a href="/admin/news">
                     <i class="fa-solid fa-newspaper"></i>
                     <span>News & Blogs</span>
                 </a>
             </li>
+            {% if current_admin_role in ['super_admin', 'operations_admin', 'content_admin', 'support_admin'] %}
+            <li class="{{ 'active' if request.path.startswith('/admin/communications') else '' }}">
+                <a href="/admin/communications">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Communications</span>
+                </a>
+            </li>
+            {% endif %}
             <li class="{{ 'active' if request.path.startswith('/admin/legal-guides') else '' }}">
                 <a href="/admin/legal-guides">
                     <i class="fa-solid fa-scale-balanced"></i>
@@ -85,6 +101,60 @@
                     <span>Testimonials</span>
                 </a>
             </li>
+            {% if current_admin_role in ['super_admin', 'operations_admin', 'support_admin'] %}
+            <li class="{{ 'active' if request.path.startswith('/admin/client-files') else '' }}">
+                <a href="/admin/client-files">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>Client Files</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if current_admin_role in ['super_admin', 'operations_admin', 'content_admin', 'finance_admin'] %}
+            <li class="{{ 'active' if request.path.startswith('/admin/mutations') else '' }}">
+                <a href="/admin/mutations">
+                    <i class="fa-solid fa-wave-square"></i>
+                    <span>Mutations Log</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if current_admin_role in ['super_admin', 'operations_admin', 'finance_admin'] %}
+            <li class="{{ 'active' if request.path.startswith('/admin/integrations') else '' }}">
+                <a href="/admin/integrations">
+                    <i class="fa-solid fa-plug-circle-bolt"></i>
+                    <span>Integrations</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if current_admin_role in ['super_admin', 'operations_admin'] %}
+            <li class="{{ 'active' if request.path.startswith('/admin/security') else '' }}">
+                <a href="/admin/security">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>Security</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if request.path.startswith('/admin/settings') else '' }}">
+                <a href="/admin/settings">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if current_admin_role in ['super_admin', 'operations_admin', 'content_admin'] %}
+            <li class="{{ 'active' if request.path.startswith('/admin/seo') else '' }}">
+                <a href="/admin/seo">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i>
+                    <span>SEO Manager</span>
+                </a>
+            </li>
+            {% endif %}
+            {% if current_admin_role == 'super_admin' %}
+            <li class="{{ 'active' if request.path.startswith('/admin/users') else '' }}">
+                <a href="/admin/users">
+                    <i class="fa-solid fa-user-gear"></i>
+                    <span>Admin Users</span>
+                </a>
+            </li>
+            {% endif %}
 
             <li class="menu-divider" aria-hidden="true"></li>
 
@@ -113,6 +183,7 @@
                 <div class="admin-title-block">
                     <p class="admin-kicker">Operations</p>
                     <h1>Admin Workspace</h1>
+                    <p class="admin-role-chip">{{ role_labels.get(current_admin_role, 'Role') if current_admin_role else 'Role' }}</p>
                 </div>
                 {% endblock %}
             </div>
@@ -125,6 +196,10 @@
                 <a class="quick-link" href="/admin/site-visits" title="Site visits">
                     <i class="fas fa-route"></i>
                     <span>Visits</span>
+                </a>
+                <a class="quick-link" href="/admin/reports" title="Operations reports">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Reports</span>
                 </a>
                 <a class="quick-link highlight" href="/admin/properties#addPropertyModal" title="Add property">
                     <i class="fas fa-plus"></i>
@@ -141,6 +216,35 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script defer src="{{ url_for('static', filename='js/admin-shell.js') }}"></script>
+<script>
+    // Lightweight rich text editor integration for admin textareas.
+    (function() {
+        if (!document.querySelector('textarea.rich-text')) return;
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js';
+        script.referrerPolicy = 'origin';
+        script.onload = function() {
+            if (!window.tinymce) return;
+            tinymce.init({
+                selector: 'textarea.rich-text',
+                menubar: false,
+                plugins: 'lists link table code advlist',
+                toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | link table | code',
+                branding: false,
+                height: 320,
+                content_style: 'body { font-family: Manrope, Segoe UI, Arial, sans-serif; font-size:14px }'
+            });
+        };
+        document.head.appendChild(script);
+
+        document.addEventListener('submit', function() {
+            if (window.tinymce) {
+                window.tinymce.triggerSave();
+            }
+        }, true);
+    })();
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

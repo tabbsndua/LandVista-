@@ -1,0 +1,73 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Integrations | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <div class="page-header">
+        <div>
+            <h1>Integrations Management</h1>
+            <p>Monitor core system integrations and operational dependencies.</p>
+        </div>
+    </div>
+
+    <section class="ops-card">
+        <div class="ops-kpi-grid">
+            {% for key, integration in integrations.items() %}
+            <article class="ops-kpi">
+                <span>{{ integration.name }}</span>
+                <strong>{% if integration.healthy %}Healthy{% else %}Needs Attention{% endif %}</strong>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="ops-card ops-table-wrap">
+        <table class="ops-table">
+            <thead>
+                <tr>
+                    <th>Integration</th>
+                    <th>Configured</th>
+                    <th>Health</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, integration in integrations.items() %}
+                <tr>
+                    <td>{{ integration.name }}</td>
+                    <td><span class="ops-pill {{ 'on' if integration.configured else 'off' }}">{{ 'Yes' if integration.configured else 'No' }}</span></td>
+                    <td><span class="ops-pill {{ 'on' if integration.healthy else 'off' }}">{{ 'Healthy' if integration.healthy else 'Issue' }}</span></td>
+                    <td>
+                        {% if key == 'smtp' %}
+                        Uses saved SMTP settings from System Settings.
+                        {% elif key == 'paystack' %}
+                        Requires both Paystack public and secret keys.
+                        {% elif key == 'mongodb' %}
+                        Primary data store for public and admin operations.
+                        {% else %}
+                        Connected and active.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="ops-card">
+        <h3>Quick Actions</h3>
+        <div class="ops-row" style="margin-top: 8px;">
+            <a class="ops-btn" href="/admin/settings" style="text-decoration:none; width:auto;">Open System Settings</a>
+            <a class="ops-btn secondary" href="/admin/payments" style="text-decoration:none; width:auto;">Open Paystack Console</a>
+            <a class="ops-btn secondary" href="/admin/security" style="text-decoration:none; width:auto;">Open Security Center</a>
+            <a class="ops-btn secondary" href="/admin/seo" style="text-decoration:none; width:auto;">Open SEO Manager</a>
+            <a class="ops-btn secondary" href="/admin/communications" style="text-decoration:none; width:auto;">Open Communications</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

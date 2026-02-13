@@ -1,0 +1,48 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Mutations Log | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-ops.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ops-grid">
+    <div class="page-header">
+        <div>
+            <h1>Mutations Log</h1>
+            <p>Track write actions and system-level updates across modules.</p>
+        </div>
+        <form method="GET" class="ops-row" style="gap:8px;">
+            <select name="level" style="width:auto; padding:8px 10px; border-radius:8px; border:1px solid #d2e1db;">
+                <option value="" {% if not selected_level %}selected{% endif %}>All levels</option>
+                <option value="info" {% if selected_level == 'info' %}selected{% endif %}>Info</option>
+                <option value="warning" {% if selected_level == 'warning' %}selected{% endif %}>Warning</option>
+                <option value="error" {% if selected_level == 'error' %}selected{% endif %}>Error</option>
+            </select>
+            <button class="ops-btn" type="submit" style="width:auto;">Filter</button>
+        </form>
+    </div>
+
+    <section class="ops-card">
+        <div class="ops-log">
+            {% if logs %}
+                {% for item in logs %}
+                <div class="ops-log-item">
+                    <div class="ops-row">
+                        <strong>{{ item.action }}</strong>
+                        <span class="ops-pill {{ 'off' if item.level == 'warning' or item.level == 'error' else 'on' }}">{{ item.level }}</span>
+                    </div>
+                    <p>User: {{ item.username }} | Role: {{ item.role }} | {{ item.created_at }}</p>
+                    {% if item.metadata %}
+                    <p>Metadata: {{ item.metadata }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="ops-log-item"><p>No mutation logs found.</p></div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}
