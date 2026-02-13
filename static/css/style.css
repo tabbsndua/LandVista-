@@ -82,9 +82,13 @@ body {
     padding: 15px 10%;
 }
 
-.logo {
+.logo,
+.footer-logo {
     height: 100px;
     width: auto;
+    max-width: min(100%, 260px);
+    object-fit: contain;
+    display: block;
 }
 
 /* =========================
@@ -1187,9 +1191,7 @@ nav a:hover {
 
 
 .footer-logo {
-    height: 100px;
-    width: auto;
-    margin-bottom: 80px;
+    margin-bottom: clamp(16px, 4vw, 32px);
 }
 
 .footer-about > p {
@@ -1348,6 +1350,12 @@ nav a:hover {
     .nav-container {
         flex-direction: column;
         gap: 15px;
+    }
+
+    .logo,
+    .footer-logo {
+        height: 72px;
+        max-width: min(100%, 220px);
     }
 
     nav a {
@@ -4396,6 +4404,12 @@ body {
 }
 
 @media (max-width: 480px) {
+    .logo,
+    .footer-logo {
+        height: 60px;
+        max-width: min(100%, 180px);
+    }
+
     .detail-header-top h1 {
         font-size: 1.3rem;
     }
@@ -4444,10 +4458,6 @@ body {
     
     .footer-top {
         padding: 40px 10%;
-    }
-    
-    .footer-logo {
-        height: 30px;
     }
     
     .footer-about > p {
