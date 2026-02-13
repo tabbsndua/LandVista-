@@ -156,6 +156,75 @@ def safe_db_operation(operation, default=None):
         print(f"Database operation error: {e}")
         return default
 
+
+def serialize_content_item(item):
+    """Normalize news/legal-guide records into JSON-safe payloads."""
+    if not isinstance(item, dict):
+        return {
+            "_id": "",
+            "title": "",
+            "excerpt": "",
+            "content": "",
+            "slug": "",
+            "category": "General",
+            "author": "LandVista Team",
+            "date": "",
+            "readTime": 5,
+            "featured_image": "",
+            "status": "published",
+            "created_at": ""
+        }
+
+    def as_text(value, default=""):
+        if value is None:
+            return default
+        if isinstance(value, str):
+            return value
+        try:
+            return str(value)
+        except Exception:
+            return default
+
+    def as_date_text(value):
+        if value is None:
+            return ""
+        if isinstance(value, str):
+            return value
+        if hasattr(value, "isoformat"):
+            try:
+                return value.isoformat()
+            except Exception:
+                pass
+        return as_text(value, "")
+
+    read_time_raw = item.get("readTime", item.get("read_time", 5))
+    try:
+        read_time = int(read_time_raw)
+        if read_time <= 0:
+            read_time = 5
+    except Exception:
+        read_time = 5
+
+    item_id = as_text(item.get("_id"), "")
+    slug = as_text(item.get("slug"), item_id)
+    if not slug:
+        slug = item_id
+
+    return {
+        "_id": item_id,
+        "title": as_text(item.get("title"), "Untitled"),
+        "excerpt": as_text(item.get("excerpt"), ""),
+        "content": as_text(item.get("content"), ""),
+        "slug": slug,
+        "category": as_text(item.get("category"), "General"),
+        "author": as_text(item.get("author"), "LandVista Team"),
+        "date": as_text(item.get("date"), as_date_text(item.get("created_at"))),
+        "readTime": read_time,
+        "featured_image": as_text(item.get("featured_image"), ""),
+        "status": as_text(item.get("status"), "published"),
+        "created_at": as_date_text(item.get("created_at"))
+    }
+
 def paystack_api_request(path, method="GET", payload=None):
     """Make authenticated requests to the Paystack API."""
     if not PAYSTACK_SECRET_KEY:
@@ -485,13 +554,23 @@ def public_property_details(property_id):
 @app.route("/news")
 def news():
     """News & Blogs page - show published articles"""
-    articles = safe_db_operation(
+    article_rows = safe_db_operation(
         lambda: list(db.news.find({"status": "published"}).sort("created_at", -1)),
         []
     )
-    for a in articles:
-        a["_id"] = str(a["_id"])
-    return render_template("news.html", articles=articles)
+    guide_rows = safe_db_operation(
+        lambda: list(db.legal_guides.find({"status": "published"}).sort("created_at", -1)),
+        []
+    )
+
+    articles = [serialize_content_item({**a, "_id": str(a.get("_id", ""))}) for a in article_rows]
+    guides = [serialize_content_item({**g, "_id": str(g.get("_id", ""))}) for g in guide_rows]
+
+    return render_template(
+        "news.html",
+        articles=articles or [],
+        guides=guides or []
+    )
 
 
 @app.route("/news/<slug>")
@@ -929,60 +1008,72 @@ def admin_verify_paystack_payment():
 @app.route("/admin")
 @require_admin_login
 def admin_dashboard():
-
-    total_properties = db.properties.count_documents({})
-    active_clients = db.clients.count_documents({})
-    total_testimonials = db.testimonials.count_documents({})
-
-    sales_cursor = db.transactions.aggregate([
-        {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
-    ])
-    sales_result = list(sales_cursor)
-    total_sales = sales_result[0]["total"] if sales_result else 0
-
-    from flask import Flask, render_template, request, redirect, Response, jsonify, session
-    from pymongo import MongoClient
-    from datetime import datetime
-    
     if db is None:
-        return render_template("admin/dashboard.html", total_properties=0, properties_sold=0, page_views=0, recent_properties=[], recent_inquiries=[], total_sales=0)
-    
-    properties_sold = db.properties.count_documents({
-        "status": {"$regex": "^sold$", "$options": "i"}
-    })
+        return render_template(
+            "admin/dashboard.html",
+            total_properties=0,
+            active_clients=0,
+            total_testimonials=0,
+            total_sales=0,
+            properties_sold=0,
+            page_views=0,
+            recent_properties=[],
+            recent_inquiries=[],
+            latest_news=[],
+            latest_guides=[]
+        )
 
-    page_views_doc = db.analytics.find_one({"page": "site"})
-    page_views = page_views_doc["count"] if page_views_doc else 0
+    try:
+        total_properties = db.properties.count_documents({})
+        active_clients = db.clients.count_documents({})
+        total_testimonials = db.testimonials.count_documents({})
 
-    recent_properties = list(
-        db.properties.find().sort("_id", -1).limit(4)
-    )
+        sales_cursor = db.transactions.aggregate([
+            {"$group": {"_id": None, "total": {"$sum": "$amount"}}}
+        ])
+        sales_result = list(sales_cursor)
+        total_sales = sales_result[0]["total"] if sales_result else 0
 
-    recent_inquiries = list(
-        db.inquiries.find().sort("_id", -1).limit(4)
-    )
+        properties_sold = db.properties.count_documents({
+            "status": {"$regex": "^sold$", "$options": "i"}
+        })
 
-    latest_news = list(
-        db.news.find({"status": "published"}).sort("created_at", -1).limit(5)
-    )
+        page_views_doc = db.analytics.find_one({"page": "site"})
+        page_views = page_views_doc["count"] if page_views_doc else 0
 
-    latest_guides = list(
-        db.legal_guides.find({"status": "published"}).sort("created_at", -1).limit(5)
-    )
+        recent_properties = list(db.properties.find().sort("_id", -1).limit(4))
+        recent_inquiries = list(db.inquiries.find().sort("_id", -1).limit(4))
+        latest_news = list(db.news.find({"status": "published"}).sort("created_at", -1).limit(5))
+        latest_guides = list(db.legal_guides.find({"status": "published"}).sort("created_at", -1).limit(5))
 
-    return render_template(
-        "admin/dashboard.html",
-        total_properties=total_properties,
-        active_clients=active_clients,
-        total_testimonials=total_testimonials,
-        total_sales=total_sales,
-        properties_sold=properties_sold,
-        page_views=page_views,
-        recent_properties=recent_properties,
-        recent_inquiries=recent_inquiries,
-        latest_news=latest_news,
-        latest_guides=latest_guides
-    )
+        return render_template(
+            "admin/dashboard.html",
+            total_properties=total_properties,
+            active_clients=active_clients,
+            total_testimonials=total_testimonials,
+            total_sales=total_sales,
+            properties_sold=properties_sold,
+            page_views=page_views,
+            recent_properties=recent_properties,
+            recent_inquiries=recent_inquiries,
+            latest_news=latest_news,
+            latest_guides=latest_guides
+        )
+    except Exception as e:
+        print(f"Error loading admin dashboard: {e}")
+        return render_template(
+            "admin/dashboard.html",
+            total_properties=0,
+            active_clients=0,
+            total_testimonials=0,
+            total_sales=0,
+            properties_sold=0,
+            page_views=0,
+            recent_properties=[],
+            recent_inquiries=[],
+            latest_news=[],
+            latest_guides=[]
+        )
 
 # ============================
 # ADMIN – PROPERTIES MANAGEMENT
@@ -2091,9 +2182,8 @@ def admin_news():
 def api_news():
     """Get published news articles (public API)"""
     try:
-        articles = list(db.news.find({"status": "published"}).sort("created_at", -1))
-        for article in articles:
-            article["_id"] = str(article["_id"])
+        rows = list(db.news.find({"status": "published"}).sort("created_at", -1))
+        articles = [serialize_content_item({**row, "_id": str(row.get("_id", ""))}) for row in rows]
         return jsonify(articles)
     except:
         return jsonify([])
@@ -2468,9 +2558,8 @@ def admin_legal_guides():
 def api_legal_guides():
     """Get published legal guides (public API)"""
     try:
-        guides = list(db.legal_guides.find({"status": "published"}).sort("created_at", -1))
-        for guide in guides:
-            guide["_id"] = str(guide["_id"])
+        rows = list(db.legal_guides.find({"status": "published"}).sort("created_at", -1))
+        guides = [serialize_content_item({**row, "_id": str(row.get("_id", ""))}) for row in rows]
         return jsonify(guides)
     except:
         return jsonify([])

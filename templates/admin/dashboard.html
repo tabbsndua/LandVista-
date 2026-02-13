@@ -1,294 +1,215 @@
-{% extends "admin/admin_base.html" %}  
+{% extends "admin/admin_base.html" %}
 
 {% block title %}Dashboard | Admin{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-dashboard-modern.css') }}">
+{% endblock %}
+
 {% block topbar %}
-<div class="topbar">
-    <div class="dashboard-header">
-        <h1>📊 Dashboard</h1>
-        <p class="live-indicator" id="liveStatus">
-            <i class="fa-solid fa-circle" style="color: #10b981; margin-right: 6px;"></i>
-            <span>Live Data • Updating every 3 seconds</span>
-        </p>
-    </div>
-    <div class="admin-profile">
-        <i class="fa-solid fa-user-circle"></i>
-        <span>Admin</span>
-    </div>
+<div class="admin-title-block">
+    <p class="admin-kicker">Realtime Control Center</p>
+    <h1>LandVista Command Dashboard</h1>
+    <p class="dashboard-live-indicator" id="liveStatus">Live sync active</p>
 </div>
 {% endblock %}
 
 {% block content %}
-
-<!-- ================= STAT CARDS ================= -->
-<div class="dashboard-intro">
-    <p>Welcome back! Here's a real-time overview of your property business.</p>
-</div>
-
-<div class="stats-grid">
-
-    <div class="stat-card stat-blue">
-        <div class="stat-header">
-            <div class="stat-icon">
-                <i class="fa-solid fa-building"></i>
-            </div>
-            <span class="stat-label">Total Properties</span>
+<section class="dashboard-modern-wrap">
+    <div class="dashboard-hero-panel" data-reveal>
+        <div>
+            <h2>Operational Snapshot</h2>
+            <p>Track listings, leads, sales momentum, and publishing workflow from one responsive dashboard.</p>
         </div>
-        <div class="stat-value" id="total-properties">{{ total_properties }}</div>
-        <p class="stat-subtext">Across all listings</p>
-    </div>
-
-    <div class="stat-card stat-green">
-        <div class="stat-header">
-            <div class="stat-icon">
-                <i class="fa-solid fa-users"></i>
-            </div>
-            <span class="stat-label">Active Clients</span>
+        <div class="hero-actions">
+            <a href="/admin/properties" class="hero-btn">Manage Listings</a>
+            <a href="/admin/inquiries" class="hero-btn ghost">Review Leads</a>
         </div>
-        <div class="stat-value" id="active-clients">{{ active_clients }}</div>
-        <p class="stat-subtext">Registered clients</p>
     </div>
 
-    <div class="stat-card stat-purple">
-        <div class="stat-header">
-            <div class="stat-icon">
-                <i class="fa-solid fa-star"></i>
+    <section class="dashboard-kpi-grid" data-reveal>
+        <article class="kpi-card" data-kpi="properties">
+            <p>Total Properties</p>
+            <h3 id="total-properties">{{ total_properties|default(0) }}</h3>
+            <span>Inventory across all statuses</span>
+        </article>
+        <article class="kpi-card" data-kpi="clients">
+            <p>Active Clients</p>
+            <h3 id="active-clients">{{ active_clients|default(0) }}</h3>
+            <span>Registered client records</span>
+        </article>
+        <article class="kpi-card" data-kpi="testimonials">
+            <p>Testimonials</p>
+            <h3 id="total-testimonials">{{ total_testimonials|default(0) }}</h3>
+            <span>Published social proof assets</span>
+        </article>
+        <article class="kpi-card" data-kpi="sales">
+            <p>Total Sales</p>
+            <h3>KSh <span id="total-sales">{{ total_sales|default(0) }}</span></h3>
+            <span>Aggregated transaction value</span>
+        </article>
+        <article class="kpi-card" data-kpi="views">
+            <p>Page Views</p>
+            <h3 id="page-views">{{ page_views|default(0) }}</h3>
+            <span>Visitor traffic tracked</span>
+        </article>
+        <article class="kpi-card" data-kpi="sold">
+            <p>Properties Sold</p>
+            <h3 id="properties-sold">{{ properties_sold|default(0) }}</h3>
+            <span>Closed inventory this cycle</span>
+        </article>
+    </section>
+
+    <section class="dashboard-insights-grid" data-reveal>
+        <article class="insight-panel">
+            <div class="panel-head">
+                <h3>Performance Signals</h3>
             </div>
-            <span class="stat-label">Testimonials</span>
-        </div>
-        <div class="stat-value" id="total-testimonials">{{ total_testimonials }}</div>
-        <p class="stat-subtext">Client reviews</p>
-    </div>
-
-    <div class="stat-card stat-gold">
-        <div class="stat-header">
-            <div class="stat-icon">
-                <i class="fa-solid fa-naira-sign"></i>
-            </div>
-            <span class="stat-label">Total Sales</span>
-        </div>
-        <div class="stat-value">KSh <span id="total-sales">{{ total_sales }}</span></div>
-        <p class="stat-subtext">Revenue this quarter</p>
-    </div>
-
-</div>
-
-<!-- ================= RECENT PROPERTIES ================= -->
-<div class="dashboard-section">
-    <div class="section-header">
-        <h2 class="section-title">🏠 Recent Properties</h2>
-        <a href="/admin/properties" class="view-all-link">View All →</a>
-    </div>
-    <div class="recent-list grid-3">
-        {% for p in recent_properties %}
-        <div class="recent-card">
-            <div class="recent-info">
-                <h3>{{ p.title }}</h3>
-                <p class="text-muted">{{ p.location }}</p>
-            </div>
-            <div class="recent-meta">
-                <strong class="price">KSh {{ "{:,}".format(p.price) }}</strong>
-                <span class="status status-{{ p.status|lower }}">{{ p.status|upper }}</span>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-<!-- ================= RECENT INQUIRIES ================= -->
-<div class="dashboard-section">
-    <div class="section-header">
-        <h2 class="section-title">💬 Recent Inquiries</h2>
-        <a href="/admin/inquiries" class="view-all-link">View All →</a>
-    </div>
-    <div class="recent-list" id="recent-inquiries-container">
-        {% for i in recent_inquiries %}
-        <div class="recent-card">
-            <div class="recent-info">
-                <h3>{{ i.name }}</h3>
-                <p class="text-muted">{{ i.email }} • {{ i.phone }}</p>
-                <p class="interested">Interested in: <strong>{{ i.property or 'N/A' }}</strong></p>
-            </div>
-            <div class="recent-meta">
-                <span class="inquiry-status">{{ i.status|upper }}</span>
-                <span class="date">📅 {{ i.created_at }}</span>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-
-<!-- ================= BUSINESS PERFORMANCE ================= -->
-<div class="dashboard-section">
-    <h2 class="section-title">📈 Business Performance</h2>
-    <div class="performance-grid">
-
-        <div class="perf-card perf-sales">
-            <div class="perf-icon"><i class="fa-solid fa-naira-sign"></i></div>
-            <div class="perf-content">
-                <p class="perf-label">Total Sales</p>
-                <h3 class="perf-value">KSh {{ total_sales }}</h3>
-                <span class="perf-meta">This quarter</span>
-            </div>
-        </div>
-
-        <div class="perf-card perf-views">
-            <div class="perf-icon"><i class="fa-solid fa-eye"></i></div>
-            <div class="perf-content">
-                <p class="perf-label">Page Views</p>
-                <h3 class="perf-value" id="page-views">{{ page_views }}</h3>
-                <span class="perf-meta">Last 30 days</span>
-            </div>
-        </div>
-
-        <div class="perf-card perf-sold">
-            <div class="perf-icon"><i class="fa-solid fa-check-circle"></i></div>
-            <div class="perf-content">
-                <p class="perf-label">Properties Sold</p>
-                <h3 class="perf-value" id="properties-sold">{{ properties_sold }}</h3>
-                <span class="perf-meta">This month</span>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<!-- ================= LATEST NEWS & ARTICLES ================= -->
-<div class="dashboard-section">
-    <div class="section-header">
-        <h2 class="section-title">📰 Latest News & Articles</h2>
-        <a href="/admin/news" class="view-all-link">View All →</a>
-    </div>
-    <div class="recent-list grid-3">
-        {% if latest_news %}
-            {% for article in latest_news %}
-            <div class="recent-card">
-                <div class="recent-info">
-                    <h3>{{ article.title }}</h3>
-                    <p class="text-muted">{{ article.author }} • {{ article.date }}</p>
-                    <p class="interested">Category: <strong>{{ article.category }}</strong></p>
+            <div class="signal-item">
+                <div>
+                    <p>Conversion Ratio</p>
+                    <strong id="conversion-rate">0%</strong>
                 </div>
-                <div class="recent-meta">
-                    <span class="status status-{{ article.status|lower }}">{{ article.status|upper }}</span>
-                    <span class="date">⏱️ {{ article.readTime }} min</span>
+                <div class="signal-bar"><span id="conversion-rate-bar" style="width:0%"></span></div>
+            </div>
+            <div class="signal-item">
+                <div>
+                    <p>Client Engagement</p>
+                    <strong id="engagement-score">0%</strong>
                 </div>
+                <div class="signal-bar"><span id="engagement-score-bar" style="width:0%"></span></div>
             </div>
-            {% endfor %}
-        {% else %}
-            <div class="recent-card" style="text-align: center; color: #6b7280; padding: 20px;">
-                <p>No articles published yet</p>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- ================= LATEST LEGAL GUIDES ================= -->
-<div class="dashboard-section">
-    <div class="section-header">
-        <h2 class="section-title">⚖️ Latest Legal Guides</h2>
-        <a href="/admin/legal-guides" class="view-all-link">View All →</a>
-    </div>
-    <div class="recent-list">
-        {% if latest_guides %}
-            {% for guide in latest_guides %}
-            <div class="recent-card">
-                <div class="recent-info">
-                    <h3>{{ guide.title }}</h3>
-                    <p class="text-muted">{{ guide.author }} • {{ guide.date }}</p>
-                    <p class="interested">Category: <strong>{{ guide.category }}</strong></p>
+            <div class="signal-item">
+                <div>
+                    <p>Content Freshness</p>
+                    <strong id="content-health">0%</strong>
                 </div>
-                <div class="recent-meta">
-                    <span class="status status-{{ guide.status|lower }}">{{ guide.status|upper }}</span>
-                    <span class="date">⏱️ {{ guide.readTime }} min</span>
-                </div>
+                <div class="signal-bar"><span id="content-health-bar" style="width:0%"></span></div>
             </div>
-            {% endfor %}
-        {% else %}
-            <div class="recent-card" style="text-align: center; color: #6b7280; padding: 20px;">
-                <p>No guides published yet</p>
+        </article>
+
+        <article class="insight-panel">
+            <div class="panel-head">
+                <h3>Quick Actions</h3>
             </div>
-        {% endif %}
-    </div>
-</div>
+            <div class="quick-action-grid">
+                <a href="/admin/properties" class="quick-action-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Add or Edit Property</span>
+                </a>
+                <a href="/admin/payments" class="quick-action-item">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Generate Payment Link</span>
+                </a>
+                <a href="/admin/site-visits" class="quick-action-item">
+                    <i class="fas fa-calendar-plus"></i>
+                    <span>Schedule Site Visit</span>
+                </a>
+                <a href="/admin/news" class="quick-action-item">
+                    <i class="fas fa-pen-nib"></i>
+                    <span>Publish News Update</span>
+                </a>
+            </div>
+        </article>
+    </section>
 
-<script>
-function refreshDashboard() {
-    fetch("/admin/dashboard-data")
-        .then(response => response.json())
-        .then(data => {
-            // Animate stat card updates
-            animateUpdate("total-properties", data.total_properties);
-            animateUpdate("active-clients", data.active_clients);
-            animateUpdate("total-testimonials", data.total_testimonials);
-            animateUpdate("total-sales", data.total_sales);
-            animateUpdate("page-views", data.page_views);
-            animateUpdate("properties-sold", data.properties_sold);
-
-            // Update live status
-            updateLiveStatus();
-
-            // Update recent inquiries in real-time with animation
-            if (data.recent_inquiries && data.recent_inquiries.length > 0) {
-                const inquiriesContainer = document.getElementById("recent-inquiries-container");
-                const newHTML = data.recent_inquiries.map(i => `
-                    <div class="recent-card dashboard-update">
-                        <div class="recent-info">
-                            <h3>${escapeHTML(i.name)}</h3>
-                            <p class="text-muted">${escapeHTML(i.email)} • ${escapeHTML(i.phone || 'N/A')}</p>
-                            <p class="interested">Interested in: <strong>${escapeHTML(i.property || 'N/A')}</strong></p>
+    <section class="dashboard-content-grid" data-reveal>
+        <article class="stream-panel">
+            <div class="panel-head">
+                <h3>Recent Inquiries</h3>
+                <a href="/admin/inquiries">Open all</a>
+            </div>
+            <div class="stream-list" id="recent-inquiries-list">
+                {% if recent_inquiries %}
+                    {% for i in recent_inquiries %}
+                    <div class="stream-row">
+                        <div>
+                            <strong>{{ i.name or 'Lead' }}</strong>
+                            <p>{{ i.email or 'No email' }}</p>
+                            <small>{{ i.property_title or i.property or 'General inquiry' }}</small>
                         </div>
-                        <div class="recent-meta">
-                            <span class="inquiry-status">${(i.status || 'new').toUpperCase()}</span>
-                            <span class="date">📅 ${escapeHTML(i.created_at)}</span>
-                        </div>
+                        <span class="tag">{{ i.status or 'new' }}</span>
                     </div>
-                `).join('');
-                
-                if (inquiriesContainer.innerHTML !== newHTML) {
-                    inquiriesContainer.innerHTML = newHTML;
-                }
-            }
-        })
-        .catch(err => {
-            console.error("Dashboard update error:", err);
-            updateLiveStatus(true);
-        });
-}
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-text">No inquiries yet.</p>
+                {% endif %}
+            </div>
+        </article>
 
-function animateUpdate(elementId, newValue) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    
-    const oldValue = element.innerText;
-    if (oldValue !== String(newValue)) {
-        element.classList.add('updating');
-        element.innerText = newValue;
-        setTimeout(() => element.classList.remove('updating'), 600);
-    }
-}
+        <article class="stream-panel">
+            <div class="panel-head">
+                <h3>Recent Properties</h3>
+                <a href="/admin/properties">Open all</a>
+            </div>
+            <div class="stream-list" id="recent-properties-list">
+                {% if recent_properties %}
+                    {% for p in recent_properties %}
+                    <div class="stream-row">
+                        <div>
+                            <strong>{{ p.title or 'Untitled property' }}</strong>
+                            <p>{{ p.location or 'Kenya' }}</p>
+                            <small>KSh {{ '{:,}'.format(p.price|int) if p.price else '0' }}</small>
+                        </div>
+                        <span class="tag {{ 'sold' if (p.status or '')|lower == 'sold' else '' }}">{{ p.status or 'available' }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-text">No properties added yet.</p>
+                {% endif %}
+            </div>
+        </article>
+    </section>
 
-function updateLiveStatus(isError = false) {
-    const status = document.getElementById("liveStatus");
-    if (isError) {
-        status.style.color = "#ef4444";
-        status.innerHTML = '<i class="fa-solid fa-circle" style="color: #ef4444; margin-right: 6px;"></i><span>Connection lost • Retrying...</span>';
-    } else {
-        status.style.color = "#10b981";
-        status.innerHTML = '<i class="fa-solid fa-circle" style="color: #10b981; margin-right: 6px;"></i><span>Live Data • Updating every 3 seconds</span>';
-    }
-}
+    <section class="dashboard-content-grid" data-reveal>
+        <article class="stream-panel">
+            <div class="panel-head">
+                <h3>Latest News</h3>
+                <a href="/admin/news">Manage</a>
+            </div>
+            <div class="stream-list" id="latest-news-list">
+                {% if latest_news %}
+                    {% for article in latest_news %}
+                    <div class="stream-row compact">
+                        <div>
+                            <strong>{{ article.title or 'Untitled article' }}</strong>
+                            <small>{{ article.author or 'Team' }} | {{ article.category or 'General' }}</small>
+                        </div>
+                        <span class="tag">{{ article.status or 'published' }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-text">No published news yet.</p>
+                {% endif %}
+            </div>
+        </article>
 
-function escapeHTML(str) {
-    return (str || '').replace(/[&<>"']/g, c => (
-        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
-    ));
-}
+        <article class="stream-panel">
+            <div class="panel-head">
+                <h3>Latest Legal Guides</h3>
+                <a href="/admin/legal-guides">Manage</a>
+            </div>
+            <div class="stream-list" id="latest-guides-list">
+                {% if latest_guides %}
+                    {% for guide in latest_guides %}
+                    <div class="stream-row compact">
+                        <div>
+                            <strong>{{ guide.title or 'Untitled guide' }}</strong>
+                            <small>{{ guide.author or 'Team' }} | {{ guide.category or 'Legal' }}</small>
+                        </div>
+                        <span class="tag">{{ guide.status or 'published' }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-text">No legal guides yet.</p>
+                {% endif %}
+            </div>
+        </article>
+    </section>
+</section>
+{% endblock %}
 
-// Initial load
-refreshDashboard();
-
-// Refresh every 3 seconds for real-time updates
-setInterval(refreshDashboard, 3000);
-</script>
-
+{% block scripts %}
+{{ super() }}
+<script defer src="{{ url_for('static', filename='js/admin-dashboard-modern.js') }}"></script>
 {% endblock %}

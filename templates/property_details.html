@@ -1,512 +1,359 @@
 {% extends "base.html" %}
 
 {% block title %}{{ property.title }} | LandVista{% endblock %}
+{% block body_class %}property-modern-body{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/property-details-modern.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="property-details-container">
-    
-    <!-- BREADCRUMB -->
-    <div class="detail-breadcrumb">
-        <a href="/">Home</a> <span>›</span>
-        <a href="/properties">Land</a> <span>›</span>
-        <span>{{ property.title }}</span>
-    </div>
+{% set media_list = [] %}
+{% if property.media is defined and property.media %}
+    {% if property.media is string %}
+        {% set media_list = [property.media] %}
+    {% else %}
+        {% set media_list = property.media %}
+    {% endif %}
+{% endif %}
 
-    <!-- TITLE AND BADGES -->
-    <div class="detail-header-top">
-        <h1>{{ property.title }}</h1>
-        <p class="detail-location">📍 {{ property.location }}, {{ property.county if property.county else 'Kenya' }}</p>
-        <div class="detail-badges">
-            <span class="detail-badge featured">FEATURED</span>
-            <span class="detail-badge available">AVAILABLE</span>
+{% set feature_list = [] %}
+{% if property.features is defined and property.features %}
+    {% if property.features is string %}
+        {% set feature_list = property.features.split('\n') %}
+    {% else %}
+        {% set feature_list = property.features %}
+    {% endif %}
+{% endif %}
+
+<section class="pd-page-wrap">
+    <section class="pd-hero" data-reveal>
+        <div class="pd-hero-copy">
+            <nav class="pd-breadcrumb" aria-label="Breadcrumb">
+                <a href="/home">Home</a>
+                <span>/</span>
+                <a href="/properties">Properties</a>
+                <span>/</span>
+                <strong>{{ property.title }}</strong>
+            </nav>
+            <p class="pd-kicker">Verified Land Opportunity</p>
+            <h1>{{ property.title }}</h1>
+            <p class="pd-location"><i class="fas fa-location-dot"></i> {{ property.location }}{% if property.county %}, {{ property.county }}{% endif %}, Kenya</p>
+            <div class="pd-hero-meta">
+                <span><i class="fas fa-ruler-combined"></i> {{ property.area if property.area else 'Flexible plot sizes available' }}</span>
+                <span><i class="fas fa-circle-check"></i> {{ 'Sold' if (property.status or '')|lower == 'sold' else 'Available' }}</span>
+                <span><i class="fas fa-shield-halved"></i> Due diligence ready</span>
+            </div>
         </div>
-    </div>
+        <div class="pd-hero-price">
+            <p>Investment Value</p>
+            <h2>KSh {{ '{:,}'.format(property.price|int) if property.price else '0' }}</h2>
+            <small>Guidance, documentation, and onboarding support included</small>
+        </div>
+    </section>
 
-    <div class="detail-top-section">
-        
-        <!-- IMAGE SECTION (LEFT) -->
-        <div class="detail-image-section">
-            <div class="detail-image-carousel">
-                <div class="main-image-container">
-                    {% if property.media %}
-                        {% if property.media is string %}
-                            <img id="mainImage" src="{{ url_for('static', filename='uploads/' ~ property.media) }}" alt="{{ property.title }}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22400%22%3E%3Crect fill=%22%23667eea%22 width=%22800%22 height=%22400%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2248%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22%3E🏞️ Property Image%3C/text%3E%3C/svg%3E'">
-                        {% else %}
-                            {% set first_media = property.media[0] if property.media else None %}
-                            {% if first_media %}
-                                <img id="mainImage" src="{{ url_for('static', filename='uploads/' ~ first_media) }}" alt="{{ property.title }}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22400%22%3E%3Crect fill=%22%23667eea%22 width=%22800%22 height=%22400%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2248%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22%3E🏞️ Property Image%3C/text%3E%3C/svg%3E'">
-                            {% else %}
-                                <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: bold; flex-direction: column; gap: 15px;">
-                                    <div style="font-size: 64px;">🏞️</div>
-                                    <div>No Image Available</div>
-                                </div>
-                            {% endif %}
-                        {% endif %}
+    <section class="pd-top-layout" data-reveal>
+        <div class="pd-gallery-panel">
+            <div class="pd-stage" id="pdStage" role="region" aria-live="polite">
+                {% if media_list and media_list[0] %}
+                    {% set first_media = media_list[0] %}
+                    {% if first_media.endswith(('.mp4', '.webm', '.mov')) %}
+                        <video controls preload="metadata">
+                            <source src="{{ url_for('static', filename='uploads/' ~ first_media) }}">
+                        </video>
                     {% else %}
-                        <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: bold; flex-direction: column; gap: 15px;">
-                            <div style="font-size: 64px;">🏞️</div>
-                            <div>No Image Available</div>
-                        </div>
+                        <img id="pdMainMedia" src="{{ url_for('static', filename='uploads/' ~ first_media) }}" alt="{{ property.title }}" loading="eager">
                     {% endif %}
-                    <button class="carousel-nav prev">‹</button>
-                    <button class="carousel-nav next">›</button>
-                </div>
-                <div class="thumbnail-images">
-                    {% if property.media %}
-                        {% if property.media is string %}
-                            <div class="thumbnail active">
-                                {% if property.media.endswith(('.mp4', '.webm', '.mov')) %}
-                                    <div style="width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">▶️</div>
-                                {% else %}
-                                    <img src="{{ url_for('static', filename='uploads/' ~ property.media) }}" alt="Thumbnail" style="width: 100%; height: 100%; object-fit: cover;">
-                                {% endif %}
-                            </div>
+                {% else %}
+                    <div class="pd-placeholder-media">
+                        <i class="fas fa-image"></i>
+                        <p>Media preview will appear here</p>
+                    </div>
+                {% endif %}
+                <button class="pd-nav prev" id="pdPrev" type="button" aria-label="Previous media"><i class="fas fa-chevron-left"></i></button>
+                <button class="pd-nav next" id="pdNext" type="button" aria-label="Next media"><i class="fas fa-chevron-right"></i></button>
+                <button class="pd-expand" id="pdExpand" type="button" aria-label="Open media viewer"><i class="fas fa-expand"></i></button>
+            </div>
+
+            <div class="pd-thumbs" id="pdThumbs">
+                {% if media_list %}
+                    {% for media in media_list %}
+                    <button type="button" class="pd-thumb {% if loop.first %}active{% endif %}" data-media="{{ media }}" data-index="{{ loop.index0 }}">
+                        {% if media.endswith(('.mp4', '.webm', '.mov')) %}
+                            <span class="pd-video-thumb"><i class="fas fa-play"></i></span>
                         {% else %}
-                            {% for media in property.media %}
-                                <div class="thumbnail {% if loop.first %}active{% endif %}">
-                                    {% if media.endswith(('.mp4', '.webm', '.mov')) %}
-                                        <div style="width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">▶️</div>
-                                    {% else %}
-                                        <img src="{{ url_for('static', filename='uploads/' ~ media) }}" alt="Thumbnail {{ loop.index }}" style="width: 100%; height: 100%; object-fit: cover;">
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ media) }}" alt="Media {{ loop.index }}" loading="lazy">
                         {% endif %}
-                    {% endif %}
-                </div>
+                    </button>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="pd-badges-row">
+                <span><i class="fas fa-check"></i> Verified title workflow</span>
+                <span><i class="fas fa-map"></i> Strategic growth corridor</span>
+                <span><i class="fas fa-phone"></i> Dedicated advisory support</span>
             </div>
         </div>
 
-        <!-- SIDEBAR FORM (RIGHT) -->
-        <aside class="detail-right-column">
-            
-            <!-- CONTACT AGENT CARD -->
-            <div class="side-form-card">
-                
-                <!-- AGENT INFO HEADER -->
-                <div class="side-contact-head">
-                    <div class="side-avatar">👤</div>
-                    <div>
-                        <p class="side-company">landvista.com</p>
-                    </div>
+        <aside class="pd-sticky-panel">
+            <article class="pd-contact-card">
+                <div class="pd-contact-head">
+                    <h3>Talk to a Property Advisor</h3>
+                    <p>Get exact payment options, legal requirements, and next steps for this property.</p>
                 </div>
 
-                <!-- QUICK CONTACT FORM -->
-                <form class="side-quick-form" id="inquiryForm">
-                    <input type="text" name="name" placeholder="Name" required>
-                    <input type="tel" name="phone" placeholder="Phone" required>
-                    <input type="text" name="email" placeholder="Email" required>
-                    <textarea name="message" rows="4" placeholder="Hello, I am interested in [{{ property.title }}]">Hello, I am interested in [{{ property.title }}]</textarea>
+                <form id="pdQuickInquiryForm" class="pd-form-grid">
+                    <input type="text" name="name" placeholder="Full name" required>
+                    <input type="tel" name="phone" placeholder="Phone number" required>
+                    <input type="email" name="email" placeholder="Email address" required>
                     <select name="inquiry_type" required>
-                        <option value="">Select</option>
+                        <option value="">Inquiry type</option>
                         <option value="buyer">Buyer</option>
                         <option value="investor">Investor</option>
                         <option value="agent">Agent</option>
                     </select>
+                    <textarea name="message" rows="4" required>I am interested in {{ property.title }}. Please share full details and process.</textarea>
                     <input type="hidden" name="property_id" value="{{ property._id }}">
                     <input type="hidden" name="property_title" value="{{ property.title }}">
-                    <div class="form-footer-side">
-                        <small>By submitting this form I agree to <a href="/terms-of-use" target="_blank">Terms of Use</a></small>
-                        <button type="button" class="btn-send-email" id="submitBtn" onclick="submitInquiry(document.getElementById('inquiryForm'))">Send Email</button>
-                    </div>
+                    <button type="submit" class="pd-btn-primary" id="pdInquirySubmit">Send Inquiry</button>
                 </form>
 
-                <!-- WHATSAPP CONTACT -->
-                <div class="side-whatsapp-contact">
-                    <p class="contact-label">Or chat with us on WhatsApp</p>
-                    <a href="https://wa.me/254784666927?text=Hello%20I%20am%20interested%20in%20{{ property.title | replace(' ', '%20') }}%20at%20{{ property.location | replace(' ', '%20') }}.%20KES%20{{ property.price }}" 
-                       target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
+                <div class="pd-quick-actions">
+                    <button type="button" class="pd-btn-secondary" data-open-modal="pdVisitModal">Book Site Visit</button>
+                    <a href="https://wa.me/254784666927?text=Hello%20I%20am%20interested%20in%20{{ property.title | replace(' ', '%20') }}%20at%20{{ property.location | replace(' ', '%20') }}" target="_blank" rel="noopener noreferrer" class="pd-btn-whatsapp">
                         <i class="fab fa-whatsapp"></i> WhatsApp
                     </a>
                 </div>
 
-            </div>
-
+                <div class="pd-share-row">
+                    <button type="button" id="pdCopyLinkBtn"><i class="fas fa-link"></i> Copy Link</button>
+                    <button type="button" data-open-modal="pdInquiryModal"><i class="fas fa-file-lines"></i> Request Brochure</button>
+                </div>
+                <p class="pd-form-feedback" id="pdQuickInquiryFeedback"></p>
+            </article>
         </aside>
+    </section>
 
-        </div>
-
-    </div>
-
-    <!-- MAIN CONTENT SECTIONS -->
-    <div class="detail-left-column">
-
-        <!-- Overview removed as requested -->
-
-        <!-- PROPERTY TYPE / FEATURES SECTION -->
-        <div class="detail-section">
-            <div class="detail-row">
-                <div class="detail-col">
+    <section class="pd-details-layout" data-reveal>
+        <article class="pd-detail-card">
+            <div class="pd-section-head">
+                <h2>Property Overview</h2>
+                <p>Detailed listing information to support confident decision-making.</p>
+            </div>
+            <div class="pd-overview-grid">
+                <div>
+                    <span>Location</span>
+                    <strong>{{ property.location }}{% if property.county %}, {{ property.county }}{% endif %}</strong>
+                </div>
+                <div>
+                    <span>Type</span>
                     <strong>Land</strong>
-                    <p>Property Type</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- DESCRIPTION SECTION -->
-        <div class="detail-section">
-            <h2>Description</h2>
-            <p>{{ property.description }}</p>
-            {% if property.features %}
-                <h3 style="margin-top: 20px; margin-bottom: 15px;">Key Features of {{ property.title }}:</h3>
-                <ul class="features-bullets">
-                    {% for feature in property.features.split('\n') %}
-                        {% if feature.strip() %}
-                        <li>{{ feature.strip() }}</li>
-                        {% endif %}
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </div>
-
-        <!-- ADDRESS SECTION -->
-        <div class="detail-section">
-            <h2>Address</h2>
-            <div class="address-grid">
-                <div>
-                    <strong>State/county:</strong>
-                    <p>{{ property.county if property.county else 'Mwingi' }}</p>
                 </div>
                 <div>
-                    <strong>Area:</strong>
-                    <p>{{ property.location }}</p>
+                    <span>Status</span>
+                    <strong>{{ 'Sold' if (property.status or '')|lower == 'sold' else 'Available' }}</strong>
                 </div>
-            </div>
-            <div class="address-grid">
                 <div>
-                    <strong>Country:</strong>
-                    <p>Kenya</p>
+                    <span>Area</span>
+                    <strong>{{ property.area if property.area else 'Flexible size options' }}</strong>
+                </div>
+                <div>
+                    <span>Investment Value</span>
+                    <strong>KSh {{ '{:,}'.format(property.price|int) if property.price else '0' }}</strong>
+                </div>
+                <div>
+                    <span>Region</span>
+                    <strong>{{ property.county if property.county else 'Kenya' }}</strong>
                 </div>
             </div>
+        </article>
+
+        <article class="pd-detail-card">
+            <div class="pd-section-head">
+                <h2>Description</h2>
+                <p>Key context around this property and value potential.</p>
+            </div>
+            <div class="pd-rich-copy">{{ property.description|safe if property.description else 'This listing is in a strategic area with strong long-term potential. Contact our advisory desk for full due diligence notes and installment options.' }}</div>
+
+            <div class="pd-feature-block">
+                <h3>Key Features</h3>
+                <div class="pd-feature-grid">
+                    {% if feature_list %}
+                        {% for feature in feature_list %}
+                            {% if feature and feature|trim %}
+                            <div class="pd-feature-item"><i class="fas fa-check-circle"></i> {{ feature|trim }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div class="pd-feature-item"><i class="fas fa-check-circle"></i> Verified ownership and transfer workflow</div>
+                        <div class="pd-feature-item"><i class="fas fa-check-circle"></i> Structured advisory support from inquiry to purchase</div>
+                        <div class="pd-feature-item"><i class="fas fa-check-circle"></i> Strategic location for long-term value growth</div>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+
+        <article class="pd-detail-card pd-calc-card">
+            <div class="pd-section-head">
+                <h2>Investment Planner</h2>
+                <p>Estimate down payment and projected installment requirements.</p>
+            </div>
+            <div class="pd-calc-controls">
+                <label for="pdDownPaymentRange">Down payment (%)</label>
+                <input type="range" id="pdDownPaymentRange" min="10" max="80" value="30" step="5">
+                <p id="pdDownPaymentLabel">30%</p>
+            </div>
+            <div class="pd-calc-results">
+                <div>
+                    <span>Down payment</span>
+                    <strong id="pdDownAmount">KSh 0</strong>
+                </div>
+                <div>
+                    <span>Balance</span>
+                    <strong id="pdBalanceAmount">KSh 0</strong>
+                </div>
+                <div>
+                    <span>Estimated 12-month installment</span>
+                    <strong id="pdInstallmentAmount">KSh 0</strong>
+                </div>
+            </div>
+        </article>
+
+        <article class="pd-detail-card">
+            <div class="pd-section-head">
+                <h2>Acquisition Roadmap</h2>
+                <p>How LandVista supports your journey from inquiry to transfer.</p>
+            </div>
+            <div class="pd-process-grid">
+                <div>
+                    <span>Step 1</span>
+                    <h4>Discovery Call</h4>
+                    <p>Align budget, timeline, and property requirements.</p>
+                </div>
+                <div>
+                    <span>Step 2</span>
+                    <h4>Site Verification</h4>
+                    <p>Physical visit with location orientation and suitability checks.</p>
+                </div>
+                <div>
+                    <span>Step 3</span>
+                    <h4>Documentation</h4>
+                    <p>Title verification workflow and agreement preparation support.</p>
+                </div>
+                <div>
+                    <span>Step 4</span>
+                    <h4>Transfer and Handover</h4>
+                    <p>Structured follow-through to close your transaction safely.</p>
+                </div>
+            </div>
+        </article>
+
+        <article class="pd-detail-card pd-faq-card">
+            <div class="pd-section-head">
+                <h2>Frequently Asked Questions</h2>
+                <p>Common buyer and investor questions on this listing.</p>
+            </div>
+            <div class="pd-accordion" id="pdFaqAccordion">
+                <button type="button" class="pd-accordion-item active">
+                    <span>Is this property legally verified?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="pd-accordion-panel" style="display:block;">
+                    <p>LandVista follows a verification workflow before publishing listings. Request detailed due diligence notes through the inquiry form for this property.</p>
+                </div>
+
+                <button type="button" class="pd-accordion-item">
+                    <span>Can I buy through installments?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="pd-accordion-panel">
+                    <p>Installment structures depend on project terms. Our advisors will provide available payment plans after your inquiry.</p>
+                </div>
+
+                <button type="button" class="pd-accordion-item">
+                    <span>How soon can a site visit be scheduled?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="pd-accordion-panel">
+                    <p>Most visits are coordinated within 24-72 hours depending on your preferred date and transport plan.</p>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="pd-similar-section" data-reveal>
+        <div class="pd-section-head">
+            <h2>Similar Opportunities</h2>
+            <p>Explore related listings in comparable growth zones.</p>
         </div>
-
-        <!-- DETAILS SECTION -->
-        <div class="detail-section">
-            <h2>Details</h2>
-            <div class="details-boxes">
-                <div class="detail-box">
-                    <strong>Price</strong>
-                    <span class="detail-price">KES {{ "{:,}".format(property.price) }}</span>
-                </div>
-                <div class="detail-box">
-                    <strong>Property Type</strong>
-                    <span>Land</span>
-                </div>
-                <div class="detail-box">
-                    <strong>Property Status</strong>
-                    <span class="status-badge">Available</span>
-                </div>
-            </div>
+        <div class="pd-similar-grid" id="pdSimilarGrid">
+            <p class="pd-loading">Loading related properties...</p>
         </div>
+    </section>
+</section>
 
-        <!-- FEATURES CHECKLIST SECTION -->
-        <div class="detail-section">
-            <h2>Features</h2>
-            <div class="features-checklist">
-                {% if property.features %}
-                    {% for feature in property.features.split('\n') %}
-                        {% if feature.strip() %}
-                        <div class="feature-item">
-                            <span class="checkmark">✓</span> {{ feature.strip() }}
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-            </div>
-        </div>
-
-    </div>
-
-</div>
-
-<!-- INQUIRY FORM SECTION -->
-<section class="inquiry-form-section">
-    <div class="inquiry-form-container">
-        <h2>Interested in this property?</h2>
-        <p class="inquiry-subtitle">Fill out the form below and our team will get back to you shortly.</p>
-        
-        <form class="inquiry-form-full" id="inquiryFormFull">
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="name">Full Name *</label>
-                    <input type="text" id="name" name="name" placeholder="Your Full Name" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email *</label>
-                    <input type="email" id="email" name="email" placeholder="Your Email" required>
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="phone">Phone Number *</label>
-                    <input type="tel" id="phone" name="phone" placeholder="Your Phone" required>
-                </div>
-                <div class="form-group">
-                    <label for="inquiry_type">Inquiry Type *</label>
-                    <select id="inquiry_type" name="inquiry_type" required>
-                        <option value="">Select Inquiry Type</option>
-                        <option value="buyer">Buyer</option>
-                        <option value="investor">Investor</option>
-                        <option value="agent">Agent</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="message">Message *</label>
-                <textarea id="message" name="message" rows="6" placeholder="Tell us more about your interest in this property..." required></textarea>
-            </div>
-            
+<div class="pd-modal" id="pdVisitModal" aria-hidden="true">
+    <div class="pd-modal-panel">
+        <button type="button" class="pd-modal-close" data-close-modal="pdVisitModal" aria-label="Close">
+            <i class="fas fa-times"></i>
+        </button>
+        <h3>Book a Site Visit</h3>
+        <p>Schedule a guided site orientation for {{ property.title }}.</p>
+        <form id="pdVisitForm" class="pd-form-grid">
+            <input type="text" name="name" placeholder="Full name" required>
+            <input type="tel" name="phone" placeholder="Phone number" required>
+            <input type="email" name="email" placeholder="Email address" required>
+            <input type="date" name="visit_date" required>
+            <textarea name="notes" rows="4" placeholder="Preferred time and specific requests"></textarea>
             <input type="hidden" name="property_id" value="{{ property._id }}">
             <input type="hidden" name="property_title" value="{{ property.title }}">
-            
-            <div class="form-footer">
-                <small>By submitting this form I agree to <a href="#">Terms of Use</a></small>
-                <button type="button" class="btn-send-inquiry" id="submitBtnForm" onclick="submitInquiry(document.getElementById('inquiryFormFull'))">Send Inquiry</button>
-            </div>
+            <button type="submit" class="pd-btn-primary" id="pdVisitSubmit">Confirm Visit Request</button>
         </form>
+        <p class="pd-form-feedback" id="pdVisitFeedback"></p>
     </div>
-</section>
+</div>
 
-<!-- ADDITIONAL CONTACT SECTION -->
-<section class="additional-contact-section">
-    <div class="contact-section-container">
-        <div class="contact-option">
-            <div class="contact-icon">💬</div>
-            <h3>Quick Chat</h3>
-            <p>Prefer real-time conversation? Chat with us on WhatsApp</p>
-            <a href="https://wa.me/254784666927?text=Hello%20I%20am%20interested%20in%20{{ property.title | replace(' ', '%20') }}%20at%20{{ property.location | replace(' ', '%20') }}.%20KES%20{{ property.price }}" 
-               target="_blank" rel="noopener noreferrer" class="whatsapp-btn-large">
-                <i class="fab fa-whatsapp"></i> Message on WhatsApp
-            </a>
-        </div>
-        
-        <div class="trust-section">
-            <h3>Why Invest With LandVista?</h3>
-            <div class="trust-items">
-                <div class="trust-item">
-                    <div class="trust-icon">✓</div>
-                    <div>
-                        <strong>Verified Listings</strong>
-                        <p>All properties are thoroughly vetted and legally verified</p>
-                    </div>
-                </div>
-                <div class="trust-item">
-                    <div class="trust-icon">✓</div>
-                    <div>
-                        <strong>Transparent Pricing</strong>
-                        <p>No hidden fees. Clear pricing with honest transactions</p>
-                    </div>
-                </div>
-                <div class="trust-item">
-                    <div class="trust-icon">✓</div>
-                    <div>
-                        <strong>Expert Support</strong>
-                        <p>Dedicated team to guide you through every step</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="pd-modal" id="pdInquiryModal" aria-hidden="true">
+    <div class="pd-modal-panel">
+        <button type="button" class="pd-modal-close" data-close-modal="pdInquiryModal" aria-label="Close">
+            <i class="fas fa-times"></i>
+        </button>
+        <h3>Request Brochure and Documentation Guide</h3>
+        <p>Share your details and receive the listing profile with next-step guidance.</p>
+        <form id="pdBrochureForm" class="pd-form-grid">
+            <input type="text" name="name" placeholder="Full name" required>
+            <input type="email" name="email" placeholder="Email address" required>
+            <input type="tel" name="phone" placeholder="Phone number" required>
+            <textarea name="message" rows="4" required>Please share brochure and documentation process for {{ property.title }}.</textarea>
+            <input type="hidden" name="inquiry_type" value="buyer">
+            <input type="hidden" name="property_id" value="{{ property._id }}">
+            <input type="hidden" name="property_title" value="{{ property.title }}">
+            <button type="submit" class="pd-btn-primary" id="pdBrochureSubmit">Send Request</button>
+        </form>
+        <p class="pd-form-feedback" id="pdBrochureFeedback"></p>
     </div>
-</section>
+</div>
 
+<div class="pd-modal pd-media-modal" id="pdMediaModal" aria-hidden="true">
+    <div class="pd-media-modal-panel">
+        <button type="button" class="pd-modal-close" data-close-modal="pdMediaModal" aria-label="Close">
+            <i class="fas fa-times"></i>
+        </button>
+        <div id="pdMediaModalContent"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-function submitInquiry(form) {
-    const isMainForm = form.id === 'inquiryForm';
-    const submitBtn = isMainForm ? form.querySelector('#submitBtn') : form.querySelector('#submitBtnForm');
-    const originalText = submitBtn.textContent;
-    
-    // Get form data
-    const formData = new FormData(form);
-    
-    // Disable button and show loading state
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending...';
-    
-    console.log('Submitting inquiry...');
-    
-    // Submit form via AJAX
-    fetch('/submit-inquiry', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data);
-        if (data.success) {
-            // Show success notification
-            showNotification('✓ ' + data.message, 'success');
-            
-            // Reset form
-            form.reset();
-            
-            // Reset button
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-            
-            // Scroll to top
-            setTimeout(() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 500);
-        } else {
-            showNotification('✗ Error: ' + (data.error || 'Failed to submit inquiry'), 'error');
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }
-    })
-    .catch(error => {
-        console.error('Fetch error:', error);
-        showNotification('✗ An error occurred while submitting the form', 'error');
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    });
-}
-
-// Notification system
-function showNotification(message, type = 'info') {
-    // Remove existing notification if present
-    const existing = document.getElementById('notification');
-    if (existing) existing.remove();
-    
-    const notification = document.createElement('div');
-    notification.id = 'notification';
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 16px 24px;
-        background: ${type === 'success' ? '#10b981' : '#ef4444'};
-        color: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 10000;
-        font-weight: 500;
-        animation: slideIn 0.3s ease-out;
-        font-size: 14px;
-        font-weight: 600;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 4 seconds
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
-    }, 4000);
-}
-
-// Add animation styles
-if (!document.getElementById('notificationStyles')) {
-    const style = document.createElement('style');
-    style.id = 'notificationStyles';
-    style.textContent = `
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-// Carousel functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const thumbnails = document.querySelectorAll('.thumbnail');
-    const mainImage = document.getElementById('mainImage');
-    const mainContainer = document.querySelector('.main-image-container');
-    
-    if (!thumbnails.length || !mainImage || !mainContainer) return;
-    
-    let currentIndex = 0;
-    const mediaFiles = {{ property.media | tojson }};
-    const mediaArray = Array.isArray(mediaFiles) ? mediaFiles : [mediaFiles];
-    
-    function isVideo(filename) {
-        return filename && (filename.endsWith('.mp4') || filename.endsWith('.webm') || filename.endsWith('.mov'));
-    }
-    
-    function updateCarousel(index) {
-        // Update active thumbnail
-        thumbnails.forEach((thumb, i) => {
-            thumb.classList.toggle('active', i === index);
-        });
-        
-        // Get the media file for this index
-        const mediaFile = mediaArray[index];
-        
-        if (isVideo(mediaFile)) {
-            // Display video
-            const videoSrc = "{{ url_for('static', filename='uploads/') }}" + mediaFile;
-            mainContainer.innerHTML = `
-                <video controls style="width: 100%; height: auto; object-fit: contain; display: block;">
-                    <source src="${videoSrc}">
-                    Your browser does not support the video tag.
-                </video>
-                <button class="carousel-nav prev">‹</button>
-                <button class="carousel-nav next">›</button>
-            `;
-            // Re-attach button listeners
-            attachButtonListeners();
-        } else {
-            // Display image
-            const activeThumb = thumbnails[index];
-            const thumbImg = activeThumb.querySelector('img');
-            const imageSrc = thumbImg.src;
-            mainImage.src = imageSrc;
-        }
-        
-        currentIndex = index;
-    }
-    
-    function attachButtonListeners() {
-        const prevBtn = document.querySelector('.carousel-nav.prev');
-        const nextBtn = document.querySelector('.carousel-nav.next');
-        
-        if (prevBtn) {
-            prevBtn.onclick = () => {
-                const newIndex = currentIndex === 0 ? thumbnails.length - 1 : currentIndex - 1;
-                updateCarousel(newIndex);
-            };
-        }
-        
-        if (nextBtn) {
-            nextBtn.onclick = () => {
-                const newIndex = currentIndex === thumbnails.length - 1 ? 0 : currentIndex + 1;
-                updateCarousel(newIndex);
-            };
-        }
-    }
-    
-    // Add click listeners to thumbnails
-    thumbnails.forEach((thumb, index) => {
-        thumb.addEventListener('click', () => updateCarousel(index));
-    });
-    
-    // Attach initial button listeners
-    attachButtonListeners();
-});
+window.propertyDetailData = {
+    id: "{{ property._id }}",
+    title: {{ (property.title or '')|tojson }},
+    location: {{ (property.location or '')|tojson }},
+    county: {{ (property.county or '')|tojson }},
+    price: {{ property.price if property.price else 0 }}
+};
 </script>
-
+<script defer src="{{ url_for('static', filename='js/property-details-modern.js') }}"></script>
 {% endblock %}

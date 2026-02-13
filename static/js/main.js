@@ -6,6 +6,8 @@
     const dropdownToggle = dropdown ? dropdown.querySelector(".dropdown-toggle") : null;
     const scrollTopBtn = document.getElementById("scrollTopBtn");
     const revealItems = document.querySelectorAll("[data-reveal]");
+    const footerNewsletterForm = document.getElementById("footerNewsletterForm");
+    const footerNewsletterMsg = document.getElementById("footerNewsletterMsg");
 
     function updateNavbarState() {
         if (!navbar) {
@@ -83,6 +85,47 @@
         }, { threshold: 0.16 });
 
         revealItems.forEach((item) => observer.observe(item));
+    }
+
+    if (footerNewsletterForm && footerNewsletterMsg) {
+        footerNewsletterForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            footerNewsletterMsg.textContent = "";
+            const submitBtn = footerNewsletterForm.querySelector("button[type='submit']");
+            const emailInput = footerNewsletterForm.querySelector("input[name='email']");
+            const email = emailInput ? emailInput.value.trim() : "";
+            if (!email) {
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Submitting...";
+            }
+
+            try {
+                const response = await fetch("/api/newsletter/subscribe", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email })
+                });
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message || "Subscription failed");
+                }
+                footerNewsletterForm.reset();
+                footerNewsletterMsg.textContent = data.message || "Subscribed successfully.";
+                footerNewsletterMsg.style.color = "#a7f3d0";
+            } catch (error) {
+                footerNewsletterMsg.textContent = error.message || "Unable to subscribe.";
+                footerNewsletterMsg.style.color = "#fecaca";
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Subscribe";
+                }
+            }
+        });
     }
 
     updateNavbarState();

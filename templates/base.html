@@ -94,83 +94,73 @@
 <!-- =========================
      FOOTER
 ========================= -->
-<footer class="footer-main">
-    <div class="footer-top">
-        <div class="footer-container">
-
-            <!-- ABOUT -->
-            <div class="footer-about">
-                <img src="{{ url_for('static', filename='images/landvista-logo.png') }}"
-                     class="footer-logo" alt="LandVista Logo">
-                <p>
-                    Your trusted partner in verified land investment opportunities across Kenya.
-                    We connect dreamers with prime land opportunities, building futures one property at a time.
-                </p>
-                <div class="footer-social">
-                    <a href="https://www.facebook.com/landvistaproperties" target="_blank">
-                        <i class="fab fa-facebook"></i>
-                    </a>
-                    <a href="https://www.instagram.com/landvistaproperties" target="_blank">
-                        <i class="fab fa-instagram"></i>
-                    </a>
+<footer class="footer-main footer-v2">
+    <div class="footer-v2-inner">
+        <div class="footer-v2-top">
+            <div class="footer-v2-brand">
+                <img src="{{ url_for('static', filename='images/landvista-logo.png') }}" class="footer-logo" alt="LandVista Logo">
+                <p>LandVista helps buyers and investors secure verified land opportunities across Kenya with clear guidance and transparent processes.</p>
+                <div class="footer-v2-badges">
+                    <span><i class="fas fa-shield-check"></i> Verified listings</span>
+                    <span><i class="fas fa-file-signature"></i> Documentation support</span>
+                    <span><i class="fas fa-headset"></i> Advisory team</span>
                 </div>
             </div>
 
-            <!-- COMPANY -->
-            <div class="footer-links">
-                <h4>Company</h4>
-                <a href="/about">About Us</a>
+            <div class="footer-v2-links">
+                <h4>Explore</h4>
+                <a href="/home">Home</a>
+                <a href="/about">About</a>
                 <a href="/properties">Properties</a>
                 <a href="/news">News & Blogs</a>
-                <a href="/contact">Contact Us</a>
+                <a href="/legal-guides">Legal Guides</a>
             </div>
 
-            <!-- CONTACT -->
-            <div class="footer-contact">
-                <h4>Get In Touch</h4>
-                <div class="contact-item">
-                    <i class="fas fa-phone"></i>
-                    <span>0784 666 927</span>
-                </div>
-                <div class="contact-item">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <span>
-                        Devkesh House, 2nd Floor<br>
-                        Room F05
-                    </span>
-                </div>
-            </div>
-
-            <!-- HOURS -->
-            <div class="footer-hours">
-                <h4>Opening Hours</h4>
-                <div class="hours-list">
-                    <div class="hour-row">
-                        <span>Monday - Friday</span>
-                        <span>9:00 AM - 6:00 PM</span>
-                    </div>
-                    <div class="hour-row">
-                        <span>Saturday</span>
-                        <span>9:00 AM - 4:00 PM</span>
-                    </div>
-                    <div class="hour-row">
-                        <span>Sunday</span>
-                        <span>Closed</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- FOOTER BOTTOM -->
-    <div class="footer-bottom">
-        <div class="footer-bottom-content">
-            <p>&copy; 2025 LandVista Properties Limited. All Rights Reserved.</p>
-            <div class="footer-legal">
+            <div class="footer-v2-links">
+                <h4>Resources</h4>
+                <a href="/contact">Contact</a>
                 <a href="/privacy-policy">Privacy Policy</a>
                 <a href="/terms-of-service">Terms of Service</a>
-                <a href="/contact">Contact Us</a>
+                <a href="/terms-of-use">Terms of Use</a>
+                <a href="/admin/login">Admin Portal</a>
+            </div>
+
+            <div class="footer-v2-contact">
+                <h4>Contact</h4>
+                <a href="tel:+254784666927"><i class="fas fa-phone"></i> +254 784 666 927</a>
+                <a href="mailto:info@landvistaproperties.com"><i class="fas fa-envelope"></i> info@landvistaproperties.com</a>
+                <p><i class="fas fa-map-marker-alt"></i> Devkesh House, 2nd Floor, Room F05</p>
+                <div class="footer-social">
+                    <a href="https://www.facebook.com/landvistaproperties" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/landvistaproperties" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i></a>
+                    <a href="https://wa.me/254784666927" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-v2-newsletter">
+                <h4>Weekly Investment Insights</h4>
+                <p>Get market updates, legal tips, and new project alerts.</p>
+                <form id="footerNewsletterForm">
+                    <input type="email" name="email" placeholder="Email address" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+                <p id="footerNewsletterMsg" class="footer-newsletter-msg"></p>
+            </div>
+        </div>
+
+        <div class="footer-v2-trust">
+            <div><i class="fas fa-check-circle"></i> Title verification guidance</div>
+            <div><i class="fas fa-road"></i> Strategic growth locations</div>
+            <div><i class="fas fa-handshake"></i> Transparent transaction support</div>
+            <div><i class="fas fa-chart-line"></i> Investment-first advisory model</div>
+        </div>
+
+        <div class="footer-v2-bottom">
+            <p>&copy; 2026 LandVista Properties Limited. All rights reserved.</p>
+            <div class="footer-legal">
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/terms-of-service">Terms</a>
+                <a href="/contact">Support</a>
             </div>
         </div>
     </div>

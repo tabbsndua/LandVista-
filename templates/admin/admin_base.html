@@ -3,119 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Admin Panel{% endblock %}</title>
-
-    <!-- VIEWPORT -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LandVista admin dashboard for property and client operations.">
 
-    <!-- FONT AWESOME (OUTLINE ICONS) -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet">
 
-    <!-- ADMIN STYLES -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
-
-    <!-- PAGE-SPECIFIC STYLES -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-shell.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
+<body class="admin-body">
+<div class="admin-shell">
+    <div class="admin-overlay" id="adminOverlay"></div>
 
-<body>
-
-<div class="admin-container">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <h2 class="sidebar-logo">LandVista</h2>
+    <aside class="sidebar" id="adminSidebar" aria-label="Admin navigation">
+        <div class="admin-brand-row">
+            <a href="/admin" class="sidebar-logo" aria-label="LandVista admin home">
+                <span class="sidebar-logo-mark">LV</span>
+                <span class="sidebar-logo-text">LandVista Admin</span>
+            </a>
+            <button class="sidebar-close" id="sidebarClose" type="button" aria-label="Close sidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
 
         <ul class="menu">
             <li class="{{ 'active' if request.path == '/admin' else '' }}">
                 <a href="/admin">
-                    <i class="fa-regular fa-table-columns"></i>
-                    Dashboard
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
                 </a>
             </li>
-
             <li class="{{ 'active' if request.path.startswith('/admin/properties') else '' }}">
                 <a href="/admin/properties">
-                    <i class="fa-regular fa-building"></i>
-                    Properties
+                    <i class="fa-solid fa-building"></i>
+                    <span>Properties</span>
                 </a>
             </li>
-
             <li class="{{ 'active' if request.path.startswith('/admin/clients') else '' }}">
                 <a href="/admin/clients">
-                    <i class="fa-regular fa-user"></i>
-                    Clients
+                    <i class="fa-solid fa-users"></i>
+                    <span>Clients</span>
                 </a>
             </li>
-
-            <li class="{{ 'active' if request.path.startswith('/admin/testimonials') else '' }}">
-                <a href="/admin/testimonials">
-                    <i class="fa-regular fa-comment"></i>
-                    Testimonials
-                </a>
-            </li>
-
-            <li class="{{ 'active' if request.path.startswith('/admin/news') else '' }}">
-                <a href="/admin/news">
-                    <i class="fa-regular fa-newspaper"></i>
-                    News & Blogs
-                </a>
-            </li>
-
-            <li class="{{ 'active' if request.path.startswith('/admin/legal-guides') else '' }}">
-                <a href="/admin/legal-guides">
-                    <i class="fa-regular fa-book"></i>
-                    Legal Guides
-                </a>
-            </li>
-
             <li class="{{ 'active' if request.path.startswith('/admin/inquiries') else '' }}">
                 <a href="/admin/inquiries">
-                    <i class="fa-regular fa-envelope"></i>
-                    Inquiries
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                    <span>Inquiries</span>
                 </a>
             </li>
-
             <li class="{{ 'active' if request.path.startswith('/admin/site-visits') else '' }}">
                 <a href="/admin/site-visits">
-                    <i class="fa-regular fa-calendar-check"></i>
-                    Site Visits
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Site Visits</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if request.path.startswith('/admin/payments') else '' }}">
+                <a href="/admin/payments">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <span>Payments</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if request.path.startswith('/admin/news') else '' }}">
+                <a href="/admin/news">
+                    <i class="fa-solid fa-newspaper"></i>
+                    <span>News & Blogs</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if request.path.startswith('/admin/legal-guides') else '' }}">
+                <a href="/admin/legal-guides">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <span>Legal Guides</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if request.path.startswith('/admin/testimonials') else '' }}">
+                <a href="/admin/testimonials">
+                    <i class="fa-solid fa-comment-dots"></i>
+                    <span>Testimonials</span>
                 </a>
             </li>
 
-            <li class="{{ 'active' if request.path.startswith('/admin/payments') else '' }}">
-                <a href="/admin/payments">
-                    <i class="fa-regular fa-credit-card"></i>
-                    Payments
-                </a>
-            </li>
+            <li class="menu-divider" aria-hidden="true"></li>
 
             <li>
                 <a href="/home">
-                    <i class="fa-regular fa-arrow-left"></i>
-                    Back to Website
+                    <i class="fa-solid fa-globe"></i>
+                    <span>View Website</span>
                 </a>
             </li>
-
             <li class="logout-item">
                 <a href="/admin/logout" class="logout-link">
-                    <i class="fa-regular fa-sign-out"></i>
-                    Logout
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
                 </a>
             </li>
         </ul>
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <main class="content">
-        {% block content %}{% endblock %}
-    </main>
+    <div class="admin-main-wrap">
+        <header class="admin-topbar">
+            <div class="admin-topbar-left">
+                <button class="admin-menu-toggle" id="adminMenuToggle" type="button" aria-label="Open sidebar" aria-controls="adminSidebar" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
+                {% block topbar %}
+                <div class="admin-title-block">
+                    <p class="admin-kicker">Operations</p>
+                    <h1>Admin Workspace</h1>
+                </div>
+                {% endblock %}
+            </div>
 
+            <div class="admin-topbar-right">
+                <a class="quick-link" href="/admin/properties" title="Manage properties">
+                    <i class="fas fa-list"></i>
+                    <span>Listings</span>
+                </a>
+                <a class="quick-link" href="/admin/site-visits" title="Site visits">
+                    <i class="fas fa-route"></i>
+                    <span>Visits</span>
+                </a>
+                <a class="quick-link highlight" href="/admin/properties#addPropertyModal" title="Add property">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Property</span>
+                </a>
+            </div>
+        </header>
+
+        <main class="content admin-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 </div>
 
-<!-- PAGE-SPECIFIC SCRIPTS -->
-    <script src="/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script defer src="{{ url_for('static', filename='js/admin-shell.js') }}"></script>
 {% block scripts %}{% endblock %}
-
 </body>
 </html>

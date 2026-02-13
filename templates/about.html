@@ -1,181 +1,220 @@
 {% extends "base.html" %}
 
-{% block title %}About Us | LandVista Properties Limited{% endblock %}
+{% block title %}About LandVista | Trusted Land Investment Partner{% endblock %}
+{% block body_class %}about-modern-body{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/about-modern.css') }}">
+{% endblock %}
 
 {% block content %}
-
-<div class="about-page">
-
-<!-- =========================
- ABOUT HERO (FIRST SCREENSHOT)
-========================= -->
-<section class="hero about-hero"
-         style="background-image: url('{{ url_for('static', filename='images/about-hero.jpg') }}'); background-size: cover; background-position: center;">
-    <div class="hero-overlay"></div>
-
-    <div class="hero-content" style="text-align:left; max-width:900px;">
-        <h1>About LandVista Properties Limited</h1>
-        <p>
-            Your trusted partner in land acquisition across Kenya.
-            We connect dreamers with prime land opportunities,
-            building futures one property at a time.
-        </p>
-    </div>
-</section>
-
-<!-- =========================
- OUR STORY SECTION (SECOND SCREENSHOT)
-========================= -->
-<section class="about-story" style="padding:80px 10%; background:#ffffff;">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:center;">
-
-        <!-- TEXT -->
-        <div>
-            <h2 style="color:#0a3c28; margin-bottom:20px;">Our Story</h2>
-
-            <p>
-                Founded in the heart of Nairobi, LandVista Properties Limited
-                was born from a simple vision: to make land ownership accessible,
-                transparent and rewarding for every Kenyan.
-            </p>
-
-            <p>
-                With years of experience in the Kenyan real estate market,
-                we understand the unique challenges and opportunities that
-                come with land investment in our beautiful country.
-            </p>
-
-            <p>
-                From the bustling outskirts of Nairobi to the serene landscapes
-                of Kithyoko, Juja-farm and Kivandini, we’ve helped thousands of
-                families and investors find their perfect plot.
-            </p>
-
-            <p>
-                Our commitment goes beyond just selling land.
-                We believe in building lasting relationships, providing expert
-                guidance and ensuring every transaction is handled with the
-                utmost professionalism and care.
-            </p>
-        </div>
-
-        <!-- IMAGE + STAT -->
-        <div style="position:relative;">
-            <img src="{{ url_for('static', filename='images/about-story.jpg') }}"
-                 style="width:100%; border-radius:16px; box-shadow:0 15px 35px rgba(0,0,0,0.15);">
-
-            <div style="
-                position:absolute;
-                bottom:20px;
-                right:20px;
-                background:#d4af37;
-                color:#0a3c28;
-                padding:25px;
-                border-radius:12px;
-                text-align:center;
-                font-weight:bold;
-            ">
-                <h2 style="margin:0;">20+</h2>
-                <p style="margin:0;">Properties Sold</p>
+<section class="about-page-wrap">
+    <section class="about-hero" data-reveal>
+        <div class="about-hero-copy">
+            <p class="about-kicker">About LandVista</p>
+            <h1>We help investors buy land with confidence, clarity, and verified process support.</h1>
+            <p>LandVista combines advisory guidance, legal workflow awareness, and strategic project curation to make land ownership more secure and decision-ready.</p>
+            <div class="about-hero-actions">
+                <a href="/properties" class="about-btn-primary">Explore Properties</a>
+                <button type="button" class="about-btn-secondary" data-open-modal="aboutProfileModal">Request Company Profile</button>
             </div>
         </div>
-
-    </div>
-</section>
-
-<!-- =========================
- MISSION / VISION / VALUES
-========================= -->
-<section class="mv-section">
-    <div class="mv-grid">
-
-        <!-- OUR MISSION -->
-        <div class="mv-card mission-card">
-            <h3>Our Mission</h3>
-            <p>
-                To provide verified, prime land opportunities across Kenya
-                with complete transparency, exceptional customer service
-                and expert guidance throughout the entire acquisition process.
-            </p>
+        <div class="about-hero-panel">
+            <article>
+                <span>20+</span>
+                <p>Projects transacted</p>
+            </article>
+            <article>
+                <span>98%</span>
+                <p>Client satisfaction score</p>
+            </article>
+            <article>
+                <span>24h</span>
+                <p>Average lead response</p>
+            </article>
+            <article>
+                <span>5+</span>
+                <p>Strategic growth counties</p>
+            </article>
         </div>
+    </section>
 
-        <!-- OUR VISION -->
-        <div class="mv-card vision-card">
-            <h3>Our Vision</h3>
-            <p>
-                To be Kenya's most trusted land investment partner,
-                empowering individuals and families to build their dreams
-                on solid ground through accessible and transparent
-                property solutions.
-            </p>
+    <section class="about-proof-strip" data-reveal>
+        <div><i class="fas fa-shield-halved"></i> Verification-first listing workflow</div>
+        <div><i class="fas fa-file-contract"></i> Documentation support readiness</div>
+        <div><i class="fas fa-users"></i> Dedicated advisor per client journey</div>
+        <div><i class="fas fa-chart-line"></i> Growth-focused project recommendations</div>
+    </section>
+
+    <section class="about-story" data-reveal>
+        <div class="about-story-media">
+            <img src="{{ url_for('static', filename='images/about-story.jpg') }}" alt="LandVista team at project site" loading="lazy">
         </div>
-
-        <!-- CORE VALUES -->
-        <div class="mv-card values-card">
-            <h3>Core Values</h3>
-
-            <ul class="values-list">
-                <li>✔ Integrity & Transparency</li>
-                <li>✔ Customer-First Approach</li>
-                <li>✔ Professional Excellence</li>
-                <li>✔ Quality & Verification</li>
+        <div class="about-story-copy">
+            <h2>Why LandVista was built</h2>
+            <p>We observed that many buyers were making land decisions without enough support on verification, location suitability, and legal process awareness. LandVista was founded to close that gap.</p>
+            <p>Our model combines project curation, clear process communication, and client-aligned advisory support so investors can act with stronger confidence.</p>
+            <ul>
+                <li>Structured onboarding from inquiry to transfer stages</li>
+                <li>Transparent communication around documentation and timelines</li>
+                <li>Site visit planning and practical location orientation</li>
+                <li>Post-purchase advisory continuity for long-term investors</li>
             </ul>
         </div>
+    </section>
 
-    </div>
+    <section class="about-values" data-reveal>
+        <div class="section-head">
+            <p>Our Operating Principles</p>
+            <h2>How we maintain trust and execution quality</h2>
+        </div>
+        <div class="values-grid">
+            <article>
+                <i class="fas fa-scale-balanced"></i>
+                <h3>Transparency</h3>
+                <p>We prioritize straightforward communication across pricing, process, and delivery timelines.</p>
+            </article>
+            <article>
+                <i class="fas fa-badge-check"></i>
+                <h3>Integrity</h3>
+                <p>Each listing is reviewed through a disciplined due diligence approach before recommendation.</p>
+            </article>
+            <article>
+                <i class="fas fa-bullseye"></i>
+                <h3>Client Fit</h3>
+                <p>Project recommendations are aligned to budget, intent, and investment horizon.</p>
+            </article>
+            <article>
+                <i class="fas fa-handshake"></i>
+                <h3>Support Continuity</h3>
+                <p>Our team supports buyers before, during, and after transaction closure.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="about-roadmap" data-reveal>
+        <div class="section-head">
+            <p>Client Journey</p>
+            <h2>A clearer path from interest to ownership</h2>
+        </div>
+        <div class="roadmap-grid">
+            <article>
+                <span>01</span>
+                <h3>Discovery and Strategy</h3>
+                <p>We assess your goals, budget, and preferred growth corridors.</p>
+            </article>
+            <article>
+                <span>02</span>
+                <h3>Site and Option Review</h3>
+                <p>Our team presents matching opportunities and facilitates location orientation.</p>
+            </article>
+            <article>
+                <span>03</span>
+                <h3>Documentation Workflow</h3>
+                <p>We guide you through requirements, legal checks, and agreement preparation support.</p>
+            </article>
+            <article>
+                <span>04</span>
+                <h3>Transfer and Aftercare</h3>
+                <p>You receive structured follow-through and post-purchase advisory continuity.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="about-news-preview" data-reveal>
+        <div class="section-head">
+            <p>Knowledge Hub</p>
+            <h2>Latest investor insights and market updates</h2>
+            <a href="/news">View all insights</a>
+        </div>
+        <div class="about-news-grid" id="aboutNewsGrid">
+            <p class="about-loading">Loading latest updates...</p>
+        </div>
+    </section>
+
+    <section class="about-faq" data-reveal>
+        <div class="section-head">
+            <p>FAQ</p>
+            <h2>Common questions from buyers and investors</h2>
+        </div>
+        <div class="about-accordion" id="aboutAccordion">
+            <button type="button" class="about-accordion-item active">
+                <span>Do you support first-time land buyers?</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="about-accordion-panel" style="display:block;">
+                <p>Yes. We provide practical guidance that helps first-time buyers understand requirements, options, and process flow before committing.</p>
+            </div>
+
+            <button type="button" class="about-accordion-item">
+                <span>Can LandVista assist with site visits?</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="about-accordion-panel">
+                <p>Yes. We coordinate site orientation so you can evaluate route, neighborhood context, and suitability with better clarity.</p>
+            </div>
+
+            <button type="button" class="about-accordion-item">
+                <span>Do you provide legal documentation guidance?</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="about-accordion-panel">
+                <p>Our team supports process awareness and documentation readiness. Request our legal guide resources for deeper context.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-cta" data-reveal>
+        <h2>Need a tailored land investment plan?</h2>
+        <p>Speak with our advisors to review opportunities aligned to your timeline and budget.</p>
+        <div class="about-hero-actions">
+            <button type="button" class="about-btn-primary" data-open-modal="aboutConsultModal">Book Advisory Session</button>
+            <a href="/contact" class="about-btn-secondary">Contact Team</a>
+        </div>
+    </section>
 </section>
 
-<!-- =========================
- WHY CHOOSE US
-========================= -->
-<section class="why-choose-section">
-    <h2>Why Choose LandVista?</h2>
-    <p class="section-subtitle">Your land investment deserves a partner you can trust</p>
-    
-    <div class="why-choose-grid">
-        
-        <div class="why-card">
-            <div class="why-icon">✓</div>
-            <h4>Verified Properties</h4>
-            <p>Every property is thoroughly vetted with complete title deed verification and legal compliance checks.</p>
-        </div>
-
-        <div class="why-card">
-            <div class="why-icon">✓</div>
-            <h4>Prime Locations</h4>
-            <p>Strategic locations across Kenya with excellent growth potential and infrastructure development.</p>
-        </div>
-
-        <div class="why-card">
-            <div class="why-icon">✓</div>
-            <h4>Expert Guidance</h4>
-            <p>Our experienced team provides personalized support throughout your land acquisition journey.</p>
-        </div>
-
-        <div class="why-card">
-            <div class="why-icon">✓</div>
-            <h4>Transparent Process</h4>
-            <p>No hidden fees, clear documentation and honest communication at every step of the process.</p>
-        </div>
-
+<div class="about-modal" id="aboutProfileModal" aria-hidden="true">
+    <div class="about-modal-panel">
+        <button type="button" class="about-modal-close" data-close-modal="aboutProfileModal" aria-label="Close modal">
+            <i class="fas fa-times"></i>
+        </button>
+        <h3>Request LandVista Company Profile</h3>
+        <p>Receive our profile, process brief, and onboarding guidance.</p>
+        <form id="aboutProfileForm" class="about-form-grid">
+            <input type="text" name="name" placeholder="Full name" required>
+            <input type="email" name="email" placeholder="Email address" required>
+            <input type="tel" name="phone" placeholder="Phone number" required>
+            <input type="hidden" name="inquiry_type" value="investor">
+            <input type="hidden" name="property_title" value="Company Profile Request">
+            <textarea name="message" rows="4" required>Please share your company profile and onboarding process.</textarea>
+            <button type="submit" id="aboutProfileSubmit">Send Request</button>
+        </form>
+        <p id="aboutProfileFeedback" class="about-form-feedback"></p>
     </div>
-</section>
-
-
-<section class="cta-section">
-    <h2>Ready to Find Your Perfect Plot?</h2>
-
-    <p>
-        Join hundreds of satisfied clients who have made their land ownership
-        dreams a reality with LandVista Properties Limited.
-    </p>
-
-    <div class="cta-buttons">
-        <a href="/properties" class="cta-primary">View Properties</a>
-        <a href="/contact" class="cta-secondary">Contact Us</a>
-    </div>
-</section>
-
 </div>
 
+<div class="about-modal" id="aboutConsultModal" aria-hidden="true">
+    <div class="about-modal-panel">
+        <button type="button" class="about-modal-close" data-close-modal="aboutConsultModal" aria-label="Close modal">
+            <i class="fas fa-times"></i>
+        </button>
+        <h3>Book an Advisory Session</h3>
+        <p>Share your investment goals and preferred locations.</p>
+        <form id="aboutConsultForm" class="about-form-grid">
+            <input type="text" name="name" placeholder="Full name" required>
+            <input type="email" name="email" placeholder="Email address" required>
+            <input type="tel" name="phone" placeholder="Phone number" required>
+            <input type="hidden" name="inquiry_type" value="investor">
+            <input type="hidden" name="property_title" value="Advisory Session Request">
+            <textarea name="message" rows="4" required>I would like to book an advisory session for land investment planning.</textarea>
+            <button type="submit" id="aboutConsultSubmit">Submit Request</button>
+        </form>
+        <p id="aboutConsultFeedback" class="about-form-feedback"></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script defer src="{{ url_for('static', filename='js/about-modern.js') }}"></script>
 {% endblock %}
