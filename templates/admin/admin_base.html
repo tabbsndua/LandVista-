@@ -27,64 +27,71 @@
         <h2 class="sidebar-logo">LandVista</h2>
 
         <ul class="menu">
-            <li class="active">
+            <li class="{{ 'active' if request.path == '/admin' else '' }}">
                 <a href="/admin">
                     <i class="fa-regular fa-table-columns"></i>
                     Dashboard
                 </a>
             </li>
 
-            <li>
+            <li class="{{ 'active' if request.path.startswith('/admin/properties') else '' }}">
                 <a href="/admin/properties">
                     <i class="fa-regular fa-building"></i>
                     Properties
                 </a>
             </li>
 
-            <li>
+            <li class="{{ 'active' if request.path.startswith('/admin/clients') else '' }}">
                 <a href="/admin/clients">
                     <i class="fa-regular fa-user"></i>
                     Clients
                 </a>
             </li>
 
-            <li>
+            <li class="{{ 'active' if request.path.startswith('/admin/testimonials') else '' }}">
                 <a href="/admin/testimonials">
                     <i class="fa-regular fa-comment"></i>
                     Testimonials
                 </a>
             </li>
 
-            <li>
+            <li class="{{ 'active' if request.path.startswith('/admin/news') else '' }}">
                 <a href="/admin/news">
                     <i class="fa-regular fa-newspaper"></i>
                     News & Blogs
                 </a>
             </li>
 
-            <li>
+            <li class="{{ 'active' if request.path.startswith('/admin/legal-guides') else '' }}">
                 <a href="/admin/legal-guides">
                     <i class="fa-regular fa-book"></i>
                     Legal Guides
                 </a>
             </li>
 
-            <li>
+            <li class="{{ 'active' if request.path.startswith('/admin/inquiries') else '' }}">
                 <a href="/admin/inquiries">
                     <i class="fa-regular fa-envelope"></i>
                     Inquiries
                 </a>
             </li>
 
-            <li>
+            <li class="{{ 'active' if request.path.startswith('/admin/site-visits') else '' }}">
                 <a href="/admin/site-visits">
                     <i class="fa-regular fa-calendar-check"></i>
                     Site Visits
                 </a>
             </li>
 
+            <li class="{{ 'active' if request.path.startswith('/admin/payments') else '' }}">
+                <a href="/admin/payments">
+                    <i class="fa-regular fa-credit-card"></i>
+                    Payments
+                </a>
+            </li>
+
             <li>
-                <a href="/">
+                <a href="/home">
                     <i class="fa-regular fa-arrow-left"></i>
                     Back to Website
                 </a>

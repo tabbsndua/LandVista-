@@ -1,432 +1,262 @@
 {% extends "base.html" %}
 
 {% block title %}Home | LandVista Properties Limited{% endblock %}
+{% block body_class %}home-modern-body{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home-modern.css') }}?v={{ range(1, 10000) | random }}">
+{% endblock %}
 
 {% block content %}
+<div class="home-modern">
+    <section class="modern-hero" id="top">
+        <div class="hero-noise"></div>
+        <div class="hero-gradient-orb hero-gradient-orb-a"></div>
+        <div class="hero-gradient-orb hero-gradient-orb-b"></div>
 
-<div class="home-page">
-
-<!-- =========================
- HOME HERO (IDENTITY ONLY)
-========================= -->
-<section class="hero home-hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <h1>Available Land for Sale</h1>
-        <p>Verified, secure and high-growth land investment opportunities across Kenya.</p>
-    </div>
-</section>
-
-<!-- =========================
- ABOUT LANDVISTA OVERVIEW
-========================= -->
-<section class="about-overview-section">
-    <div class="about-overview-container">
-        <div class="about-overview-content">
-            <h2>Welcome to LandVista Properties Limited</h2>
-            <p class="overview-subtitle">Your Trusted Partner in Land Investment Across Kenya</p>
-            
-            <div class="overview-text">
-                <p>
-                    At <strong>LandVista Properties Limited</strong>, we specialize in connecting serious investors with premium, verified land opportunities across Kenya's most promising growth regions. With years of experience in real estate and a commitment to transparency, we've helped hundreds of families and investors secure their perfect plots.
+        <div class="modern-hero-inner">
+            <div class="hero-copy reveal">
+                <p class="hero-eyebrow">Verified Land Investments</p>
+                <h1>Acquire strategic land opportunities with confidence and speed.</h1>
+                <p class="hero-lead">
+                    LandVista combines legal due diligence, trusted support, and flexible payment planning so you can invest without uncertainty.
                 </p>
-                
-                <div class="overview-highlights">
-                    <div class="highlight-item">
-                        <h4>100% Verified Properties</h4>
-                        <p>Every property undergoes rigorous due diligence with complete legal documentation and title verification</p>
-                    </div>
-                    
-                    <div class="highlight-item">
-                        <h4>Transparent Transactions</h4>
-                        <p>No hidden fees, clear pricing and honest communication from start to finish</p>
-                    </div>
-                    
-                    <div class="highlight-item">
-                        <h4>Prime Locations</h4>
-                        <p>Properties in high-growth areas with excellent infrastructure, accessibility and long-term appreciation potential</p>
-                    </div>
-                    
-                    <div class="highlight-item">
-                        <h4>Flexible Payment Plans</h4>
-                        <p>We offer installment options and flexible terms to make land ownership accessible to everyone</p>
-                    </div>
-                    
-                    <div class="highlight-item">
-                        <h4>Expert Support</h4>
-                        <p>Our team provides personalized advice, site visits and support throughout your investment journey</p>
-                    </div>
-                    
-                    <div class="highlight-item">
-                        <h4>Trusted by Thousands</h4>
-                        <p>Join satisfied clients who have invested in their future with LandVista</p>
-                    </div>
+                <div class="hero-actions">
+                    <a href="/properties" class="hero-btn hero-btn-primary">Browse Available Plots</a>
+                    <a href="/contact" class="hero-btn hero-btn-ghost">Talk to an Advisor</a>
                 </div>
-                
-                <div class="overview-cta">
-                    <p><strong>Ready to explore your perfect land investment?</strong> Browse our listings, request a site visit, or contact our team for personalized recommendations.</p>
-                    <div class="cta-buttons">
-                        <a href="/properties" class="cta-btn primary">View Properties</a>
-                        <a href="/contact" class="cta-btn secondary">Get In Touch</a>
-                    </div>
+                <div class="hero-badges">
+                    <span><i class="fas fa-shield-alt"></i> Verified Titles</span>
+                    <span><i class="fas fa-route"></i> Prime Access Roads</span>
+                    <span><i class="fas fa-hand-holding-usd"></i> Flexible Installments</span>
                 </div>
             </div>
+
+            <div class="hero-glass-card reveal" data-reveal-delay="120">
+                <p class="glass-label">Investment Snapshot</p>
+                <h3>Why investors choose LandVista</h3>
+                <div class="hero-stats-mini">
+                    <div>
+                        <strong>98%</strong>
+                        <span>Client satisfaction</span>
+                    </div>
+                    <div>
+                        <strong>20+</strong>
+                        <span>Acres listed</span>
+                    </div>
+                    <div>
+                        <strong>15+</strong>
+                        <span>Properties sold</span>
+                    </div>
+                </div>
+                <p class="hero-note">Built for first-time buyers and serious land investors.</p>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- =========================
- FEATURED LAND LISTINGS
-========================= -->
-<section class="land-listings" id="properties">
-    <h2>Verified Land Listings</h2>
-    <p class="section-subtitle">
-        Explore our carefully vetted land opportunities with clean titles, strategic locations and transparent pricing. Perfect for investors and homeowners.
-    </p>
+    <section class="section-shell modern-feature-section">
+        <div class="section-header reveal">
+            <p class="section-tag">Core Value</p>
+            <h2>More than listings. A full investment support system.</h2>
+        </div>
+        <div class="feature-grid">
+            <article class="feature-card glass-card reveal">
+                <i class="fas fa-file-signature"></i>
+                <h3>Legal-First Verification</h3>
+                <p>Every property is screened for title authenticity, ownership clarity, and legal readiness before publication.</p>
+            </article>
+            <article class="feature-card glass-card reveal" data-reveal-delay="100">
+                <i class="fas fa-map-marked-alt"></i>
+                <h3>Growth-Focused Locations</h3>
+                <p>Access emerging corridors with strong infrastructure trends and long-term appreciation potential.</p>
+            </article>
+            <article class="feature-card glass-card reveal" data-reveal-delay="180">
+                <i class="fas fa-user-tie"></i>
+                <h3>Dedicated Advisor Support</h3>
+                <p>From first inquiry to transfer completion, our team guides each stage of your purchase journey.</p>
+            </article>
+            <article class="feature-card glass-card reveal" data-reveal-delay="260">
+                <i class="fas fa-wallet"></i>
+                <h3>Structured Payment Flexibility</h3>
+                <p>Choose payment options tailored to your timeline while maintaining clarity on each installment milestone.</p>
+            </article>
+        </div>
+    </section>
 
-    <div class="land-grid" id="landGrid">
+    <section class="section-shell modern-process-section">
+        <div class="section-header reveal">
+            <p class="section-tag">Simple Process</p>
+            <h2>How LandVista gets you from interest to ownership.</h2>
+        </div>
+        <div class="process-grid">
+            <div class="process-step reveal">
+                <span>01</span>
+                <h3>Discover</h3>
+                <p>Review verified listings filtered by location, budget, and land use goals.</p>
+            </div>
+            <div class="process-step reveal" data-reveal-delay="110">
+                <span>02</span>
+                <h3>Validate</h3>
+                <p>Book a site visit and confirm details with our advisory team before commitment.</p>
+            </div>
+            <div class="process-step reveal" data-reveal-delay="220">
+                <span>03</span>
+                <h3>Secure</h3>
+                <p>Finalize payment and documentation with transparent guidance at each step.</p>
+            </div>
+            <div class="process-step reveal" data-reveal-delay="330">
+                <span>04</span>
+                <h3>Own</h3>
+                <p>Complete transfer and receive support post-purchase as your investment grows.</p>
+            </div>
+        </div>
+    </section>
 
-        {% for p in properties[:3] %}
-        <div class="land-card">
-            <div class="land-card-image">
-                {% if p.get('media') %}
-                    {% if p.media is string %}
-                        {% if p.media.endswith(('.mp4', '.webm', '.mov')) %}
-                        <video muted style="width:100%; height:100%; object-fit:cover;">
-                            <source src="{{ url_for('static', filename='uploads/' ~ p.media) }}">
-                        </video>
-                        {% else %}
-                        <img src="{{ url_for('static', filename='uploads/' ~ p.media) }}" alt="{{ p.title }}">
-                        {% endif %}
-                    {% else %}
-                        {% set first_media = p.media[0] if p.media else None %}
-                        {% if first_media %}
-                            {% if first_media.endswith(('.mp4', '.webm', '.mov')) %}
-                            <video muted style="width:100%; height:100%; object-fit:cover;">
-                                <source src="{{ url_for('static', filename='uploads/' ~ first_media) }}">
+    <section class="section-shell modern-listings-section" id="properties">
+        <div class="section-header reveal">
+            <p class="section-tag">Featured Plots</p>
+            <h2>Verified land opportunities available now.</h2>
+            <p class="section-subcopy">Fresh inventory synced in real-time from the admin dashboard.</p>
+        </div>
+
+        <div class="modern-land-grid" id="landGrid">
+            {% for p in properties[:3] %}
+            <article class="modern-land-card glass-card reveal">
+                <div class="modern-land-media">
+                    {% if p.get('media') %}
+                        {% if p.media is string %}
+                            {% if p.media.endswith(('.mp4', '.webm', '.mov')) %}
+                            <video muted playsinline loop>
+                                <source src="{{ url_for('static', filename='uploads/' ~ p.media) }}">
                             </video>
                             {% else %}
-                            <img src="{{ url_for('static', filename='uploads/' ~ first_media) }}" alt="{{ p.title }}">
+                            <img src="{{ url_for('static', filename='uploads/' ~ p.media) }}" alt="{{ p.title }}">
                             {% endif %}
                         {% else %}
-                        <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}">
+                            {% set first_media = p.media[0] if p.media else None %}
+                            {% if first_media %}
+                                {% if first_media.endswith(('.mp4', '.webm', '.mov')) %}
+                                <video muted playsinline loop>
+                                    <source src="{{ url_for('static', filename='uploads/' ~ first_media) }}">
+                                </video>
+                                {% else %}
+                                <img src="{{ url_for('static', filename='uploads/' ~ first_media) }}" alt="{{ p.title }}">
+                                {% endif %}
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}">
+                            {% endif %}
                         {% endif %}
+                    {% else %}
+                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}">
                     {% endif %}
-                {% else %}
-                <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}">
-                {% endif %}
-            </div>
-            <div class="land-card-content">
-                <h3>{{ p.title }}</h3>
-                <p class="location">{{ p.location }}</p>
-                <p class="description">{{ p.description[:80] if p.description else 'Prime land investment opportunity' }}...</p>
-                <div class="land-meta">
-                    <span>{{ p.area }}</span>
-                    <span class="price">FROM KES {{ "{:,}".format(p.price) }}</span>
                 </div>
-                <div class="land-actions">
-                    <a href="https://wa.me/254784666927?text=Hello%20I%20am%20interested%20in%20{{ p.title | replace(' ', '%20') }}%20at%20{{ p.location | replace(' ', '%20') }}." 
-                       target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
-                        <i class="fab fa-whatsapp"></i> WhatsApp
-                    </a>
-                    <a href="/properties/{{ p._id }}" class="btn-details">Details</a>
+                <div class="modern-land-body">
+                    <h3>{{ p.title }}</h3>
+                    <p class="land-location"><i class="fas fa-map-pin"></i> {{ p.location }}</p>
+                    <p class="land-excerpt">{{ p.description[:95] if p.description else 'Prime verified land opportunity with high growth potential.' }}...</p>
+                    <div class="land-meta">
+                        <span>{{ p.area or 'Plot available' }}</span>
+                        <strong>KES {{ "{:,}".format(p.price|int) if p.price else 'Contact us' }}</strong>
+                    </div>
+                    <div class="land-actions">
+                        <a href="https://wa.me/254784666927?text=Hello%20I%20am%20interested%20in%20{{ p.title | replace(' ', '%20') }}%20at%20{{ p.location | replace(' ', '%20') }}." target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                        <a href="/properties/{{ p._id }}">View Details</a>
+                    </div>
                 </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <div class="section-cta reveal">
+            <a href="/properties" class="hero-btn hero-btn-primary">Explore All Properties</a>
+        </div>
+    </section>
+
+    <section class="section-shell modern-stats-section">
+        <div class="modern-stats-grid">
+            <article class="modern-stat glass-card reveal">
+                <h3 data-counter-target="15">15+</h3>
+                <p>Properties sold</p>
+            </article>
+            <article class="modern-stat glass-card reveal" data-reveal-delay="90">
+                <h3 data-counter-target="20">20+</h3>
+                <p>Acres listed</p>
+            </article>
+            <article class="modern-stat glass-card reveal" data-reveal-delay="180">
+                <h3 data-counter-target="5000000">KSh 5M+</h3>
+                <p>Total property value</p>
+            </article>
+            <article class="modern-stat glass-card reveal" data-reveal-delay="270">
+                <h3 data-counter-target="98">98%</h3>
+                <p>Client satisfaction</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="section-shell modern-testimonials-section">
+        <div class="section-header reveal">
+            <p class="section-tag">Client Stories</p>
+            <h2>Trusted by families and investors across Kenya.</h2>
+        </div>
+
+        <div class="modern-testimonials-wrap">
+            <div class="modern-testimonials-track" id="testimonialsTrack">
+                {% for t in testimonials %}
+                <article class="modern-testimonial-card glass-card">
+                    <div class="testimonial-stars">
+                        {% for _ in range((t.rating or 5)|int) %}
+                        <i class="fas fa-star"></i>
+                        {% endfor %}
+                    </div>
+                    <p class="testimonial-text">"{{ t.testimonial }}"</p>
+                    <div class="testimonial-person">
+                        <span>{{ t.name[0].upper() if t.name else '?' }}</span>
+                        <div>
+                            <strong>{{ t.name }}</strong>
+                            <small>{{ t.location }}</small>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
             </div>
         </div>
-        {% endfor %}
 
-    </div>
+        {% if testimonials|length > 1 %}
+        <div class="testimonials-controls reveal">
+            <button type="button" id="testimonialsPrev" aria-label="Previous testimonial"><i class="fas fa-chevron-left"></i></button>
+            <p><span id="testimonialsCount">1</span>/<span id="testimonialsTotal">{{ testimonials|length }}</span></p>
+            <button type="button" id="testimonialsNext" aria-label="Next testimonial"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        {% endif %}
+    </section>
 
-    <div class="explore-all-container">
-        <a href="/properties" class="explore-all-btn">Explore All Our Properties</a>
-    </div>
-</section>
-
-
-
-<!-- =========================
- STATS / TRUST
-========================= -->
-<section class="stats-section">
-    <div class="stats-grid">
-        <div class="stat"><h3>15+</h3><p>Properties Sold</p></div>
-        <div class="stat"><h3>20+</h3><p>Acres Listed</p></div>
-        <div class="stat"><h3>KSh 5M+</h3><p>Total Value</p></div>
-        <div class="stat"><h3>98%</h3><p>Client Satisfaction</p></div>
-    </div>
-</section>
-
-<!-- =========================
- CLIENT TESTIMONIALS
-========================= -->
-<section class="testimonials-section">
-    <h2>What Our Clients Say</h2>
-    <p class="section-subtitle">Real success stories from our satisfied investors</p>
-    
-    <div class="testimonials-grid" id="testimonialsContainer">
-        {% for t in testimonials %}
-        <div class="testimonial-card">
-            <div class="stars">
-                {% for i in range(t.rating|int) %}⭐{% endfor %}
+    <section class="section-shell modern-newsletter-section">
+        <div class="newsletter-glass reveal">
+            <div>
+                <p class="section-tag">Newsletter</p>
+                <h2>Get curated land investment updates every week.</h2>
+                <p>Insights, legal tips, and new property alerts delivered to your inbox.</p>
             </div>
-            <p class="testimonial-text">"{{ t.testimonial }}"</p>
-            <div class="testimonial-author">
-                <div class="testimonial-author-avatar">
-                    {{ t.name[0].upper() }}
+            <div class="newsletter-form-wrap">
+                <div id="newsletterSuccess" class="newsletter-alert success-alert" style="display:none;">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="newsletterSuccessText">Subscription successful. Check your inbox for confirmation.</span>
                 </div>
-                <div class="testimonial-author-info">
-                    <strong>{{ t.name }}</strong>
-                    <p>{{ t.location }}</p>
+                <div id="newsletterError" class="newsletter-alert error-alert" style="display:none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="newsletterErrorText"></span>
                 </div>
+                <form id="newsletterForm" class="newsletter-modern-form">
+                    <input type="email" name="email" placeholder="Enter email address" required>
+                    <button type="submit" class="newsletter-btn">Subscribe</button>
+                </form>
+                <small>Join 200+ investors already subscribed.</small>
             </div>
         </div>
-        {% endfor %}
-    </div>
-
-    <!-- CAROUSEL NAVIGATION (Only show if multiple testimonials) -->
-    {% if testimonials|length > 1 %}
-    <div class="testimonials-nav-buttons">
-        <button class="testimonials-nav-btn" id="testimonialsPrev" title="Previous">‹</button>
-        <button class="testimonials-nav-btn" id="testimonialsNext" title="Next">›</button>
-    </div>
-    <div class="testimonials-counter">
-        <span id="testimonialsCount">1</span> / <span id="testimonialsTotal">{{ testimonials|length }}</span>
-    </div>
-    {% endif %}
-</section>
-
-<script>
-// Testimonials carousel auto-slide
-(function() {
-    const container = document.getElementById('testimonialsContainer');
-    const cards = container.querySelectorAll('.testimonial-card');
-    let currentIndex = 0;
-    let autoSlideTimer;
-    
-    if (cards.length > 1) {
-        // Convert to carousel view
-        container.classList.add('carousel-mode');
-        
-        const showSlide = (index) => {
-            const offset = -index * 100;
-            container.style.transform = `translateX(${offset}%)`;
-            document.getElementById('testimonialsCount').textContent = index + 1;
-        };
-        
-        const nextSlide = () => {
-            currentIndex = (currentIndex + 1) % cards.length;
-            showSlide(currentIndex);
-            resetAutoSlide();
-        };
-        
-        const prevSlide = () => {
-            currentIndex = (currentIndex - 1 + cards.length) % cards.length;
-            showSlide(currentIndex);
-            resetAutoSlide();
-        };
-        
-        const autoSlide = () => {
-            autoSlideTimer = setInterval(nextSlide, 5000);
-        };
-        
-        const resetAutoSlide = () => {
-            clearInterval(autoSlideTimer);
-            autoSlide();
-        };
-        
-        document.getElementById('testimonialsNext').addEventListener('click', nextSlide);
-        document.getElementById('testimonialsPrev').addEventListener('click', prevSlide);
-        
-        // Start auto-slide
-        autoSlide();
-    }
-})();
-</script>
-
-<!-- =========================
- NEWSLETTER SECTION
-========================= -->
-<section class="newsletter-section">
-    <div class="newsletter-container">
-        <div class="newsletter-content">
-            <h2>Stay Updated</h2>
-            <p>Subscribe to our newsletter and get the latest insights on land investment delivered to your inbox.</p>
-            
-            <!-- Success Message -->
-            <div id="newsletterSuccess" class="newsletter-alert" style="display:none; background: #4CAF50; color: white;">
-                <i class="fas fa-check-circle"></i> <span id="newsletterSuccessText">You've been subscribed! Check your email for confirmation.</span>
-            </div>
-            
-            <!-- Error Message -->
-            <div id="newsletterError" class="newsletter-alert" style="display:none; background: #F44336; color: white;">
-                <i class="fas fa-exclamation-circle"></i> <span id="newsletterErrorText"></span>
-            </div>
-            
-            <form class="newsletter-form" id="newsletterForm">
-                <input type="email" name="email" placeholder="Enter your email address" required>
-                <button type="submit" class="newsletter-btn">Subscribe Now</button>
-            </form>
-            
-            <p class="newsletter-note">✓ Join 200+ investors getting weekly insights</p>
-        </div>
-    </div>
-</section>
-
+    </section>
 </div>
+{% endblock %}
 
-<script>
-// Real-time properties and testimonials update
-
-function loadProperties() {
-    fetch('/api/properties?limit=4')
-        .then(response => response.json())
-        .then(data => {
-            const grid = document.getElementById('landGrid');
-            grid.innerHTML = data.slice(0, 3).map(p => `
-                <div class="land-card">
-                    <div class="land-card-image">
-                        ${p.media ? 
-                            (p.media.endsWith('.mp4') || p.media.endsWith('.webm') || p.media.endsWith('.mov')
-                                ? `<video muted style="width:100%; height:100%; object-fit:cover;"><source src="/static/uploads/${escapeHTML(p.media)}"></video>`
-                                : `<img src="/static/uploads/${escapeHTML(p.media)}" alt="${escapeHTML(p.title)}">`
-                            )
-                            : `<img src="/static/images/placeholder.jpg" alt="${escapeHTML(p.title)}">`
-                        }
-                    </div>
-                    <div class="land-card-content">
-                        <h3>${escapeHTML(p.title)}</h3>
-                        <p class="location">${escapeHTML(p.location)}</p>
-                        <p class="description">${escapeHTML(p.description ? p.description.substring(0, 80) : 'Prime land investment opportunity')}...</p>
-                        <div class="land-meta">
-                            <span>${escapeHTML(p.area)}</span>
-                            <span class="price">FROM KES ${Number(p.price).toLocaleString()}</span>
-                        </div>
-                        <div class="land-actions">
-                            <a href="https://wa.me/254784666927?text=Hello%20I%20am%20interested%20in%20${escapeHTML(p.title).replace(/\s/g, '%20')}%20at%20${escapeHTML(p.location).replace(/\s/g, '%20')}." 
-                               target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
-                                <i class="fab fa-whatsapp"></i> WhatsApp
-                            </a>
-                            <a href="/properties/${p._id}" class="btn-details">Details</a>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        })
-        .catch(err => console.error('Failed to load properties:', err));
-}
-
-function loadTestimonials() {
-    fetch('/api/testimonials')
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById('testimonialsContainer');
-            container.innerHTML = data.map(t => `
-                <div class="testimonial-card">
-                    <div class="stars">
-                        ${Array(parseInt(t.rating || 5)).fill('⭐').join('')}
-                    </div>
-                    <p class="testimonial-text">"${escapeHTML(t.testimonial)}"</p>
-                    <div class="testimonial-author">
-                        <div class="testimonial-author-avatar">
-                            ${(escapeHTML(t.name) || '?')[0].toUpperCase()}
-                        </div>
-                        <div class="testimonial-author-info">
-                            <strong>${escapeHTML(t.name)}</strong>
-                            <p>${escapeHTML(t.location)}</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        })
-        .catch(err => console.error('Failed to load testimonials:', err));
-}
-
-function escapeHTML(str) {
-    return (str || '').replace(/[&<>"']/g, c => (
-        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
-    ));
-}
-
-// Socket.IO handlers are initialized via `initHomeSocket()` above
-
-// Load data on page load
-loadProperties();
-loadTestimonials();
-
-// Also set up polling as fallback
-setInterval(() => {
-    loadProperties();
-    loadTestimonials();
-}, 10000);
-
-
-
-// Article realtime handlers are registered by the socket initializer
-
-// Newsletter subscription handler
-document.getElementById('newsletterForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const email = this.querySelector('input[name="email"]').value;
-    const successMsg = document.getElementById('newsletterSuccess');
-    const errorMsg = document.getElementById('newsletterError');
-    const errorText = document.getElementById('newsletterErrorText');
-    const btn = this.querySelector('.newsletter-btn');
-    
-    // Clear messages
-    successMsg.style.display = 'none';
-    errorMsg.style.display = 'none';
-    
-    // Show loading state
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
-    
-    fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: email })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Clear form
-            document.getElementById('newsletterForm').reset();
-            
-            // Show success message
-            successMsg.style.display = 'block';
-            successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            
-            // Hide success message after 5 seconds
-            setTimeout(() => {
-                successMsg.style.display = 'none';
-            }, 5000);
-            
-            // Emit real-time event
-            socket.emit('newsletter_subscribed', { email: email });
-        } else {
-            errorText.textContent = data.message || 'An error occurred. Please try again.';
-            errorMsg.style.display = 'block';
-        }
-        
-        // Reset button
-        btn.disabled = false;
-        btn.innerHTML = 'Subscribe Now';
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        errorText.textContent = 'Failed to subscribe. Please try again.';
-        errorMsg.style.display = 'block';
-        
-        // Reset button
-        btn.disabled = false;
-        btn.innerHTML = 'Subscribe Now';
-    });
-});
-
-// Real-time newsletter updates are handled by the socket initializer
-
-</script>
-
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/home-modern.js') }}?v={{ range(1, 10000) | random }}"></script>
 {% endblock %}

@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, Response, jsonify, 
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
+from urllib import request as urlrequest, error as urlerror
 try:
     import certifi
     CA_BUNDLE = certifi.where()
@@ -20,6 +21,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import threading
+import uuid
 
 load_dotenv()
 
@@ -50,6 +52,14 @@ ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@landvista.com')
 # ============================
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'landvista2025')  # Change in .env file
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')  # Change in .env file
+
+# ============================
+# PAYSTACK CONFIG
+# ============================
+PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY", "").strip()
+PAYSTACK_PUBLIC_KEY = os.getenv("PAYSTACK_PUBLIC_KEY", "").strip()
+PAYSTACK_CALLBACK_URL = os.getenv("PAYSTACK_CALLBACK_URL", "").strip()
+PAYSTACK_BASE_URL = os.getenv("PAYSTACK_BASE_URL", "https://api.paystack.co").strip()
 
 # ============================
 # DISABLE CACHING FOR DEVELOPMENT
@@ -119,6 +129,7 @@ except Exception as e:
 testimonials = db.testimonials if db is not None else None
 inquiries = db.inquiries if db is not None else None
 site_visits = db.site_visits if db is not None else None
+payments = db.payments if db is not None else None
 
 # ============================
 # DATABASE HELPER FUNCTION
@@ -133,6 +144,45 @@ def safe_db_operation(operation, default=None):
     except Exception as e:
         print(f"Database operation error: {e}")
         return default
+
+def paystack_api_request(path, method="GET", payload=None):
+    """Make authenticated requests to the Paystack API."""
+    if not PAYSTACK_SECRET_KEY:
+        return {"status": False, "message": "PAYSTACK_SECRET_KEY is not configured"}
+
+    try:
+        endpoint = f"{PAYSTACK_BASE_URL.rstrip('/')}{path}"
+        body = None
+        if payload is not None:
+            body = json.dumps(payload).encode("utf-8")
+
+        req = urlrequest.Request(endpoint, data=body, method=method.upper())
+        req.add_header("Authorization", f"Bearer {PAYSTACK_SECRET_KEY}")
+        req.add_header("Content-Type", "application/json")
+
+        with urlrequest.urlopen(req, timeout=20) as response:
+            response_text = response.read().decode("utf-8")
+
+        return json.loads(response_text) if response_text else {"status": False, "message": "Empty response from Paystack"}
+
+    except urlerror.HTTPError as exc:
+        raw_error = ""
+        try:
+            raw_error = exc.read().decode("utf-8")
+        except Exception:
+            raw_error = str(exc)
+
+        try:
+            parsed = json.loads(raw_error)
+            return {
+                "status": False,
+                "message": parsed.get("message", "Paystack API request failed"),
+                "raw": parsed
+            }
+        except Exception:
+            return {"status": False, "message": raw_error or "Paystack API request failed"}
+    except Exception as exc:
+        return {"status": False, "message": str(exc)}
 
 # ============================
 # EMAIL UTILITY FUNCTIONS
@@ -673,6 +723,183 @@ def api_testimonials_admin():
         t["_id"] = str(t["_id"])
     return jsonify(testimonials_list)
 
+
+# ============================
+# ADMIN PAYMENTS (PAYSTACK)
+# ============================
+
+@app.route("/admin/payments")
+@require_admin_login
+def admin_payments_page():
+    payment_records = safe_db_operation(
+        lambda: list(db.payments.find().sort("created_at", -1).limit(50)),
+        []
+    )
+
+    for record in payment_records:
+        record["_id"] = str(record.get("_id", ""))
+        amount_kobo = int(record.get("amount_kobo", 0) or 0)
+        record["amount_major"] = amount_kobo / 100
+
+    return render_template(
+        "admin/payments.html",
+        payments=payment_records,
+        paystack_enabled=bool(PAYSTACK_SECRET_KEY and PAYSTACK_PUBLIC_KEY),
+        paystack_public_key=PAYSTACK_PUBLIC_KEY
+    )
+
+@app.route("/admin/payments/initialize", methods=["POST"])
+@require_admin_login
+def admin_initialize_paystack_payment():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    customer_name = (data.get("customer_name") or "").strip()
+    note = (data.get("note") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    currency = (data.get("currency") or "KES").strip().upper()
+
+    if not email or "@" not in email:
+        return jsonify({"success": False, "message": "A valid customer email is required"}), 400
+
+    try:
+        amount_major = float(data.get("amount") or 0)
+    except Exception:
+        return jsonify({"success": False, "message": "Amount must be numeric"}), 400
+
+    if amount_major <= 0:
+        return jsonify({"success": False, "message": "Amount must be greater than zero"}), 400
+
+    amount_kobo = int(round(amount_major * 100))
+    reference = f"LV-{int(time.time())}-{uuid.uuid4().hex[:8]}".upper()
+
+    callback_url = PAYSTACK_CALLBACK_URL or f"{request.url_root.rstrip('/')}/admin/payments"
+    metadata = {
+        "source": "admin_panel",
+        "created_by": session.get("admin_username", "admin"),
+        "customer_name": customer_name,
+        "note": note
+    }
+    if phone:
+        metadata["phone"] = phone
+
+    payload = {
+        "email": email,
+        "amount": amount_kobo,
+        "reference": reference,
+        "currency": currency,
+        "callback_url": callback_url,
+        "metadata": metadata
+    }
+
+    paystack_response = paystack_api_request("/transaction/initialize", method="POST", payload=payload)
+    if not paystack_response.get("status"):
+        return jsonify({
+            "success": False,
+            "message": paystack_response.get("message", "Failed to initialize transaction")
+        }), 400
+
+    payment_data = paystack_response.get("data", {})
+    payment_doc = {
+        "reference": reference,
+        "email": email,
+        "customer_name": customer_name,
+        "phone": phone,
+        "note": note,
+        "currency": currency,
+        "amount_kobo": amount_kobo,
+        "status": "initialized",
+        "authorization_url": payment_data.get("authorization_url"),
+        "access_code": payment_data.get("access_code"),
+        "created_by": session.get("admin_username", "admin"),
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+
+    if payments is not None:
+        safe_db_operation(
+            lambda: payments.update_one(
+                {"reference": reference},
+                {"$set": payment_doc},
+                upsert=True
+            ),
+            None
+        )
+
+    return jsonify({
+        "success": True,
+        "message": "Payment link created",
+        "reference": reference,
+        "authorization_url": payment_data.get("authorization_url"),
+        "access_code": payment_data.get("access_code"),
+        "public_key": PAYSTACK_PUBLIC_KEY
+    })
+
+@app.route("/admin/payments/verify", methods=["POST"])
+@require_admin_login
+def admin_verify_paystack_payment():
+    data = request.get_json(silent=True) or {}
+    reference = (data.get("reference") or "").strip()
+
+    if not reference:
+        return jsonify({"success": False, "message": "Transaction reference is required"}), 400
+
+    paystack_response = paystack_api_request(f"/transaction/verify/{reference}", method="GET")
+    if not paystack_response.get("status"):
+        return jsonify({
+            "success": False,
+            "message": paystack_response.get("message", "Unable to verify transaction")
+        }), 400
+
+    result = paystack_response.get("data", {})
+    status = (result.get("status") or "unknown").lower()
+    amount_kobo = int(result.get("amount") or 0)
+    email = result.get("customer", {}).get("email", "")
+    paid_at = result.get("paid_at") or result.get("created_at")
+    gateway_response = result.get("gateway_response", "")
+
+    update_doc = {
+        "status": status,
+        "amount_kobo": amount_kobo,
+        "email": email,
+        "currency": result.get("currency", "KES"),
+        "paid_at": paid_at,
+        "gateway_response": gateway_response,
+        "channel": result.get("channel"),
+        "updated_at": datetime.utcnow(),
+        "raw_response": result
+    }
+
+    if payments is not None:
+        safe_db_operation(
+            lambda: payments.update_one(
+                {"reference": reference},
+                {
+                    "$set": update_doc,
+                    "$setOnInsert": {
+                        "reference": reference,
+                        "created_by": session.get("admin_username", "admin"),
+                        "created_at": datetime.utcnow()
+                    }
+                },
+                upsert=True
+            ),
+            None
+        )
+
+    return jsonify({
+        "success": True,
+        "message": "Transaction verified",
+        "payment": {
+            "reference": reference,
+            "status": status,
+            "amount_kobo": amount_kobo,
+            "amount_major": amount_kobo / 100,
+            "currency": result.get("currency", "KES"),
+            "email": email,
+            "paid_at": paid_at,
+            "gateway_response": gateway_response
+        }
+    })
 
 
 # ============================

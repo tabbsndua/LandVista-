@@ -1,0 +1,438 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Admin Payments | LandVista{% endblock %}
+
+{% block extra_css %}
+<style>
+.payments-page { display: grid; gap: 20px; }
+.payments-status {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.status-pill.on {
+    background: #ecfdf3;
+    color: #166534;
+}
+.status-pill.off {
+    background: #fef2f2;
+    color: #991b1b;
+}
+.payments-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 16px;
+}
+.panel {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 18px;
+}
+.panel h3 {
+    margin: 0 0 14px;
+    color: #0a3c28;
+}
+.payment-form {
+    display: grid;
+    gap: 12px;
+}
+.payment-form .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.payment-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.payment-form input,
+.payment-form textarea,
+.payment-form select {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+}
+.payment-form textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+.payment-form button {
+    width: fit-content;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    background: #0a3c28;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+}
+.payment-form button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+.payment-result {
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 12px;
+    background: #f8fafc;
+    display: none;
+}
+.payment-result.active {
+    display: block;
+}
+.payment-result p {
+    margin: 6px 0;
+    color: #334155;
+    font-size: 14px;
+    word-break: break-word;
+}
+.payment-result a {
+    color: #0a3c28;
+    font-weight: 700;
+}
+.alert {
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    display: none;
+}
+.alert.show { display: block; }
+.alert.success {
+    background: #ecfdf3;
+    border: 1px solid #a7f3d0;
+    color: #166534;
+}
+.alert.error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+}
+.table-wrap {
+    overflow-x: auto;
+}
+.payments-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.payments-table th,
+.payments-table td {
+    text-align: left;
+    padding: 10px 8px;
+    border-bottom: 1px solid #f1f5f9;
+    white-space: nowrap;
+}
+.payments-table th {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+.table-status {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.table-status.success {
+    background: #dcfce7;
+    color: #166534;
+}
+.table-status.failed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.table-status.pending,
+.table-status.initialized {
+    background: #fef9c3;
+    color: #854d0e;
+}
+.verify-btn {
+    border: 1px solid #0a3c28;
+    color: #0a3c28;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 12px;
+}
+@media (max-width: 980px) {
+    .payments-grid { grid-template-columns: 1fr; }
+    .payment-form .row { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Paystack Payments</h1>
+        <p>Create payment links, launch checkout, and verify transactions.</p>
+    </div>
+</div>
+
+<div class="payments-page">
+    <div class="payments-status">
+        <div>
+            <strong>Paystack Integration</strong>
+            <p style="margin:4px 0 0; color:#6b7280; font-size:13px;">
+                {{ "Keys detected and ready for transactions." if paystack_enabled else "Set PAYSTACK_SECRET_KEY and PAYSTACK_PUBLIC_KEY in your environment." }}
+            </p>
+        </div>
+        <span class="status-pill {{ 'on' if paystack_enabled else 'off' }}">
+            <i class="fa-solid {{ 'fa-check-circle' if paystack_enabled else 'fa-triangle-exclamation' }}"></i>
+            {{ "Configured" if paystack_enabled else "Not Configured" }}
+        </span>
+    </div>
+
+    <div class="payments-grid">
+        <section class="panel">
+            <h3>Initialize Transaction</h3>
+            <div id="paymentAlert" class="alert"></div>
+            <form id="paymentForm" class="payment-form">
+                <div class="row">
+                    <div>
+                        <label for="payEmail">Customer Email</label>
+                        <input type="email" id="payEmail" name="email" required placeholder="client@example.com">
+                    </div>
+                    <div>
+                        <label for="payName">Customer Name</label>
+                        <input type="text" id="payName" name="customer_name" placeholder="Client name">
+                    </div>
+                </div>
+                <div class="row">
+                    <div>
+                        <label for="payAmount">Amount (KES)</label>
+                        <input type="number" id="payAmount" name="amount" min="1" step="0.01" required placeholder="150000">
+                    </div>
+                    <div>
+                        <label for="payPhone">Phone</label>
+                        <input type="text" id="payPhone" name="phone" placeholder="+2547...">
+                    </div>
+                </div>
+                <div>
+                    <label for="payNote">Payment Note</label>
+                    <textarea id="payNote" name="note" placeholder="Plot reservation fee for Juja phase 2"></textarea>
+                </div>
+                <button type="submit" id="initButton" {{ "disabled" if not paystack_enabled else "" }}>
+                    Initialize Payment
+                </button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h3>Latest Transaction Output</h3>
+            <div id="paymentResult" class="payment-result">
+                <p><strong>Reference:</strong> <span id="resultReference">-</span></p>
+                <p><strong>Checkout URL:</strong> <a id="resultUrl" href="#" target="_blank" rel="noopener noreferrer">Open link</a></p>
+                <p><strong>Status:</strong> <span id="resultStatus">initialized</span></p>
+                <p style="margin-top:10px;">
+                    <button type="button" class="verify-btn" id="verifyLatestBtn">Verify This Transaction</button>
+                </p>
+            </div>
+            <p style="color:#6b7280; font-size:13px; margin-top:12px;">
+                When checkout succeeds, click verify to sync the transaction status from Paystack into MongoDB.
+            </p>
+        </section>
+    </div>
+
+    <section class="panel">
+        <h3>Recent Transactions</h3>
+        <div class="table-wrap">
+            <table class="payments-table" id="paymentsTable">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Email</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr data-reference="{{ payment.reference }}">
+                        <td>{{ payment.reference }}</td>
+                        <td>{{ payment.email or "-" }}</td>
+                        <td>{{ payment.currency or "KES" }} {{ "{:,.2f}".format(payment.amount_major or 0) }}</td>
+                        <td>
+                            <span class="table-status {{ payment.status or 'pending' }}">{{ payment.status or "pending" }}</span>
+                        </td>
+                        <td>
+                            {% if payment.created_at %}
+                                {{ payment.created_at.strftime("%Y-%m-%d %H:%M") if payment.created_at.strftime else payment.created_at }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td><button type="button" class="verify-btn verify-row-btn">Verify</button></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:#6b7280;">No transactions yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% if paystack_public_key %}
+<script src="https://js.paystack.co/v1/inline.js"></script>
+{% endif %}
+<script>
+(() => {
+    const form = document.getElementById('paymentForm');
+    const initBtn = document.getElementById('initButton');
+    const alertBox = document.getElementById('paymentAlert');
+    const resultBox = document.getElementById('paymentResult');
+    const resultRef = document.getElementById('resultReference');
+    const resultUrl = document.getElementById('resultUrl');
+    const resultStatus = document.getElementById('resultStatus');
+    const verifyLatestBtn = document.getElementById('verifyLatestBtn');
+    const table = document.getElementById('paymentsTable');
+    let latestReference = '';
+
+    function showAlert(type, message) {
+        alertBox.className = `alert show ${type}`;
+        alertBox.textContent = message;
+    }
+
+    async function verifyReference(reference, sourceRow = null) {
+        if (!reference) return;
+        try {
+            const response = await fetch('/admin/payments/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reference })
+            });
+            const data = await response.json();
+            if (!data.success) {
+                showAlert('error', data.message || 'Verification failed');
+                return;
+            }
+
+            showAlert('success', `Transaction ${reference} verified: ${data.payment.status}`);
+            resultStatus.textContent = data.payment.status;
+
+            const row = sourceRow || (table ? table.querySelector(`tr[data-reference="${reference}"]`) : null);
+            if (row) {
+                const statusBadge = row.querySelector('.table-status');
+                if (statusBadge) {
+                    statusBadge.textContent = data.payment.status;
+                    statusBadge.className = `table-status ${data.payment.status}`;
+                }
+            }
+        } catch (error) {
+            showAlert('error', 'Network error while verifying transaction');
+        }
+    }
+
+    if (verifyLatestBtn) {
+        verifyLatestBtn.addEventListener('click', () => verifyReference(latestReference));
+    }
+
+    if (table) {
+        table.addEventListener('click', (event) => {
+            const btn = event.target.closest('.verify-row-btn');
+            if (!btn) return;
+            const row = btn.closest('tr[data-reference]');
+            if (!row) return;
+            verifyReference(row.dataset.reference, row);
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!initBtn) return;
+
+            const payload = {
+                email: form.email.value.trim(),
+                customer_name: form.customer_name.value.trim(),
+                amount: form.amount.value,
+                phone: form.phone.value.trim(),
+                note: form.note.value.trim(),
+                currency: 'KES'
+            };
+
+            initBtn.disabled = true;
+            initBtn.textContent = 'Initializing...';
+
+            try {
+                const response = await fetch('/admin/payments/initialize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+
+                if (!data.success) {
+                    showAlert('error', data.message || 'Failed to initialize payment');
+                    return;
+                }
+
+                latestReference = data.reference;
+                resultBox.classList.add('active');
+                resultRef.textContent = data.reference;
+                resultUrl.href = data.authorization_url || '#';
+                resultUrl.textContent = data.authorization_url || 'Open link';
+                resultStatus.textContent = 'initialized';
+                showAlert('success', 'Payment initialized. Proceed to checkout or share the link.');
+
+                if (window.PaystackPop && data.public_key && data.access_code) {
+                    const handler = window.PaystackPop.setup({
+                        key: data.public_key,
+                        email: payload.email,
+                        amount: Math.round(Number(payload.amount || 0) * 100),
+                        ref: data.reference,
+                        access_code: data.access_code,
+                        callback: function(resp) {
+                            verifyReference(resp.reference || data.reference);
+                        }
+                    });
+                    handler.openIframe();
+                } else if (data.authorization_url) {
+                    window.open(data.authorization_url, '_blank', 'noopener');
+                }
+            } catch (error) {
+                showAlert('error', 'Network error while initializing payment');
+            } finally {
+                initBtn.disabled = false;
+                initBtn.textContent = 'Initialize Payment';
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}
