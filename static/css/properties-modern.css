@@ -102,6 +102,17 @@
     background: #fcfefd;
 }
 
+.toolbar-range input[type="range"] {
+    padding: 0;
+    accent-color: #0a3c28;
+}
+
+.toolbar-range small {
+    color: #5b736c;
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
 .toolbar-actions {
     display: flex;
     align-items: flex-end;
@@ -199,6 +210,23 @@
 .results-tip {
     color: #5f766f;
     font-size: 0.86rem;
+}
+
+.active-filter-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.active-filter-tags .tag {
+    border-radius: 999px;
+    padding: 6px 10px;
+    background: #edf6f1;
+    border: 1px solid rgba(10, 60, 40, 0.12);
+    color: #0a3c28;
+    font-size: 0.76rem;
+    font-weight: 700;
 }
 
 .no-results {

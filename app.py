@@ -463,7 +463,10 @@ def privacy_policy():
 
 @app.route("/properties")
 def properties_page():
-    properties = list(db.properties.find({"status": {"$ne": "draft"}}).sort("_id", -1))
+    properties = safe_db_operation(
+        lambda: list(db.properties.find({"status": {"$ne": "draft"}}).sort("_id", -1)),
+        []
+    )
     return render_template("properties.html", properties=properties)
 @app.route("/properties/<property_id>")
 def public_property_details(property_id):
@@ -482,7 +485,10 @@ def public_property_details(property_id):
 @app.route("/news")
 def news():
     """News & Blogs page - show published articles"""
-    articles = list(db.news.find({"status": "published"}).sort("created_at", -1))
+    articles = safe_db_operation(
+        lambda: list(db.news.find({"status": "published"}).sort("created_at", -1)),
+        []
+    )
     for a in articles:
         a["_id"] = str(a["_id"])
     return render_template("news.html", articles=articles)
@@ -513,7 +519,10 @@ def news_detail(slug):
 @app.route("/legal-guides")
 def legal_guides():
     """Legal Guides page - show published guides"""
-    guides = list(db.legal_guides.find({"status": "published"}).sort("created_at", -1))
+    guides = safe_db_operation(
+        lambda: list(db.legal_guides.find({"status": "published"}).sort("created_at", -1)),
+        []
+    )
     for g in guides:
         g["_id"] = str(g["_id"])
     return render_template("legal_guides.html", guides=guides)

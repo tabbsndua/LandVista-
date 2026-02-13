@@ -112,7 +112,8 @@
 
                     <label>
                         Message
-                        <textarea name="message" rows="6" required placeholder="Tell us your goal, budget, and preferred area"></textarea>
+                        <textarea name="message" rows="6" maxlength="900" required placeholder="Tell us your goal, budget, and preferred area"></textarea>
+                        <small id="contactMessageCounter">0 / 900</small>
                     </label>
 
                     <button type="submit" id="contactSubmitBtn">Send Inquiry</button>
@@ -200,7 +201,8 @@
 
             <label>
                 Additional Notes
-                <textarea name="notes" rows="4" placeholder="Anything we should prepare before your visit"></textarea>
+                <textarea name="notes" rows="4" maxlength="700" placeholder="Anything we should prepare before your visit"></textarea>
+                <small id="visitNotesCounter">0 / 700</small>
             </label>
 
             <div class="modal-footer">

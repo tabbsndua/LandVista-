@@ -144,6 +144,45 @@
         </div>
     </section>
 
+    <section class="section-shell comparison-section">
+        <div class="section-header reveal" data-reveal>
+            <p class="section-tag">Planning Support</p>
+            <h2>Compare strategies before selecting a plot.</h2>
+        </div>
+        <div class="comparison-table-wrap reveal" data-reveal>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Strategy</th>
+                        <th>Best For</th>
+                        <th>Typical Timeline</th>
+                        <th>Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Buy and Hold</td>
+                        <td>Long-term investors</td>
+                        <td>3 - 8 years</td>
+                        <td>Low to Medium</td>
+                    </tr>
+                    <tr>
+                        <td>Installment Build Plan</td>
+                        <td>Income planning buyers</td>
+                        <td>1 - 4 years</td>
+                        <td>Medium</td>
+                    </tr>
+                    <tr>
+                        <td>Speculative Growth Zone</td>
+                        <td>High-upside seekers</td>
+                        <td>2 - 6 years</td>
+                        <td>Medium to High</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <section class="section-shell calculator-section">
         <div class="calculator-wrap glass-card reveal" data-reveal>
             <div>
@@ -166,6 +205,22 @@
                 </label>
                 <button type="submit" class="hero-btn hero-btn-primary">Calculate Projection</button>
                 <div class="calculator-result" id="calculatorResult">Projected value: KES 2,643,000</div>
+            </form>
+        </div>
+    </section>
+
+    <section class="section-shell guide-section">
+        <div class="guide-panel reveal" data-reveal>
+            <div>
+                <p class="section-tag">Free Guide</p>
+                <h2>Get our land due diligence checklist.</h2>
+                <p>Receive a concise PDF guide covering title checks, legal steps, site inspection notes, and payment safety tips.</p>
+            </div>
+            <form id="guideRequestForm" class="guide-request-form">
+                <input type="text" name="name" placeholder="Full name" required>
+                <input type="email" name="email" placeholder="Email address" required>
+                <button type="submit" class="hero-btn hero-btn-primary">Send Guide to My Email</button>
+                <p id="guideRequestFeedback" class="guide-feedback"></p>
             </form>
         </div>
     </section>
@@ -357,6 +412,10 @@
         <p id="consultationFeedback" class="consult-feedback"></p>
     </div>
 </div>
+{% endblock %}
+
+{% block socket_script %}
+<script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 {% endblock %}
 
 {% block extra_js %}

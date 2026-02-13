@@ -6,6 +6,9 @@
     const availabilitySelect = document.getElementById("availabilityFilter");
     const priceSelect = document.getElementById("priceFilter");
     const sortSelect = document.getElementById("sortFilter");
+    const maxBudgetRange = document.getElementById("maxBudgetRange");
+    const maxBudgetValue = document.getElementById("maxBudgetValue");
+    const activeFilterTags = document.getElementById("activeFilterTags");
     const applyBtn = document.getElementById("applyFiltersBtn");
     const resetBtn = document.getElementById("resetFiltersBtn");
     const noResultResetBtn = document.getElementById("noResultResetBtn");
@@ -134,6 +137,7 @@
         const status = (availabilitySelect?.value || "available").toLowerCase();
         const priceRange = priceSelect?.value || "";
         const sortBy = sortSelect?.value || "latest";
+        const maxBudget = Number(maxBudgetRange?.value || 10000000);
 
         filteredProperties = allProperties.filter((property) => {
             const title = String(property.title || "").toLowerCase();
@@ -150,6 +154,7 @@
             if (priceRange === "500000-1000000") priceMatch = price > 500000 && price <= 1000000;
             if (priceRange === "1000000-5000000") priceMatch = price > 1000000 && price <= 5000000;
             if (priceRange === "5000000+") priceMatch = price > 5000000;
+            if (price > maxBudget) priceMatch = false;
 
             return keywordMatch && statusMatch && priceMatch;
         });
@@ -165,6 +170,20 @@
         }
 
         renderProperties(filteredProperties);
+        updateActiveFilterTags(keyword, status, priceRange, maxBudget);
+    }
+
+    function updateActiveFilterTags(keyword, status, priceRange, maxBudget) {
+        if (!activeFilterTags) return;
+        const tags = [];
+        if (keyword) tags.push(`Keyword: ${keyword}`);
+        if (status && status !== "all") tags.push(`Status: ${status}`);
+        if (priceRange) tags.push(`Range: ${priceRange.replace("-", " to ")}`);
+        if (Number.isFinite(maxBudget) && maxBudget < 10000000) {
+            tags.push(`Max budget: KSh ${maxBudget.toLocaleString()}`);
+        }
+
+        activeFilterTags.innerHTML = tags.map((item) => `<span class="tag">${escapeHTML(item)}</span>`).join("");
     }
 
     async function fetchProperties() {
@@ -250,6 +269,8 @@
             if (availabilitySelect) availabilitySelect.value = "available";
             if (priceSelect) priceSelect.value = "";
             if (sortSelect) sortSelect.value = "latest";
+            if (maxBudgetRange) maxBudgetRange.value = "10000000";
+            if (maxBudgetValue) maxBudgetValue.textContent = "Any budget";
             syncChips("available");
             applyFilters();
         });
@@ -269,6 +290,13 @@
 
         priceSelect?.addEventListener("change", applyFilters);
         sortSelect?.addEventListener("change", applyFilters);
+        maxBudgetRange?.addEventListener("input", () => {
+            const maxBudget = Number(maxBudgetRange.value || 10000000);
+            if (maxBudgetValue) {
+                maxBudgetValue.textContent = maxBudget >= 10000000 ? "Any budget" : `Up to KSh ${maxBudget.toLocaleString()}`;
+            }
+            applyFilters();
+        });
 
         chips.forEach((chip) => {
             chip.addEventListener("click", () => {
@@ -325,6 +353,9 @@
 
     allProperties = parseInitialCards();
     filteredProperties = [...allProperties];
+    if (maxBudgetValue && maxBudgetRange) {
+        maxBudgetValue.textContent = Number(maxBudgetRange.value) >= 10000000 ? "Any budget" : `Up to KSh ${Number(maxBudgetRange.value).toLocaleString()}`;
+    }
     syncChips((availabilitySelect?.value || "available").toLowerCase());
     setView("grid");
     setupEvents();

@@ -12,6 +12,8 @@
     const orbB = document.querySelector(".hero-gradient-orb-b");
     const calculatorForm = document.getElementById("roiCalculatorForm");
     const calculatorResult = document.getElementById("calculatorResult");
+    const guideRequestForm = document.getElementById("guideRequestForm");
+    const guideRequestFeedback = document.getElementById("guideRequestFeedback");
     const consultationForm = document.getElementById("consultationForm");
     const consultationFeedback = document.getElementById("consultationFeedback");
     const consultationModal = document.getElementById("consultationModal");
@@ -532,6 +534,58 @@
         });
     }
 
+    function setupGuideRequestForm() {
+        if (!guideRequestForm || !guideRequestFeedback) {
+            return;
+        }
+
+        guideRequestForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            guideRequestFeedback.textContent = "";
+
+            const formData = new FormData();
+            const name = String(guideRequestForm.querySelector('input[name="name"]')?.value || "").trim();
+            const email = String(guideRequestForm.querySelector('input[name="email"]')?.value || "").trim();
+            formData.append("name", name);
+            formData.append("email", email);
+            formData.append("phone", "Not provided");
+            formData.append("property", "Due diligence checklist");
+            formData.append("priority", "medium");
+            formData.append("message", "Requesting the land due diligence checklist guide.");
+
+            const submitBtn = guideRequestForm.querySelector("button[type='submit']");
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Sending...";
+            }
+
+            try {
+                const response = await fetch("/inquiries/add", {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || "Unable to submit request");
+                }
+
+                guideRequestForm.reset();
+                guideRequestFeedback.textContent = "Request received. Our team will send the guide to your email.";
+            } catch (error) {
+                guideRequestFeedback.textContent = error.message || "Unable to send request right now.";
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Send Guide to My Email";
+                }
+            }
+        });
+    }
+
     function setupRealtimeRefresh() {
         if (typeof io !== "function") {
             return;
@@ -579,6 +633,7 @@
     setupConsultationForm();
     setupCalculator();
     setupNewsletter();
+    setupGuideRequestForm();
     setupRealtimeRefresh();
     scheduleRefreshLoop();
 })();

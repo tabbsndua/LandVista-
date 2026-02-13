@@ -68,6 +68,12 @@
                 </select>
             </label>
 
+            <label class="toolbar-field toolbar-range">
+                <span>Max Budget</span>
+                <input type="range" id="maxBudgetRange" min="500000" max="10000000" step="100000" value="10000000">
+                <small id="maxBudgetValue">Any budget</small>
+            </label>
+
             <div class="toolbar-actions">
                 <button class="toolbar-btn primary" id="applyFiltersBtn" type="button">Apply</button>
                 <button class="toolbar-btn ghost" id="resetFiltersBtn" type="button">Reset</button>
@@ -93,6 +99,7 @@
             <p id="resultsCounter">{{ properties|length }} properties</p>
             <p class="results-tip">Tip: Click <strong>Quick View</strong> for a preview modal without leaving this page.</p>
         </div>
+        <div id="activeFilterTags" class="active-filter-tags"></div>
 
         <div id="noResultsMessage" class="no-results" style="display:none;">
             <h3>No properties found</h3>
@@ -160,6 +167,10 @@
         <div id="quickViewContent"></div>
     </div>
 </div>
+{% endblock %}
+
+{% block socket_script %}
+<script defer src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 {% endblock %}
 
 {% block extra_js %}

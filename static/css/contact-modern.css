@@ -273,6 +273,13 @@
     background: #fcfefd;
 }
 
+.modern-contact-form small,
+.visit-form small {
+    color: #6a7f79;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
 #contactSubmitBtn {
     border: none;
     border-radius: 10px;

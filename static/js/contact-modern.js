@@ -12,6 +12,8 @@
     const visitSubmitBtn = document.getElementById("visitSubmitBtn");
     const visitSuccess = document.getElementById("visitSuccess");
     const visitError = document.getElementById("visitError");
+    const contactMessageCounter = document.getElementById("contactMessageCounter");
+    const visitNotesCounter = document.getElementById("visitNotesCounter");
 
     function showAlert(target, message) {
         if (!target) return;
@@ -30,6 +32,12 @@
         visitModal.classList.remove("open");
         visitModal.setAttribute("aria-hidden", "true");
         document.body.style.overflow = "";
+    }
+
+    function updateCounter(input, counter, limit) {
+        if (!input || !counter) return;
+        const length = String(input.value || "").length;
+        counter.textContent = `${length} / ${limit}`;
     }
 
     function openVisitModal() {
@@ -75,6 +83,10 @@
             }
         }
     });
+
+    const contactMessageInput = contactForm?.querySelector('textarea[name="message"]');
+    contactMessageInput?.addEventListener("input", () => updateCounter(contactMessageInput, contactMessageCounter, 900));
+    updateCounter(contactMessageInput, contactMessageCounter, 900);
 
     openVisitModalBtn?.addEventListener("click", openVisitModal);
     visitCloseBtn?.addEventListener("click", closeVisitModal);
@@ -135,4 +147,8 @@
             }
         }
     });
+
+    const visitNotesInput = visitForm?.querySelector('textarea[name="notes"]');
+    visitNotesInput?.addEventListener("input", () => updateCounter(visitNotesInput, visitNotesCounter, 700));
+    updateCounter(visitNotesInput, visitNotesCounter, 700);
 })();

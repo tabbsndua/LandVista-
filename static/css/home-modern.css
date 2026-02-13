@@ -379,6 +379,44 @@
     font-size: 0.84rem;
 }
 
+.comparison-section {
+    padding-top: 22px;
+}
+
+.comparison-table-wrap {
+    background: #ffffff;
+    border: 1px solid rgba(10, 60, 40, 0.12);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 26px rgba(10, 60, 40, 0.08);
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.comparison-table th,
+.comparison-table td {
+    text-align: left;
+    padding: 13px 14px;
+    border-bottom: 1px solid rgba(10, 60, 40, 0.08);
+    color: #43625a;
+    font-size: 0.9rem;
+}
+
+.comparison-table th {
+    background: #f6faf8;
+    color: #0a3c28;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.comparison-table tbody tr:hover {
+    background: #f9fcfa;
+}
+
 .calculator-section {
     padding-top: 18px;
 }
@@ -417,6 +455,53 @@
     border-radius: 10px;
     background: rgba(10, 60, 40, 0.08);
     color: #0a3c28;
+    font-weight: 700;
+}
+
+.guide-section {
+    padding-top: 20px;
+}
+
+.guide-panel {
+    border-radius: 20px;
+    border: 1px solid rgba(10, 60, 40, 0.12);
+    background: linear-gradient(145deg, #ffffff 0%, #f5faf7 100%);
+    box-shadow: 0 14px 30px rgba(10, 60, 40, 0.08);
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 14px;
+    align-items: center;
+}
+
+.guide-panel h2 {
+    font-family: "Sora", "Manrope", sans-serif;
+    color: #0a3c28;
+    font-size: clamp(1.3rem, 2.5vw, 2rem);
+    margin-bottom: 10px;
+}
+
+.guide-panel p {
+    color: #4f6962;
+    line-height: 1.7;
+}
+
+.guide-request-form {
+    display: grid;
+    gap: 10px;
+}
+
+.guide-request-form input {
+    border: 1px solid rgba(10, 60, 40, 0.2);
+    border-radius: 12px;
+    padding: 11px 12px;
+    background: #ffffff;
+}
+
+.guide-feedback {
+    min-height: 18px;
+    color: #0a3c28;
+    font-size: 0.84rem;
     font-weight: 700;
 }
 
@@ -867,8 +952,17 @@
     }
 
     .newsletter-glass,
-    .calculator-wrap {
+    .calculator-wrap,
+    .guide-panel {
         grid-template-columns: 1fr;
+    }
+
+    .comparison-table-wrap {
+        overflow-x: auto;
+    }
+
+    .comparison-table {
+        min-width: 640px;
     }
 }
 
