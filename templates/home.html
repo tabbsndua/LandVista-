@@ -4,7 +4,7 @@
 {% block body_class %}home-modern-body{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/home-modern.css') }}?v={{ range(1, 10000) | random }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home-modern.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
         <div class="hero-gradient-orb hero-gradient-orb-b"></div>
 
         <div class="modern-hero-inner">
-            <div class="hero-copy reveal">
+            <div class="hero-copy reveal" data-reveal>
                 <p class="hero-eyebrow">Verified Land Investments</p>
                 <h1>Acquire strategic land opportunities with confidence and speed.</h1>
                 <p class="hero-lead">
@@ -23,7 +23,7 @@
                 </p>
                 <div class="hero-actions">
                     <a href="/properties" class="hero-btn hero-btn-primary">Browse Available Plots</a>
-                    <a href="/contact" class="hero-btn hero-btn-ghost">Talk to an Advisor</a>
+                    <button class="hero-btn hero-btn-ghost" type="button" data-modal-open="consultationModal">Get Investment Plan</button>
                 </div>
                 <div class="hero-badges">
                     <span><i class="fas fa-shield-alt"></i> Verified Titles</span>
@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <div class="hero-glass-card reveal" data-reveal-delay="120">
+            <div class="hero-glass-card reveal" data-reveal data-reveal-delay="120">
                 <p class="glass-label">Investment Snapshot</p>
                 <h3>Why investors choose LandVista</h3>
                 <div class="hero-stats-mini">
@@ -54,28 +54,36 @@
         </div>
     </section>
 
+    <section class="section-shell trust-strip reveal" data-reveal>
+        <div class="trust-chip"><i class="fas fa-file-contract"></i> Clean Documentation</div>
+        <div class="trust-chip"><i class="fas fa-user-shield"></i> Advisory Support</div>
+        <div class="trust-chip"><i class="fas fa-map"></i> Strategic Locations</div>
+        <div class="trust-chip"><i class="fas fa-wallet"></i> Flexible Payment Plans</div>
+        <div class="trust-chip"><i class="fas fa-headset"></i> Fast Response Team</div>
+    </section>
+
     <section class="section-shell modern-feature-section">
-        <div class="section-header reveal">
+        <div class="section-header reveal" data-reveal>
             <p class="section-tag">Core Value</p>
             <h2>More than listings. A full investment support system.</h2>
         </div>
         <div class="feature-grid">
-            <article class="feature-card glass-card reveal">
+            <article class="feature-card glass-card reveal" data-reveal>
                 <i class="fas fa-file-signature"></i>
                 <h3>Legal-First Verification</h3>
                 <p>Every property is screened for title authenticity, ownership clarity, and legal readiness before publication.</p>
             </article>
-            <article class="feature-card glass-card reveal" data-reveal-delay="100">
+            <article class="feature-card glass-card reveal" data-reveal data-reveal-delay="100">
                 <i class="fas fa-map-marked-alt"></i>
                 <h3>Growth-Focused Locations</h3>
                 <p>Access emerging corridors with strong infrastructure trends and long-term appreciation potential.</p>
             </article>
-            <article class="feature-card glass-card reveal" data-reveal-delay="180">
+            <article class="feature-card glass-card reveal" data-reveal data-reveal-delay="180">
                 <i class="fas fa-user-tie"></i>
                 <h3>Dedicated Advisor Support</h3>
                 <p>From first inquiry to transfer completion, our team guides each stage of your purchase journey.</p>
             </article>
-            <article class="feature-card glass-card reveal" data-reveal-delay="260">
+            <article class="feature-card glass-card reveal" data-reveal data-reveal-delay="260">
                 <i class="fas fa-wallet"></i>
                 <h3>Structured Payment Flexibility</h3>
                 <p>Choose payment options tailored to your timeline while maintaining clarity on each installment milestone.</p>
@@ -84,27 +92,27 @@
     </section>
 
     <section class="section-shell modern-process-section">
-        <div class="section-header reveal">
+        <div class="section-header reveal" data-reveal>
             <p class="section-tag">Simple Process</p>
             <h2>How LandVista gets you from interest to ownership.</h2>
         </div>
         <div class="process-grid">
-            <div class="process-step reveal">
+            <div class="process-step reveal" data-reveal>
                 <span>01</span>
                 <h3>Discover</h3>
                 <p>Review verified listings filtered by location, budget, and land use goals.</p>
             </div>
-            <div class="process-step reveal" data-reveal-delay="110">
+            <div class="process-step reveal" data-reveal data-reveal-delay="110">
                 <span>02</span>
                 <h3>Validate</h3>
                 <p>Book a site visit and confirm details with our advisory team before commitment.</p>
             </div>
-            <div class="process-step reveal" data-reveal-delay="220">
+            <div class="process-step reveal" data-reveal data-reveal-delay="220">
                 <span>03</span>
                 <h3>Secure</h3>
                 <p>Finalize payment and documentation with transparent guidance at each step.</p>
             </div>
-            <div class="process-step reveal" data-reveal-delay="330">
+            <div class="process-step reveal" data-reveal data-reveal-delay="330">
                 <span>04</span>
                 <h3>Own</h3>
                 <p>Complete transfer and receive support post-purchase as your investment grows.</p>
@@ -112,8 +120,58 @@
         </div>
     </section>
 
+    <section class="section-shell market-insights-section">
+        <div class="section-header reveal" data-reveal>
+            <p class="section-tag">Market Insights</p>
+            <h2>High-potential investment zones to watch in 2026.</h2>
+        </div>
+        <div class="insights-grid">
+            <article class="insight-card reveal" data-reveal>
+                <h3>Juja Belt</h3>
+                <p>University-driven demand and expanding access roads continue to attract high-volume buyers.</p>
+                <strong>Trend: Strong mid-term growth</strong>
+            </article>
+            <article class="insight-card reveal" data-reveal data-reveal-delay="110">
+                <h3>Matuu Corridor</h3>
+                <p>Infrastructure upgrades and affordable entry points are creating a favorable investor mix.</p>
+                <strong>Trend: Value appreciation pockets</strong>
+            </article>
+            <article class="insight-card reveal" data-reveal data-reveal-delay="220">
+                <h3>Kivandini Region</h3>
+                <p>Improved connectivity and utility expansion support long-term residential development use cases.</p>
+                <strong>Trend: Long-hold upside</strong>
+            </article>
+        </div>
+    </section>
+
+    <section class="section-shell calculator-section">
+        <div class="calculator-wrap glass-card reveal" data-reveal>
+            <div>
+                <p class="section-tag">Investment Tool</p>
+                <h2>Estimate your potential land value growth.</h2>
+                <p class="section-subcopy">Quickly project future value using your budget, expected annual growth, and timeline.</p>
+            </div>
+            <form id="roiCalculatorForm" class="calculator-form">
+                <label>
+                    Current Budget (KES)
+                    <input type="number" id="calcBudget" min="100000" step="50000" value="1500000" required>
+                </label>
+                <label>
+                    Annual Growth (%)
+                    <input type="number" id="calcGrowth" min="1" max="40" step="0.5" value="12" required>
+                </label>
+                <label>
+                    Investment Horizon (years)
+                    <input type="number" id="calcYears" min="1" max="30" step="1" value="5" required>
+                </label>
+                <button type="submit" class="hero-btn hero-btn-primary">Calculate Projection</button>
+                <div class="calculator-result" id="calculatorResult">Projected value: KES 2,643,000</div>
+            </form>
+        </div>
+    </section>
+
     <section class="section-shell modern-listings-section" id="properties">
-        <div class="section-header reveal">
+        <div class="section-header reveal" data-reveal>
             <p class="section-tag">Featured Plots</p>
             <h2>Verified land opportunities available now.</h2>
             <p class="section-subcopy">Fresh inventory synced in real-time from the admin dashboard.</p>
@@ -121,33 +179,33 @@
 
         <div class="modern-land-grid" id="landGrid">
             {% for p in properties[:3] %}
-            <article class="modern-land-card glass-card reveal">
+            <article class="modern-land-card glass-card reveal" data-reveal>
                 <div class="modern-land-media">
                     {% if p.get('media') %}
                         {% if p.media is string %}
                             {% if p.media.endswith(('.mp4', '.webm', '.mov')) %}
-                            <video muted playsinline loop>
+                            <video muted playsinline loop preload="metadata">
                                 <source src="{{ url_for('static', filename='uploads/' ~ p.media) }}">
                             </video>
                             {% else %}
-                            <img src="{{ url_for('static', filename='uploads/' ~ p.media) }}" alt="{{ p.title }}">
+                            <img loading="lazy" src="{{ url_for('static', filename='uploads/' ~ p.media) }}" alt="{{ p.title }}">
                             {% endif %}
                         {% else %}
                             {% set first_media = p.media[0] if p.media else None %}
                             {% if first_media %}
                                 {% if first_media.endswith(('.mp4', '.webm', '.mov')) %}
-                                <video muted playsinline loop>
+                                <video muted playsinline loop preload="metadata">
                                     <source src="{{ url_for('static', filename='uploads/' ~ first_media) }}">
                                 </video>
                                 {% else %}
-                                <img src="{{ url_for('static', filename='uploads/' ~ first_media) }}" alt="{{ p.title }}">
+                                <img loading="lazy" src="{{ url_for('static', filename='uploads/' ~ first_media) }}" alt="{{ p.title }}">
                                 {% endif %}
                             {% else %}
-                            <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}">
+                            <img loading="lazy" src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}">
                             {% endif %}
                         {% endif %}
                     {% else %}
-                    <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}">
+                    <img loading="lazy" src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}">
                     {% endif %}
                 </div>
                 <div class="modern-land-body">
@@ -167,26 +225,26 @@
             {% endfor %}
         </div>
 
-        <div class="section-cta reveal">
+        <div class="section-cta reveal" data-reveal>
             <a href="/properties" class="hero-btn hero-btn-primary">Explore All Properties</a>
         </div>
     </section>
 
     <section class="section-shell modern-stats-section">
         <div class="modern-stats-grid">
-            <article class="modern-stat glass-card reveal">
+            <article class="modern-stat glass-card reveal" data-reveal>
                 <h3 data-counter-target="15">15+</h3>
                 <p>Properties sold</p>
             </article>
-            <article class="modern-stat glass-card reveal" data-reveal-delay="90">
+            <article class="modern-stat glass-card reveal" data-reveal data-reveal-delay="90">
                 <h3 data-counter-target="20">20+</h3>
                 <p>Acres listed</p>
             </article>
-            <article class="modern-stat glass-card reveal" data-reveal-delay="180">
+            <article class="modern-stat glass-card reveal" data-reveal data-reveal-delay="180">
                 <h3 data-counter-target="5000000">KSh 5M+</h3>
                 <p>Total property value</p>
             </article>
-            <article class="modern-stat glass-card reveal" data-reveal-delay="270">
+            <article class="modern-stat glass-card reveal" data-reveal data-reveal-delay="270">
                 <h3 data-counter-target="98">98%</h3>
                 <p>Client satisfaction</p>
             </article>
@@ -194,7 +252,7 @@
     </section>
 
     <section class="section-shell modern-testimonials-section">
-        <div class="section-header reveal">
+        <div class="section-header reveal" data-reveal>
             <p class="section-tag">Client Stories</p>
             <h2>Trusted by families and investors across Kenya.</h2>
         </div>
@@ -222,7 +280,7 @@
         </div>
 
         {% if testimonials|length > 1 %}
-        <div class="testimonials-controls reveal">
+        <div class="testimonials-controls reveal" data-reveal>
             <button type="button" id="testimonialsPrev" aria-label="Previous testimonial"><i class="fas fa-chevron-left"></i></button>
             <p><span id="testimonialsCount">1</span>/<span id="testimonialsTotal">{{ testimonials|length }}</span></p>
             <button type="button" id="testimonialsNext" aria-label="Next testimonial"><i class="fas fa-chevron-right"></i></button>
@@ -230,8 +288,33 @@
         {% endif %}
     </section>
 
+    <section class="section-shell faq-section">
+        <div class="section-header reveal" data-reveal>
+            <p class="section-tag">FAQ</p>
+            <h2>Answers to common land investment questions.</h2>
+        </div>
+        <div class="faq-accordion">
+            <article class="faq-item reveal" data-reveal>
+                <button class="faq-toggle" type="button">How do I verify ownership before purchase?</button>
+                <div class="faq-content">We provide due diligence support including title checks, ownership records, and legal verification guidance before commitment.</div>
+            </article>
+            <article class="faq-item reveal" data-reveal data-reveal-delay="80">
+                <button class="faq-toggle" type="button">Can I buy through installments?</button>
+                <div class="faq-content">Yes. Selected projects allow staged payments aligned with your timeline. Terms are shared upfront before reservation.</div>
+            </article>
+            <article class="faq-item reveal" data-reveal data-reveal-delay="160">
+                <button class="faq-toggle" type="button">How soon can I book a site visit?</button>
+                <div class="faq-content">Most visits can be scheduled within 24 to 72 hours depending on project location and transport availability.</div>
+            </article>
+            <article class="faq-item reveal" data-reveal data-reveal-delay="240">
+                <button class="faq-toggle" type="button">Do you support first-time buyers?</button>
+                <div class="faq-content">Absolutely. We provide clear guidance for budgeting, location matching, legal process, and post-purchase planning.</div>
+            </article>
+        </div>
+    </section>
+
     <section class="section-shell modern-newsletter-section">
-        <div class="newsletter-glass reveal">
+        <div class="newsletter-glass reveal" data-reveal>
             <div>
                 <p class="section-tag">Newsletter</p>
                 <h2>Get curated land investment updates every week.</h2>
@@ -255,8 +338,27 @@
         </div>
     </section>
 </div>
+
+<div id="consultationModal" class="consult-modal" aria-hidden="true">
+    <div class="consult-modal-panel">
+        <button class="consult-close" type="button" data-modal-close="consultationModal" aria-label="Close consultation form">
+            <i class="fas fa-times"></i>
+        </button>
+        <h3>Request a Custom Investment Plan</h3>
+        <p>Share your budget and timeline. Our advisor will reach out with recommended projects.</p>
+        <form id="consultationForm" class="consultation-form">
+            <input type="text" name="name" placeholder="Full name" required>
+            <input type="email" name="email" placeholder="Email address" required>
+            <input type="tel" name="phone" placeholder="Phone number" required>
+            <input type="text" name="property" placeholder="Preferred location or property type">
+            <textarea name="message" rows="4" placeholder="Tell us your target budget and preferred timeline" required></textarea>
+            <button type="submit" class="hero-btn hero-btn-primary">Submit Request</button>
+        </form>
+        <p id="consultationFeedback" class="consult-feedback"></p>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/home-modern.js') }}?v={{ range(1, 10000) | random }}"></script>
+<script defer src="{{ url_for('static', filename='js/home-modern.js') }}"></script>
 {% endblock %}

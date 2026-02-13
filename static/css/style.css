@@ -11,6 +11,72 @@
 body {
     background-color: #f4f7f5;
     color: #1f2d27;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+.skip-link {
+    position: absolute;
+    left: -999px;
+    top: 8px;
+    background: #0a3c28;
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    z-index: 3000;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.skip-link:focus {
+    left: 12px;
+}
+
+[data-reveal] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+}
+
+[data-reveal].revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.scroll-top-btn {
+    position: fixed;
+    right: 22px;
+    bottom: 98px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(10, 60, 40, 0.2);
+    background: #ffffff;
+    color: #0a3c28;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 18px rgba(10, 60, 40, 0.16);
+    z-index: 980;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: all 0.25s ease;
+}
+
+.scroll-top-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+input, select, textarea, button {
+    font: inherit;
 }
 
 /* =========================
@@ -1516,6 +1582,18 @@ nav a:hover,
 }
 
 @media (max-width: 768px) {
+    .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 6%;
+    }
+
+    .top-bar .opening-hours {
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
     .logo,
     .footer-logo {
         height: 72px;
@@ -1528,6 +1606,21 @@ nav a:hover,
 
     .footer-about {
         align-items: center;
+    }
+
+    .scroll-top-btn {
+        right: 16px;
+        bottom: 88px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
     }
 }
 

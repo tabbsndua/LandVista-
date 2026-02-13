@@ -1,405 +1,217 @@
 {% extends "base.html" %}
 
 {% block title %}Contact Us | LandVista{% endblock %}
+{% block body_class %}contact-modern-body{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/contact-modern.css') }}">
+{% endblock %}
 
 {% block content %}
-
-<!-- CONTACT HERO SECTION -->
-<section class="contact-hero">
-    <div class="contact-hero-overlay"></div>
-    <div class="contact-hero-content">
-        <h1>Get In Touch</h1>
-        <p>Have questions about our properties? Our team is here to help you find your perfect land investment.</p>
-    </div>
-</section>
-
-<!-- CONTACT INFO CARDS -->
-<section class="contact-info-section">
-    <div class="contact-info-grid">
-        <div class="info-card">
-            <div class="info-icon">
-                <i class="fas fa-phone"></i>
+<div class="contact-modern-page">
+    <section class="contact-modern-hero">
+        <div class="contact-modern-hero-overlay"></div>
+        <div class="contact-modern-hero-content" data-reveal>
+            <p class="hero-kicker">Talk to LandVista</p>
+            <h1>Get property guidance from our advisory team.</h1>
+            <p>Share your goals and budget, and we will match you with verified land options that fit your plan.</p>
+            <div class="hero-action-row">
+                <a href="tel:+254784666927" class="hero-call-btn"><i class="fas fa-phone"></i> Call Now</a>
+                <button type="button" class="hero-modal-btn" id="openVisitModalBtn"><i class="fas fa-calendar-check"></i> Book Site Visit</button>
             </div>
-            <h3>Call Us</h3>
-            <p>Speak directly with our property experts</p>
-            <p class="info-highlight">
-                <a href="tel:+254784666927">+254 784 666 927</a>
-            </p>
         </div>
+    </section>
 
-        <div class="info-card">
-            <div class="info-icon">
-                <i class="fas fa-envelope"></i>
-            </div>
-            <h3>Email Us</h3>
-            <p>Send us your inquiries anytime</p>
-            <p class="info-highlight">
-                <a href="mailto:info@landvistaproperties.com">info@landvistaproperties.com</a>
-            </p>
-        </div>
-
-        <div class="info-card">
-            <div class="info-icon">
-                <i class="fab fa-whatsapp"></i>
-            </div>
+    <section class="contact-info-cards" data-reveal>
+        <article>
+            <i class="fas fa-phone"></i>
+            <h3>Phone</h3>
+            <p><a href="tel:+254784666927">+254 784 666 927</a></p>
+        </article>
+        <article>
+            <i class="fas fa-envelope"></i>
+            <h3>Email</h3>
+            <p><a href="mailto:info@landvistaproperties.com">info@landvistaproperties.com</a></p>
+        </article>
+        <article>
+            <i class="fas fa-map-marker-alt"></i>
+            <h3>Office</h3>
+            <p>Devkesh House, 2nd Floor, Room F05</p>
+        </article>
+        <article>
+            <i class="fab fa-whatsapp"></i>
             <h3>WhatsApp</h3>
-            <p>Chat with us on WhatsApp</p>
-            <p class="info-highlight">
-                <a href="https://wa.me/254784666927" target="_blank">+254 784 666 927</a>
-            </p>
-        </div>
+            <p><a href="https://wa.me/254784666927" target="_blank" rel="noopener noreferrer">Message us directly</a></p>
+        </article>
+    </section>
 
-        <div class="info-card">
-            <div class="info-icon">
-                <i class="fas fa-map-marker-alt"></i>
-            </div>
-            <h3>Visit Us</h3>
-            <p>Come see us at our office</p>
-              <p class="info-highlight">Devkesh House, 2nd Floor<br>Room F05</p>
-        </div>
-
-        <div class="info-card">
-            <div class="info-icon">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <h3>Book Site Visit</h3>
-            <p>Schedule a site visit with our team</p>
-            <p class="info-highlight">
-                <button class="btn-link-style" onclick="openBookingModal()">Schedule Now</button>
-            </p>
-        </div>
-
-        <!-- Request Documentation and Schedule Site Visit cards removed per configuration -->
-    </div>
-</section>
-
-<!-- CONTACT FORM AND INFO SECTION -->
-<section class="contact-content-section">
-    <div class="contact-wrapper">
-        <!-- INFO SIDEBAR (LEFT) -->
-        <div class="contact-info-sidebar">
-            <div class="sidebar-card">
-                <h3><i class="fas fa-clock"></i> Operating Hours</h3>
-                <div class="hours-info">
-                    <div class="hour-row">
-                        <span class="day">Monday - Friday</span>
-                        <span class="time">9:00 AM - 6:00 PM</span>
-                    </div>
-                    <div class="hour-row">
-                        <span class="day">Saturday</span>
-                        <span class="time">9:00 AM - 4:00 PM</span>
-                    </div>
-                    <div class="hour-row">
-                        <span class="day">Sunday</span>
-                        <span class="time">Closed</span>
-                    </div>
+    <section class="contact-main-section">
+        <div class="contact-layout">
+            <aside class="contact-sidebar" data-reveal>
+                <div class="side-card">
+                    <h3>Working Hours</h3>
+                    <ul>
+                        <li><span>Mon - Fri</span> <strong>9:00 AM - 6:00 PM</strong></li>
+                        <li><span>Saturday</span> <strong>9:00 AM - 4:00 PM</strong></li>
+                        <li><span>Sunday</span> <strong>Closed</strong></li>
+                    </ul>
                 </div>
-                <p class="support-info"><i class="fas fa-headset"></i> 24/7 Online Support</p>
-            </div>
+                <div class="side-card">
+                    <h3>What to include in your message</h3>
+                    <ul class="bullet-list">
+                        <li>Preferred location</li>
+                        <li>Budget range</li>
+                        <li>Investment timeline</li>
+                        <li>Land use goal</li>
+                    </ul>
+                </div>
+                <div class="side-card highlight">
+                    <h3>Fast response promise</h3>
+                    <p>Our team responds to inquiries within 24 hours on business days.</p>
+                </div>
+            </aside>
 
-            <div class="sidebar-card">
-                <h3><i class="fas fa-tasks"></i> What We Offer</h3>
-                <ul class="offer-list">
-                    <li><i class="fas fa-check"></i> Free Site Visit Consultation</li>
-                    <li><i class="fas fa-check"></i> Expert Property Guidance</li>
-                    <li><i class="fas fa-check"></i> Flexible Payment Plans</li>
-                    <li><i class="fas fa-check"></i> Legal Documentation Support</li>
-                    <li><i class="fas fa-check"></i> 24h Response Guarantee</li>
-                </ul>
-            </div>
+            <div class="contact-form-panel" data-reveal>
+                <h2>Send us a message</h2>
+                <p>Complete the form and we will contact you with relevant options.</p>
 
-            <div class="sidebar-card highlight">
-                <h3><i class="fas fa-lightbulb"></i> Quick Tip</h3>
-                <p>Include your preferred location and budget to help us find the perfect property match for you!</p>
-            </div>
-        </div>
+                <div id="contactSuccess" class="form-alert success" style="display:none;"></div>
+                <div id="contactError" class="form-alert error" style="display:none;"></div>
 
-        <!-- FORM (RIGHT - WIDER) -->
-        <div class="contact-form-wrapper">
-            <h2>Send us a Message</h2>
-            <p class="form-subtitle">Fill out the form below and we'll get back to you as soon as possible</p>
-
-            <!-- Success Message -->
-            <div id="successMessage" class="alert alert-success" style="display:none;">
-                <i class="fas fa-check-circle"></i> Thank you! Your inquiry has been received. We'll contact you soon.
-            </div>
-
-            <!-- Error Message -->
-            <div id="errorMessage" class="alert alert-error" style="display:none;">
-                <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
-            </div>
-
-            <form id="contactForm" method="POST" action="/inquiries/add">
-
-                <div class="form-row-2">
-                    <div class="form-group">
-                        <label>Your Name *</label>
-                        <input type="text" name="name" placeholder="John Doe" required>
+                <form id="contactForm" class="modern-contact-form">
+                    <div class="form-grid two">
+                        <label>
+                            Full Name
+                            <input type="text" name="name" required placeholder="Your name">
+                        </label>
+                        <label>
+                            Email Address
+                            <input type="email" name="email" required placeholder="you@example.com">
+                        </label>
                     </div>
 
-                    <div class="form-group">
-                        <label>Email Address *</label>
-                        <input type="text" name="email" placeholder="john@example.com or inquiries.landvista.com" required>
+                    <div class="form-grid two">
+                        <label>
+                            Phone Number
+                            <input type="tel" name="phone" required placeholder="+254...">
+                        </label>
+                        <label>
+                            Priority
+                            <select name="priority">
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </label>
                     </div>
-                </div>
 
-                <div class="form-row-2">
-                    <div class="form-group">
-                        <label>Phone Number *</label>
-                        <input type="tel" name="phone" placeholder="+254 700 000000" required>
-                    </div>
+                    <label>
+                        Preferred Property / Location
+                        <input type="text" name="property" placeholder="Example: Juja residential plot">
+                    </label>
 
-                    <div class="form-group">
-                        <label>Subject *</label>
-                        <select name="property" required>
-                            <option value="">Select a subject</option>
-                            <option value="Property Inquiry">Property Inquiry</option>
-                            <option value="Schedule Site Visit">Schedule Site Visit</option>
-                            <option value="Payment Plans">Payment Plans</option>
-                            <option value="General Question">General Question</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                </div>
+                    <label>
+                        Message
+                        <textarea name="message" rows="6" required placeholder="Tell us your goal, budget, and preferred area"></textarea>
+                    </label>
 
-                <div class="form-group">
-                    <label>Property of Interest (Optional)</label>
-                    <input type="text" name="last_name" placeholder="e.g., Agricultural Land - Naivasha">
-                </div>
-
-                <div class="form-group">
-                    <label>Message *</label>
-                    <textarea name="message" rows="5" placeholder="Tell us how we can help you..." required></textarea>
-                </div>
-
-                <button type="submit" class="btn-submit-contact">Send Message</button>
-
-            </form>
-        </div>
-    </div>
-</section>
-
-<!-- FAQ SECTION -->
-<section class="contact-faq-section">
-    <h2>Frequently Asked Questions</h2>
-    <div class="faq-grid">
-        <div class="faq-card">
-            <h4>How long does site visit take?</h4>
-            <p>A typical site visit takes 1-2 hours depending on the property size and distance.</p>
-        </div>
-        <div class="faq-card">
-            <h4>What payment methods do you accept?</h4>
-            <p>We accept bank transfers, cash, M-Pesa, and flexible installment payment plans.</p>
-        </div>
-        <div class="faq-card">
-            <h4>How do I verify land ownership?</h4>
-            <p>All our properties undergo strict due diligence. We provide complete legal documentation and verification reports.</p>
-        </div>
-        <div class="faq-card">
-            <h4>Can I negotiate prices?</h4>
-            <p>Prices are competitive and fixed, but we offer flexible payment plans and bulk purchase discounts.</p>
-        </div>
-    </div>
-</section>
-
-<script>
-document.getElementById('contactForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const submitBtn = document.querySelector('.btn-submit-contact');
-    const successMsg = document.getElementById('successMessage');
-    const errorMsg = document.getElementById('errorMessage');
-    const errorText = document.getElementById('errorText');
-    
-    // Clear messages
-    successMsg.style.display = 'none';
-    errorMsg.style.display = 'none';
-    
-    // Disable button and show loading
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-    
-    fetch('/inquiries/add', {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Clear form
-            document.getElementById('contactForm').reset();
-            
-            // Show success notification
-            const successDiv = document.createElement('div');
-            successDiv.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:16px 24px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;animation:slideIn 0.3s ease-out;font-weight:600;';
-            successDiv.textContent = '✓ Your message has been received! We will contact you soon.';
-            document.body.appendChild(successDiv);
-            setTimeout(() => successDiv.remove(), 4000);
-            
-            // Also show the message div
-            successMsg.style.display = 'block';
-            setTimeout(() => {
-                successMsg.style.display = 'none';
-            }, 5000);
-        } else {
-            throw new Error(data.error || 'Failed to submit form');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        errorText.textContent = error.message + '. Please try again or call us directly.';
-        errorMsg.style.display = 'block';
-    })
-    .finally(() => {
-        // Re-enable button
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = 'Send Message';
-    });
-});
-
-// SITE VISIT BOOKING MODAL
-function openBookingModal() {
-    document.getElementById('bookingModal').classList.add('show');
-}
-
-function closeBookingModal() {
-    document.getElementById('bookingModal').classList.remove('show');
-    document.getElementById('bookingForm').reset();
-}
-
-window.onclick = function(event) {
-    const modal = document.getElementById('bookingModal');
-    if (event.target == modal) {
-        closeBookingModal();
-    }
-}
-
-document.getElementById('bookingForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const submitBtn = document.getElementById('bookingSubmitBtn');
-    const originalText = submitBtn.innerHTML;
-    
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = 'Scheduling...';
-    
-    // Submit to backend endpoint `/submit-site-visit` as form data (expected by server)
-    const payload = new FormData();
-    payload.append('name', formData.get('visitor_name'));
-    payload.append('email', formData.get('visitor_email'));
-    payload.append('phone', formData.get('visitor_phone'));
-    // No specific property from contact page; mark as contact booking
-    payload.append('property_id', '');
-    payload.append('property_title', 'Contact Page Booking');
-    // Combine date and time into one string
-    const date = formData.get('visit_date');
-    const time = formData.get('visit_time');
-    payload.append('visit_date', time ? (date + ' ' + time) : date);
-    payload.append('notes', formData.get('visit_message'));
-
-    fetch('/submit-site-visit', {
-        method: 'POST',
-        body: payload
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data && data.success) {
-            const successDiv = document.createElement('div');
-            successDiv.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:16px 24px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;animation:slideIn 0.3s ease-out;font-weight:600;';
-            // Use server-provided message when available
-            successDiv.textContent = '✓ ' + (data.message || 'Scheduled successfully. Check your email for confirmation.');
-            document.body.appendChild(successDiv);
-            setTimeout(() => successDiv.remove(), 4000);
-            closeBookingModal();
-        } else {
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = 'position:fixed;top:20px;right:20px;background:#ef4444;color:white;padding:16px 24px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;animation:slideIn 0.3s ease-out;';
-            errorDiv.textContent = '✗ Error: ' + (data && (data.message || data.error) || 'Please try again');
-            document.body.appendChild(errorDiv);
-            setTimeout(() => errorDiv.remove(), 4000);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        const errorDiv = document.createElement('div');
-        errorDiv.style.cssText = 'position:fixed;top:20px;right:20px;background:#ef4444;color:white;padding:16px 24px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;animation:slideIn 0.3s ease-out;';
-        errorDiv.textContent = '✗ Failed to schedule visit. Please try again.';
-        document.body.appendChild(errorDiv);
-        setTimeout(() => errorDiv.remove(), 4000);
-    })
-    .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-    });
-});
-
-// Add slideIn animation
-const style = document.createElement('style');
-style.textContent = '@keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }';
-document.head.appendChild(style);
-</script>
-
-<!-- SITE VISIT BOOKING MODAL -->
-<div id="bookingModal" class="booking-modal">
-    <div class="booking-modal-content">
-        <div class="booking-modal-header">
-            <h2>📅 Schedule Site Visit</h2>
-            <button class="booking-close-btn" onclick="closeBookingModal()">✕</button>
-        </div>
-        
-        <form id="bookingForm">
-            <div class="booking-form-group">
-                <label>Your Name *</label>
-                <input type="text" name="visitor_name" required placeholder="Enter your full name">
+                    <button type="submit" id="contactSubmitBtn">Send Inquiry</button>
+                </form>
             </div>
-            
-            <div class="booking-form-group">
-                <label>Email Address *</label>
-                <input type="email" name="visitor_email" required placeholder="your@email.com">
+        </div>
+    </section>
+
+    <section class="contact-faq-section" data-reveal>
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-grid">
+            <article class="faq-card">
+                <h4>How long does a site visit take?</h4>
+                <p>Most site visits take 1 to 2 hours depending on distance and number of plots viewed.</p>
+            </article>
+            <article class="faq-card">
+                <h4>Can I buy on installments?</h4>
+                <p>Yes. Selected projects support structured installments with clear payment milestones.</p>
+            </article>
+            <article class="faq-card">
+                <h4>How do you verify ownership?</h4>
+                <p>We support due diligence through title checks and legal documentation review before purchase.</p>
+            </article>
+            <article class="faq-card">
+                <h4>What payment methods are accepted?</h4>
+                <p>We accept bank transfer, mobile payments, and other approved channels based on project terms.</p>
+            </article>
+        </div>
+    </section>
+</div>
+
+<div class="visit-modal" id="visitModal" aria-hidden="true">
+    <div class="visit-modal-panel">
+        <button type="button" class="visit-close-btn" id="visitCloseBtn" aria-label="Close site visit form">
+            <i class="fas fa-times"></i>
+        </button>
+        <h3>Schedule a Site Visit</h3>
+        <p>Choose your preferred date and time and our team will confirm availability.</p>
+
+        <div id="visitSuccess" class="form-alert success" style="display:none;"></div>
+        <div id="visitError" class="form-alert error" style="display:none;"></div>
+
+        <form id="visitForm" class="visit-form">
+            <div class="form-grid two">
+                <label>
+                    Full Name
+                    <input type="text" name="name" required placeholder="Your name">
+                </label>
+                <label>
+                    Email
+                    <input type="email" name="email" required placeholder="you@example.com">
+                </label>
             </div>
-            
-            <div class="booking-form-group">
-                <label>Phone Number *</label>
-                <input type="tel" name="visitor_phone" required placeholder="0784 666 927">
+
+            <div class="form-grid two">
+                <label>
+                    Phone
+                    <input type="tel" name="phone" required placeholder="+254...">
+                </label>
+                <label>
+                    Preferred Date
+                    <input type="date" name="visit_date" required>
+                </label>
             </div>
-            
-            <div class="booking-form-group">
-                <label>Preferred Date *</label>
-                <input type="date" name="visit_date" required>
+
+            <div class="form-grid two">
+                <label>
+                    Preferred Time
+                    <select name="visit_time" required>
+                        <option value="">Select time</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                    </select>
+                </label>
+                <label>
+                    Property/Location
+                    <input type="text" name="property_title" placeholder="Location or property title">
+                </label>
             </div>
-            
-            <div class="booking-form-group">
-                <label>Preferred Time *</label>
-                <select name="visit_time" required>
-                    <option value="">Select a time</option>
-                    <option value="09:00">9:00 AM</option>
-                    <option value="10:00">10:00 AM</option>
-                    <option value="11:00">11:00 AM</option>
-                    <option value="12:00">12:00 PM</option>
-                    <option value="14:00">2:00 PM</option>
-                    <option value="15:00">3:00 PM</option>
-                    <option value="16:00">4:00 PM</option>
-                    <option value="17:00">5:00 PM</option>
-                </select>
-            </div>
-            
-            <div class="booking-form-group">
-                <label>Additional Message (Optional)</label>
-                <textarea name="visit_message" placeholder="Tell us which property you're interested in or any special requests..."></textarea>
-            </div>
-            
-            <div class="booking-form-footer">
-                <button type="button" class="booking-btn booking-btn-cancel" onclick="closeBookingModal()">Cancel</button>
-                <button type="submit" id="bookingSubmitBtn" class="booking-btn booking-btn-submit">Schedule Visit</button>
+
+            <label>
+                Additional Notes
+                <textarea name="notes" rows="4" placeholder="Anything we should prepare before your visit"></textarea>
+            </label>
+
+            <div class="modal-footer">
+                <button type="button" class="visit-secondary-btn" id="visitCancelBtn">Cancel</button>
+                <button type="submit" class="visit-primary-btn" id="visitSubmitBtn">Schedule Visit</button>
             </div>
         </form>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
+<script defer src="{{ url_for('static', filename='js/contact-modern.js') }}"></script>
 {% endblock %}

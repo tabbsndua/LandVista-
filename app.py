@@ -66,9 +66,20 @@ PAYSTACK_BASE_URL = os.getenv("PAYSTACK_BASE_URL", "https://api.paystack.co").st
 # ============================
 @app.after_request
 def set_cache_headers(response):
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
+    # Improve frontend performance while keeping admin pages fresh.
+    path = request.path or ""
+    if path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        response.headers.pop("Pragma", None)
+        response.headers.pop("Expires", None)
+    elif path.startswith("/admin"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    else:
+        response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
+        response.headers.pop("Pragma", None)
+        response.headers.pop("Expires", None)
     return response
 
 # ============================
@@ -426,7 +437,7 @@ def track_page_views():
 
 @app.route("/")
 def landing():
-    return render_template("landing.html")
+    return redirect("/home")
 
 @app.route("/home")
 def home():

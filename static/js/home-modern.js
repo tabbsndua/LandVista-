@@ -10,9 +10,19 @@
     const hero = document.querySelector(".modern-hero");
     const orbA = document.querySelector(".hero-gradient-orb-a");
     const orbB = document.querySelector(".hero-gradient-orb-b");
+    const calculatorForm = document.getElementById("roiCalculatorForm");
+    const calculatorResult = document.getElementById("calculatorResult");
+    const consultationForm = document.getElementById("consultationForm");
+    const consultationFeedback = document.getElementById("consultationFeedback");
+    const consultationModal = document.getElementById("consultationModal");
+    const modalOpeners = document.querySelectorAll("[data-modal-open]");
+    const modalClosers = document.querySelectorAll("[data-modal-close]");
 
     let testimonialIndex = 0;
     let testimonialTimer = null;
+    let refreshInterval = null;
+    let isFetchingProperties = false;
+    let isFetchingTestimonials = false;
 
     function escapeHTML(value) {
         const str = String(value || "");
@@ -42,14 +52,14 @@
     function mediaMarkup(media, title) {
         const file = firstMedia(media);
         if (!file) {
-            return `<img src="/static/images/placeholder.jpg" alt="${escapeHTML(title)}">`;
+            return `<img loading="lazy" src="/static/images/placeholder.jpg" alt="${escapeHTML(title)}">`;
         }
 
         const src = `/static/uploads/${encodeURIComponent(file)}`;
         if (isVideo(file)) {
-            return `<video muted autoplay loop playsinline><source src="${src}"></video>`;
+            return `<video muted autoplay loop playsinline preload="metadata"><source src="${src}"></video>`;
         }
-        return `<img src="${src}" alt="${escapeHTML(title)}">`;
+        return `<img loading="lazy" src="${src}" alt="${escapeHTML(title)}">`;
     }
 
     function priceMarkup(price) {
@@ -113,10 +123,11 @@
     }
 
     async function loadProperties() {
-        if (!landGrid) {
+        if (!landGrid || isFetchingProperties) {
             return;
         }
 
+        isFetchingProperties = true;
         try {
             const response = await fetch("/api/properties?limit=4");
             const data = await response.json();
@@ -127,6 +138,8 @@
             landGrid.innerHTML = properties.map(renderPropertyCard).join("");
         } catch (error) {
             console.error("Failed to load properties:", error);
+        } finally {
+            isFetchingProperties = false;
         }
     }
 
@@ -174,10 +187,11 @@
     }
 
     async function loadTestimonials() {
-        if (!testimonialsTrack) {
+        if (!testimonialsTrack || isFetchingTestimonials) {
             return;
         }
 
+        isFetchingTestimonials = true;
         try {
             const response = await fetch("/api/testimonials");
             const data = await response.json();
@@ -193,6 +207,8 @@
             startTestimonialAutoSlide();
         } catch (error) {
             console.error("Failed to load testimonials:", error);
+        } finally {
+            isFetchingTestimonials = false;
         }
     }
 
@@ -314,6 +330,136 @@
         }
     }
 
+    function setupFaqAccordion() {
+        document.querySelectorAll(".faq-toggle").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const item = btn.closest(".faq-item");
+                if (!item) return;
+                item.classList.toggle("open");
+            });
+        });
+    }
+
+    function setupModal() {
+        if (!consultationModal) {
+            return;
+        }
+
+        function closeModal() {
+            consultationModal.classList.remove("open");
+            consultationModal.setAttribute("aria-hidden", "true");
+            document.body.style.overflow = "";
+        }
+
+        function openModal() {
+            consultationModal.classList.add("open");
+            consultationModal.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+        }
+
+        modalOpeners.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const target = btn.getAttribute("data-modal-open");
+                if (target === "consultationModal") {
+                    openModal();
+                }
+            });
+        });
+
+        modalClosers.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const target = btn.getAttribute("data-modal-close");
+                if (target === "consultationModal") {
+                    closeModal();
+                }
+            });
+        });
+
+        consultationModal.addEventListener("click", (event) => {
+            if (event.target === consultationModal) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && consultationModal.classList.contains("open")) {
+                closeModal();
+            }
+        });
+    }
+
+    function setupConsultationForm() {
+        if (!consultationForm || !consultationFeedback) {
+            return;
+        }
+
+        consultationForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            consultationFeedback.textContent = "";
+            consultationFeedback.className = "consult-feedback";
+
+            const formData = new FormData(consultationForm);
+            const submitBtn = consultationForm.querySelector("button[type='submit']");
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Submitting...";
+            }
+
+            try {
+                const response = await fetch("/inquiries/add", {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || "Unable to submit request");
+                }
+
+                consultationForm.reset();
+                consultationFeedback.textContent = "Request submitted successfully. Our advisor will contact you shortly.";
+                consultationFeedback.classList.add("success");
+            } catch (error) {
+                consultationFeedback.textContent = error.message || "Unable to submit request right now.";
+                consultationFeedback.classList.add("error");
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Submit Request";
+                }
+            }
+        });
+    }
+
+    function setupCalculator() {
+        if (!calculatorForm || !calculatorResult) {
+            return;
+        }
+
+        function renderResult() {
+            const budget = Number(document.getElementById("calcBudget")?.value || 0);
+            const growth = Number(document.getElementById("calcGrowth")?.value || 0);
+            const years = Number(document.getElementById("calcYears")?.value || 0);
+            const projected = budget > 0 ? budget * Math.pow(1 + growth / 100, years) : 0;
+            calculatorResult.textContent = `Projected value: KES ${Math.round(projected).toLocaleString()}`;
+        }
+
+        calculatorForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            renderResult();
+        });
+
+        calculatorForm.querySelectorAll("input").forEach((input) => {
+            input.addEventListener("input", renderResult);
+        });
+
+        renderResult();
+    }
+
     function setupNewsletter() {
         if (!newsletterForm) {
             return;
@@ -404,14 +550,35 @@
         });
     }
 
+    function scheduleRefreshLoop() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+
+        if (document.hidden) {
+            return;
+        }
+
+        refreshInterval = setInterval(() => {
+            loadProperties();
+            loadTestimonials();
+        }, 30000);
+    }
+
+    document.addEventListener("visibilitychange", scheduleRefreshLoop);
+
     loadProperties();
     loadTestimonials();
     setupRevealAnimations();
     setupCounters();
     setupHeroParallax();
     setupTestimonialButtons();
+    setupFaqAccordion();
+    setupModal();
+    setupConsultationForm();
+    setupCalculator();
     setupNewsletter();
     setupRealtimeRefresh();
-    setInterval(loadProperties, 12000);
-    setInterval(loadTestimonials, 12000);
+    scheduleRefreshLoop();
 })();
