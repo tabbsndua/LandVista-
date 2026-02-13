@@ -1,0 +1,63 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Create Site Visit - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <header class="admin-header">
+        <h1>Create Site Visit</h1>
+    </header>
+
+    <section class="admin-section">
+        <form id="adminCreateVisitForm">
+            <div class="form-row">
+                <label>Name</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-row">
+                <label>Email</label>
+                <input type="email" name="email" required>
+            </div>
+            <div class="form-row">
+                <label>Phone</label>
+                <input type="text" name="phone" required>
+            </div>
+            <div class="form-row">
+                <label>Property Title</label>
+                <input type="text" name="property_title">
+            </div>
+            <div class="form-row">
+                <label>Visit Date</label>
+                <input type="text" name="visit_date" placeholder="YYYY-MM-DD HH:MM" required>
+            </div>
+            <div class="form-row">
+                <label>Notes</label>
+                <textarea name="notes"></textarea>
+            </div>
+            <div class="form-row">
+                <button type="submit" class="btn">Create Visit</button>
+                <a href="/admin/site-visits" class="btn btn-secondary">Back</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('adminCreateVisitForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const form = new FormData(this);
+    fetch('/admin/site-visits/create', {
+        method: 'POST',
+        body: form
+    }).then(r => r.json()).then(data => {
+        if (data && data.success) {
+            window.location.href = '/admin/site-visits';
+        } else {
+            alert('Error: ' + (data && (data.error || data.message) || 'Failed to create'));
+        }
+    }).catch(err => { alert('Request failed'); console.error(err); });
+});
+</script>
+{% endblock %}

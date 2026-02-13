@@ -1,0 +1,809 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}News & Blogs Management{% endblock %}
+
+{% block content %}
+
+<div class="admin-news">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div>
+            <h1>News & Blogs Management</h1>
+            <p>Manage articles, news, and blog posts</p>
+        </div>
+
+        <button class="btn-primary" onclick="openCreateArticleModal()">
+            + Create New Article
+        </button>
+    </div>
+
+    <!-- SEARCH & FILTERS -->
+    <div class="filters">
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="articleSearch" 
+                placeholder="Search articles..."
+                onkeyup="filterArticles()"
+            >
+        </div>
+
+        <select id="categoryFilter" onchange="filterArticles()">
+            <option value="">All Categories</option>
+            <option value="Featured Locations">Featured Locations</option>
+            <option value="Investment Tips">Investment Tips</option>
+            <option value="Market Analysis">Market Analysis</option>
+            <option value="News">News</option>
+        </select>
+
+        <select id="statusFilter" onchange="filterArticles()">
+            <option value="">All Status</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+        </select>
+    </div>
+
+    <!-- ARTICLES GRID -->
+    <div id="articlesGrid" class="articles-grid">
+        <!-- Articles will be loaded here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" style="display: none; text-align: center; padding: 40px;">
+        <p style="color: #6b7280; font-size: 14px;">No articles found.</p>
+    </div>
+
+</div>
+
+<!-- ============================================
+   VIEW ARTICLE MODAL
+============================================ -->
+<div class="modal" id="viewModal" style="display: none;">
+    <div class="modal-box modal-box-large">
+        <div class="modal-header">
+            <h2>View Article</h2>
+            <span class="modal-close" onclick="closeViewModal()">×</span>
+        </div>
+        <div class="modal-body" id="viewContent" style="padding: 30px;">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeViewModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+   CREATE/EDIT ARTICLE MODAL
+============================================ -->
+<div class="modal" id="articleModal" style="display: none;">
+    <div class="modal-box modal-box-large">
+
+        <div class="modal-header">
+            <h2 id="modalTitle">Create New Article</h2>
+            <span class="modal-close" onclick="closeArticleModal()">×</span>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- TITLE -->
+            <div class="form-group">
+                <label for="articleTitle">Article Title <span class="required">*</span></label>
+                <input 
+                    type="text" 
+                    id="articleTitle" 
+                    placeholder="e.g., Juja Farm: Prime Land Investment Opportunity"
+                    required
+                >
+            </div>
+
+            <!-- SLUG (URL FRIENDLY) -->
+            <div class="form-group">
+                <label for="articleSlug">URL Slug <span class="required">*</span></label>
+                <input 
+                    type="text" 
+                    id="articleSlug" 
+                    placeholder="e.g., juja-farm"
+                    required
+                >
+                <small class="helper-text">Used for the article URL</small>
+            </div>
+
+            <!-- AUTHOR -->
+            <div class="form-group">
+                <label for="articleAuthor">Author <span class="required">*</span></label>
+                <input 
+                    type="text" 
+                    id="articleAuthor" 
+                    placeholder="e.g., Sarah Mwangi"
+                    required
+                >
+            </div>
+
+            <!-- CATEGORY -->
+            <div class="form-group">
+                <label for="articleCategory">Category <span class="required">*</span></label>
+                <select id="articleCategory" required>
+                    <option value="">Select category...</option>
+                    <option value="Featured Locations">Featured Locations</option>
+                    <option value="Investment Tips">Investment Tips</option>
+                    <option value="Market Analysis">Market Analysis</option>
+                    <option value="News">News</option>
+                </select>
+            </div>
+
+            <!-- META INFORMATION -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="publishDate">Publish Date <span class="required">*</span></label>
+                    <input 
+                        type="date" 
+                        id="publishDate"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="readTime">Read Time (minutes) <span class="required">*</span></label>
+                    <input 
+                        type="number" 
+                        id="readTime" 
+                        placeholder="e.g., 6"
+                        min="1"
+                        required
+                    >
+                </div>
+            </div>
+
+            <!-- FEATURED IMAGE -->
+            <div class="form-group">
+                <label for="featuredImage">Featured Image</label>
+                <input 
+                    type="file" 
+                    id="featuredImage"
+                    accept="image/*"
+                >
+                <small class="helper-text">Recommended size: 800x600px</small>
+            </div>
+
+            <!-- SHORT EXCERPT -->
+            <div class="form-group">
+                <label for="articleExcerpt">Short Excerpt <span class="required">*</span></label>
+                <textarea 
+                    id="articleExcerpt" 
+                    rows="3"
+                    placeholder="Brief summary of the article..."
+                    required
+                ></textarea>
+                <div class="char-count">
+                    <span id="excerptCount">0</span> / 160 characters
+                </div>
+            </div>
+
+            <!-- ARTICLE CONTENT -->
+            <div class="form-group">
+                <label for="articleContent">Article Content <span class="required">*</span></label>
+                <textarea 
+                    id="articleContent" 
+                    rows="12"
+                    placeholder="Write the full article content here..."
+                    required
+                ></textarea>
+            </div>
+
+            <!-- STATUS -->
+            <div class="form-group">
+                <label for="articleStatus">Status <span class="required">*</span></label>
+                <select id="articleStatus" required>
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                </select>
+                <small class="helper-text">Draft articles are not visible on the website</small>
+            </div>
+
+            <!-- FEATURED TOGGLE -->
+            <div class="form-group checkbox-group">
+                <label for="isFeatured">
+                    <input 
+                        type="checkbox" 
+                        id="isFeatured"
+                    >
+                    <span>Mark as Featured Article</span>
+                </label>
+                <small class="helper-text">Featured articles appear prominently on the homepage</small>
+            </div>
+
+        </div>
+
+        <!-- MODAL FOOTER -->
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeArticleModal()">Cancel</button>
+            <button class="btn-primary" onclick="saveArticle()">Save Article</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ============================================
+   DELETE CONFIRMATION MODAL
+============================================ -->
+<div class="modal" id="deleteModal" style="display: none;">
+    <div class="modal-box">
+
+        <div class="modal-header">
+            <h2>Delete Article</h2>
+            <span class="modal-close" onclick="closeDeleteModal()">×</span>
+        </div>
+
+        <div class="modal-body">
+            <p>Are you sure you want to delete this article? This action cannot be undone.</p>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn-danger" onclick="confirmDelete()">Delete</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ============================================
+   STYLES
+============================================ -->
+<style>
+.article-view-container {
+    animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.article-view-header {
+    margin-bottom: 20px;
+}
+
+.article-view-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 0;
+}
+
+.meta-badge {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+}
+
+.article-view-body {
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.article-excerpt-section {
+    background: #fffbeb;
+    padding: 20px;
+    border-left: 4px solid #f59e0b;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.article-excerpt-section h4 {
+    color: #d97706;
+    margin-top: 0;
+}
+
+.article-content-section {
+    line-height: 1.8;
+    color: #374151;
+}
+
+.article-content-section h4 {
+    color: #0a3c28;
+    margin-bottom: 15px;
+}
+
+.modal-box-large {
+    max-height: 85vh;
+    overflow-y: auto;
+    width: 800px;
+}
+
+@media (max-width: 900px) {
+    .modal-box-large {
+        width: 90vw;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/news.css') }}">
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ============================================================
+// NEWS & BLOGS MANAGEMENT
+// ============================================================
+
+// Sample articles data (will be loaded from backend)
+let articles = [
+    {
+        _id: "1",
+        title: "Juja Farm: Prime Land Investment Opportunity Near Thika Superhighway",
+        slug: "juja-farm",
+        author: "Sarah Mwangi",
+        category: "Featured Locations",
+        date: "Dec 14, 2024",
+        readTime: 6,
+        excerpt: "Nestled off the Thika Superhighway and just a short drive from Nairobi CBD, Juja Farm has rapidly evolved from a quiet agricultural area...",
+        status: "published",
+        featured: true
+    },
+    {
+        _id: "2",
+        title: "Kithioko: Affordable Land Parcels in Machakos County",
+        slug: "kithioko",
+        author: "James Kamau",
+        category: "Featured Locations",
+        date: "Dec 11, 2024",
+        readTime: 7,
+        excerpt: "Located in the southeastern region of Kenya, Kithioko has become one of Machakos County's most promising land investment zones...",
+        status: "published",
+        featured: true
+    },
+    {
+        _id: "3",
+        title: "Kivandini: Strategic Location for Agricultural & Residential Development",
+        slug: "kivandini",
+        author: "Grace Wanjiru",
+        category: "Featured Locations",
+        date: "Dec 9, 2024",
+        readTime: 5,
+        excerpt: "Situated within Machakos County, Kivandini has emerged as a high-potential region for land buyers seeking fertile agricultural land...",
+        status: "published",
+        featured: true
+    }
+];
+
+let currentEditingId = null;
+
+// ============================================================
+// INITIALIZE
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    loadArticles();
+    setTodayDate();
+});
+
+function setTodayDate() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('publishDate').value = today;
+}
+
+// ============================================================
+// LOAD ARTICLES FROM BACKEND
+// ============================================================
+function loadArticles() {
+    fetch('/api/news/admin')
+        .then(response => response.json())
+        .then(data => {
+            articles = data || [];
+            renderArticles();
+        })
+        .catch(err => {
+            console.error('Failed to load articles:', err);
+            articles = [];
+            renderArticles();
+        });
+}
+
+// ============================================================
+// RENDER ARTICLES AS CARDS
+// ============================================================
+function renderArticles() {
+    const grid = document.getElementById('articlesGrid');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (articles.length === 0) {
+        grid.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    grid.innerHTML = articles.map(article => `
+        <div class="article-card" data-article-id="${article._id}">
+            ${article.featured_image ? `<div class="card-image" style="background-image: url('${article.featured_image}')"></div>` : '<div class="card-image card-image-placeholder"></div>'}
+            <div class="card-content">
+                <div class="card-header">
+                    <h3>${escapeHTML(article.title)}</h3>
+                    <span class="status-badge ${article.status}">${article.status}</span>
+                </div>
+                <div class="card-meta">
+                    <span class="meta-item">📅 ${article.date}</span>
+                    <span class="meta-item">✍️ ${escapeHTML(article.author)}</span>
+                    <span class="meta-item">⏱️ ${article.readTime} min</span>
+                </div>
+                <p class="card-category">${article.category}</p>
+                <p class="card-excerpt">${escapeHTML(article.excerpt)}</p>
+                <div class="card-actions">
+                    <button class="btn-sm view-btn" onclick="viewArticle('${article._id}')">👁️ View</button>
+                    <button class="btn-sm edit-btn" onclick="editArticle('${article._id}')">✏️ Edit</button>
+                    <button class="btn-sm delete-btn" onclick="openDeleteModal('${article._id}')">🗑️ Delete</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ============================================================
+// VIEW ARTICLE MODAL
+// ============================================================
+function viewArticle(id) {
+    console.log('viewArticle called with id:', id);
+    console.log('articles array length:', articles.length);
+    console.log('articles array:', articles);
+    const article = articles.find(a => a._id === id);
+    console.log('Found article:', article);
+    if (!article) {
+        console.error('Article not found in array for id:', id);
+        return;
+    }
+    console.log('Opening modal for article:', article.title);
+    
+    const viewContent = document.getElementById('viewContent');
+    if (!viewContent) {
+        console.error('viewContent element not found!');
+        return;
+    }
+    viewContent.innerHTML = `
+        <div class="article-view-container">
+            ${article.featured_image ? `
+                <div class="article-hero-image">
+                    <img src="${article.featured_image}" alt="${escapeHTML(article.title)}" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;">
+                </div>
+            ` : ''}
+            
+            <div class="article-view-header">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+                    <span class="status-badge ${article.status}">${capitalize(article.status)}</span>
+                    ${article.featured ? '<span style="background: #fbbf24; color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">⭐ Featured</span>' : ''}
+                </div>
+                
+                <h2 style="color: #0a3c28; margin: 0 0 15px 0; font-size: 1.8rem; line-height: 1.3;">
+                    ${escapeHTML(article.title)}
+                </h2>
+                
+                <div class="article-view-meta">
+                    <div class="meta-badge">📅 ${article.date}</div>
+                    <div class="meta-badge">✍️ ${escapeHTML(article.author)}</div>
+                    <div class="meta-badge">⏱️ ${article.readTime} min read</div>
+                    <div class="meta-badge">📂 ${article.category}</div>
+                </div>
+            </div>
+            
+            <hr style="border: none; border-top: 2px solid #e5e7eb; margin: 25px 0;">
+            
+            <div class="article-view-body">
+                <div class="article-excerpt-section">
+                    <h4 style="color: #6b7280; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 10px;">Summary</h4>
+                    <p style="color: #374151; font-size: 0.95rem; font-style: italic; line-height: 1.6; margin: 0;">
+                        ${escapeHTML(article.excerpt)}
+                    </p>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                
+                <div class="article-content-section">
+                    <h4 style="color: #6b7280; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 15px;">Full Content</h4>
+                    <div style="line-height: 1.8; color: #333; word-wrap: break-word; white-space: pre-wrap; font-size: 0.95rem;">
+                        ${escapeHTML(article.content || 'No additional content provided')}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="article-view-footer" style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-top: 25px; border-left: 4px solid #0a3c28;">
+                <h4 style="margin: 0 0 12px 0; color: #0a3c28;">Article Information</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 0.9rem;">
+                    <div>
+                        <span style="color: #6b7280; font-weight: 600;">Author:</span>
+                        <span style="color: #374151;">${escapeHTML(article.author)}</span>
+                    </div>
+                    <div>
+                        <span style="color: #6b7280; font-weight: 600;">Category:</span>
+                        <span style="color: #374151;">${article.category}</span>
+                    </div>
+                    <div>
+                        <span style="color: #6b7280; font-weight: 600;">Published:</span>
+                        <span style="color: #374151;">${article.date}</span>
+                    </div>
+                    <div>
+                        <span style="color: #6b7280; font-weight: 600;">Reading Time:</span>
+                        <span style="color: #374151;">${article.readTime} minutes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('viewModal').style.display = 'flex';
+}
+
+function closeViewModal() {
+    document.getElementById('viewModal').style.display = 'none';
+}
+
+// ============================================================
+// ESCAPE HTML FUNCTION
+// ============================================================
+function escapeHTML(str) {
+    return (str || '').replace(/[&<>"']/g, c => (
+        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+    ));
+}
+
+function capitalize(str) {
+    return (str || '').charAt(0).toUpperCase() + (str || '').slice(1);
+}
+
+// ============================================================
+// FILTER ARTICLES
+// ============================================================
+function filterArticles() {
+    const searchTerm = document.getElementById('articleSearch').value.toLowerCase();
+    const category = document.getElementById('categoryFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    const filtered = articles.filter(article => {
+        const matchesSearch = article.title.toLowerCase().includes(searchTerm) || 
+                            article.author.toLowerCase().includes(searchTerm);
+        const matchesCategory = !category || article.category === category;
+        const matchesStatus = !status || article.status === status;
+        
+        return matchesSearch && matchesCategory && matchesStatus;
+    });
+    
+    const grid = document.getElementById('articlesGrid');
+    const emptyState = document.getElementById('emptyState');
+    
+    if (filtered.length === 0) {
+        grid.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    grid.innerHTML = filtered.map(article => `
+        <div class="article-card" data-article-id="${article._id}">
+            ${article.featured_image ? `<div class="card-image" style="background-image: url('${article.featured_image}')"></div>` : '<div class="card-image card-image-placeholder"></div>'}
+            <div class="card-content">
+                <div class="card-header">
+                    <h3>${escapeHTML(article.title)}</h3>
+                    <span class="status-badge ${article.status}">${article.status}</span>
+                </div>
+                <div class="card-meta">
+                    <span class="meta-item">📅 ${article.date}</span>
+                    <span class="meta-item">✍️ ${escapeHTML(article.author)}</span>
+                    <span class="meta-item">⏱️ ${article.readTime} min</span>
+                </div>
+                <p class="card-category">${article.category}</p>
+                <p class="card-excerpt">${escapeHTML(article.excerpt)}</p>
+                <div class="card-actions">
+                    <button class="btn-sm view-btn" onclick="viewArticle('${article._id}')">👁️ View</button>
+                    <button class="btn-sm edit-btn" onclick="editArticle('${article._id}')">✏️ Edit</button>
+                    <button class="btn-sm delete-btn" onclick="openDeleteModal('${article._id}')">🗑️ Delete</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ============================================================
+// MODAL CONTROLS
+// ============================================================
+function openCreateArticleModal() {
+    currentEditingId = null;
+    document.getElementById('modalTitle').textContent = 'Create New Article';
+    clearArticleForm();
+    document.getElementById('articleModal').style.display = 'flex';
+}
+
+function editArticle(id) {
+    const article = articles.find(a => a._id === id);
+    if (!article) return;
+    
+    currentEditingId = id;
+    document.getElementById('modalTitle').textContent = 'Edit Article';
+    
+    document.getElementById('articleTitle').value = article.title;
+    document.getElementById('articleSlug').value = article.slug;
+    document.getElementById('articleAuthor').value = article.author;
+    document.getElementById('articleCategory').value = article.category;
+    document.getElementById('publishDate').value = article.date;
+    document.getElementById('readTime').value = article.readTime;
+    document.getElementById('articleExcerpt').value = article.excerpt;
+    document.getElementById('articleContent').value = article.content || '';
+    document.getElementById('articleStatus').value = article.status;
+    document.getElementById('isFeatured').checked = article.featured || false;
+    
+    document.getElementById('articleModal').style.display = 'flex';
+}
+
+function closeArticleModal() {
+    document.getElementById('articleModal').style.display = 'none';
+    clearArticleForm();
+}
+
+function clearArticleForm() {
+    document.getElementById('articleTitle').value = '';
+    document.getElementById('articleSlug').value = '';
+    document.getElementById('articleAuthor').value = '';
+    document.getElementById('articleCategory').value = '';
+    document.getElementById('publishDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('readTime').value = '';
+    document.getElementById('articleExcerpt').value = '';
+    document.getElementById('articleContent').value = '';
+    document.getElementById('articleStatus').value = 'draft';
+    document.getElementById('isFeatured').checked = false;
+}
+
+// ============================================================
+// SAVE ARTICLE
+// ============================================================
+function saveArticle() {
+    const title = document.getElementById('articleTitle').value.trim();
+    const slug = document.getElementById('articleSlug').value.trim();
+    const author = document.getElementById('articleAuthor').value.trim();
+    const category = document.getElementById('articleCategory').value;
+    const date = document.getElementById('publishDate').value;
+    const readTime = parseInt(document.getElementById('readTime').value);
+    const excerpt = document.getElementById('articleExcerpt').value.trim();
+    const content = document.getElementById('articleContent').value.trim();
+    const status = document.getElementById('articleStatus').value;
+    const featured = document.getElementById('isFeatured').checked;
+    const imageFile = document.getElementById('featuredImage').files[0];
+    
+    if (!title || !slug || !author || !category || !readTime || !excerpt || !content || !date) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Prepare form data for file upload
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('slug', slug);
+    formData.append('author', author);
+    formData.append('category', category);
+    formData.append('date', date);
+    formData.append('read_time', readTime);
+    formData.append('excerpt', excerpt);
+    formData.append('content', content);
+    formData.append('status', status);
+    formData.append('featured', featured);
+    
+    if (imageFile) {
+        formData.append('featured_image', imageFile);
+    }
+    
+    const url = currentEditingId 
+        ? `/admin/news/update/${currentEditingId}`
+        : '/admin/news/add';
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeArticleModal();
+            loadArticles();
+            alert(currentEditingId ? 'Article updated!' : 'Article created!');
+        } else {
+            alert('Error: ' + (data.error || 'Failed to save article'));
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error saving article');
+    });
+}
+
+// ============================================================
+// DELETE ARTICLE
+// ============================================================
+let deleteArticleId = null;
+
+function openDeleteModal(id) {
+    deleteArticleId = id;
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+    deleteArticleId = null;
+}
+
+function confirmDelete() {
+    fetch(`/admin/news/delete/${deleteArticleId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeDeleteModal();
+            loadArticles();
+            alert('Article deleted!');
+        } else {
+            alert('Error deleting article');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error deleting article');
+    });
+}
+
+// ============================================================
+// CHARACTER COUNT
+// ============================================================
+document.getElementById('articleExcerpt').addEventListener('input', function() {
+    document.getElementById('excerptCount').textContent = this.value.length;
+});
+
+// Close modal on outside click
+document.getElementById('articleModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeArticleModal();
+    }
+});
+
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+// Delegated handler for action buttons (robust if inline onclick fails)
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function (e) {
+        const viewBtn = e.target.closest && e.target.closest('.view-btn');
+        if (viewBtn) {
+            console.log('Delegated click: view button clicked', viewBtn);
+            const card = viewBtn.closest && viewBtn.closest('.article-card');
+            if (card) {
+                const id = card.getAttribute('data-article-id') || card.dataset.articleId;
+                console.log('Found card for view, id=', id);
+                if (!id) {
+                    console.warn('No id found on card');
+                    return;
+                }
+                if (typeof viewArticle === 'function') {
+                    viewArticle(id);
+                } else {
+                    console.warn('viewArticle() not defined');
+                }
+                e.preventDefault();
+                return;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

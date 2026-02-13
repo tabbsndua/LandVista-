@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ property.title }} | LandVista
+{% endblock %}
+
+{% block content %}
+
+<!-- =========================
+   PROPERTY DETAILS HEADER
+========================= -->
+<section class="property-header">
+    <div class="property-container">
+
+        <!-- BREADCRUMB -->
+        <div class="breadcrumb">
+            <a href="/">Home</a>
+            <span>›</span>
+            <a href="/properties">Land</a>
+            <span>›</span>
+            <span class="current">{{ property.title }}</span>
+        </div>
+
+        <!-- TITLE -->
+        <h1 class="property-title">{{ property.title }}</h1>
+
+        <!-- LOCATION -->
+        {% if property.location %}
+        <p class="property-location">
+          <img src="/static/uploads/map-pin.svg" alt="location" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 5px;">
+            {{ property.location }}
+        </p>
+        {% endif %}
+
+        <!-- BADGES -->
+        <div class="property-badges">
+            {% if property.featured %}
+                <span class="badge featured">FEATURED</span>
+            {% endif %}
+
+            {% if property.status %}
+                <span class="badge available">
+                    {{ property.status | upper }}
+                </span>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+
+<!-- =========================
+   PROPERTY IMAGE
+========================= -->
+<section class="property-hero">
+    <div class="property-container">
+
+        {% if property.media %}
+            <img src="{{ url_for('static', filename='uploads/' ~ property.media) }}"
+                 alt="{{ property.title }}">
+        {% else %}
+            <img src="{{ url_for('static', filename='images/placeholder.jpg') }}"
+                 alt="Property Image">
+        {% endif %}
+
+    </div>
+</section>
+
+<!-- =========================
+   PROPERTY CONTENT
+========================= -->
+<section class="property-content">
+    <div class="property-container">
+
+        <div class="property-grid">
+
+            <!-- LEFT CONTENT -->
+            <div class="property-main">
+
+                {% if property.description %}
+                <h2>Description</h2>
+                <p>{{ property.description }}</p>
+                {% endif %}
+
+                <h2>Property Details</h2>
+                <ul class="property-details-list">
+                    {% if property.location %}
+                        <li><strong>Location:</strong> {{ property.location }}</li>
+                    {% endif %}
+                    {% if property.size %}
+                        <li><strong>Size:</strong> {{ property.size }}</li>
+                    {% endif %}
+                    {% if property.type %}
+                        <li><strong>Type:</strong> {{ property.type }}</li>
+                    {% endif %}
+                    {% if property.status %}
+                        <li><strong>Status:</strong> {{ property.status }}</li>
+                    {% endif %}
+                </ul>
+
+            </div>
+
+            <!-- RIGHT SIDEBAR -->
+            <aside class="property-sidebar">
+
+                {% if property.price %}
+                <div class="price-box">
+                    <h3>Price</h3>
+                    <p class="price">
+                        KES {{ property.price }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <div class="contact-box">
+                    <h3>Interested?</h3>
+                    <a href="tel:+254784666927" class="btn-primary">
+                        Call Now
+                    </a>
+                    <a href="https://wa.me/254784666927" class="btn-outline">
+                        WhatsApp
+                    </a>
+                </div>
+
+            </aside>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

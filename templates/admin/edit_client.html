@@ -1,0 +1,307 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Edit Client | Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+.form-header {
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.form-header a {
+    font-size: 24px;
+    color: #0a3c28;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.form-header a:hover {
+    background: #f3f4f6;
+    border-radius: 6px;
+}
+
+.form-header h2 {
+    margin: 0;
+    color: #0a3c28;
+}
+
+.form-header p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.error-message {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border-left: 4px solid #ef4444;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #0a3c28;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.required {
+    color: #ef4444;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-save {
+    flex: 1;
+    padding: 12px 24px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-cancel {
+    flex: 1;
+    padding: 12px 24px;
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+    background: #e5e7eb;
+}
+
+.helper-text {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.form-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0a3c28;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+@media (max-width: 640px) {
+    .form-container {
+        padding: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="form-container">
+    <div class="form-header">
+        <a href="/admin/clients">←</a>
+        <div>
+            <h2>Edit Client</h2>
+            <p>Update client information</p>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="error-message">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" class="client-form">
+        <!-- BASIC INFORMATION -->
+        <div class="form-section-title">👤 Basic Information</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="name">Full Name <span class="required">*</span></label>
+                <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    required 
+                    value="{{ client.name }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="client_type">Client Type <span class="required">*</span></label>
+                <select id="client_type" name="client_type" required>
+                    <option value="">Select Type</option>
+                    <option value="buyer" {% if client.client_type == 'buyer' %}selected{% endif %}>Buyer</option>
+                    <option value="investor" {% if client.client_type == 'investor' %}selected{% endif %}>Investor</option>
+                    <option value="agent" {% if client.client_type == 'agent' %}selected{% endif %}>Agent</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- CONTACT INFORMATION -->
+        <div class="form-section-title">📞 Contact Information</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="email">Email <span class="required">*</span></label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required 
+                    value="{{ client.email }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone <span class="required">*</span></label>
+                <input 
+                    type="tel" 
+                    id="phone" 
+                    name="phone" 
+                    required 
+                    value="{{ client.phone }}"
+                >
+            </div>
+        </div>
+
+        <!-- LOCATION & PREFERENCES -->
+        <div class="form-section-title">📍 Location & Preferences</div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="location">Preferred Location <span class="required">*</span></label>
+                <input 
+                    type="text" 
+                    id="location" 
+                    name="location" 
+                    required 
+                    value="{{ client.location }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="budget">Budget (KES)</label>
+                <input 
+                    type="text" 
+                    id="budget" 
+                    name="budget" 
+                    value="{{ client.budget or '' }}"
+                >
+                <span class="helper-text">Leave blank if unknown</span>
+            </div>
+        </div>
+
+        <!-- STATUS -->
+        <div class="form-section-title">🔔 Status</div>
+
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                <option value="Active" {% if client.status == 'Active' %}selected{% endif %}>Active</option>
+                <option value="Inactive" {% if client.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                <option value="Pending" {% if client.status == 'Pending' %}selected{% endif %}>Pending</option>
+            </select>
+        </div>
+
+        <!-- ADDITIONAL NOTES -->
+        <div class="form-section-title">📝 Additional Information</div>
+
+        <div class="form-group">
+            <label for="notes">Notes</label>
+            <textarea 
+                id="notes" 
+                name="notes"
+            >{{ client.notes or '' }}</textarea>
+            <span class="helper-text">e.g. Contact preferences, property interests, previous interactions</span>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="form-actions">
+            <button type="submit" class="btn-save">✓ Save Changes</button>
+            <a href="/admin/clients" class="btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

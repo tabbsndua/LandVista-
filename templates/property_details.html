@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}{{ property.title }} | LandVista{% endblock %}
+
+{% block content %}
+<div class="property-details-container">
+    
+    <!-- BREADCRUMB -->
+    <div class="detail-breadcrumb">
+        <a href="/">Home</a> <span>›</span>
+        <a href="/properties">Land</a> <span>›</span>
+        <span>{{ property.title }}</span>
+    </div>
+
+    <!-- TITLE AND BADGES -->
+    <div class="detail-header-top">
+        <h1>{{ property.title }}</h1>
+        <p class="detail-location">📍 {{ property.location }}, {{ property.county if property.county else 'Kenya' }}</p>
+        <div class="detail-badges">
+            <span class="detail-badge featured">FEATURED</span>
+            <span class="detail-badge available">AVAILABLE</span>
+        </div>
+    </div>
+
+    <div class="detail-top-section">
+        
+        <!-- IMAGE SECTION (LEFT) -->
+        <div class="detail-image-section">
+            <div class="detail-image-carousel">
+                <div class="main-image-container">
+                    {% if property.media %}
+                        {% if property.media is string %}
+                            <img id="mainImage" src="{{ url_for('static', filename='uploads/' ~ property.media) }}" alt="{{ property.title }}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22400%22%3E%3Crect fill=%22%23667eea%22 width=%22800%22 height=%22400%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2248%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22%3E🏞️ Property Image%3C/text%3E%3C/svg%3E'">
+                        {% else %}
+                            {% set first_media = property.media[0] if property.media else None %}
+                            {% if first_media %}
+                                <img id="mainImage" src="{{ url_for('static', filename='uploads/' ~ first_media) }}" alt="{{ property.title }}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22800%22 height=%22400%22%3E%3Crect fill=%22%23667eea%22 width=%22800%22 height=%22400%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2248%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22%3E🏞️ Property Image%3C/text%3E%3C/svg%3E'">
+                            {% else %}
+                                <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: bold; flex-direction: column; gap: 15px;">
+                                    <div style="font-size: 64px;">🏞️</div>
+                                    <div>No Image Available</div>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                        <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: bold; flex-direction: column; gap: 15px;">
+                            <div style="font-size: 64px;">🏞️</div>
+                            <div>No Image Available</div>
+                        </div>
+                    {% endif %}
+                    <button class="carousel-nav prev">‹</button>
+                    <button class="carousel-nav next">›</button>
+                </div>
+                <div class="thumbnail-images">
+                    {% if property.media %}
+                        {% if property.media is string %}
+                            <div class="thumbnail active">
+                                {% if property.media.endswith(('.mp4', '.webm', '.mov')) %}
+                                    <div style="width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">▶️</div>
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='uploads/' ~ property.media) }}" alt="Thumbnail" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            {% for media in property.media %}
+                                <div class="thumbnail {% if loop.first %}active{% endif %}">
+                                    {% if media.endswith(('.mp4', '.webm', '.mov')) %}
+                                        <div style="width: 100%; height: 100%; background: #333; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">▶️</div>
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename='uploads/' ~ media) }}" alt="Thumbnail {{ loop.index }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR FORM (RIGHT) -->
+        <aside class="detail-right-column">
+            
+            <!-- CONTACT AGENT CARD -->
+            <div class="side-form-card">
+                
+                <!-- AGENT INFO HEADER -->
+                <div class="side-contact-head">
+                    <div class="side-avatar">👤</div>
+                    <div>
+                        <p class="side-company">landvista.com</p>
+                    </div>
+                </div>
+
+                <!-- QUICK CONTACT FORM -->
+                <form class="side-quick-form" id="inquiryForm">
+                    <input type="text" name="name" placeholder="Name" required>
+                    <input type="tel" name="phone" placeholder="Phone" required>
+                    <input type="text" name="email" placeholder="Email" required>
+                    <textarea name="message" rows="4" placeholder="Hello, I am interested in [{{ property.title }}]">Hello, I am interested in [{{ property.title }}]</textarea>
+                    <select name="inquiry_type" required>
+                        <option value="">Select</option>
+                        <option value="buyer">Buyer</option>
+                        <option value="investor">Investor</option>
+                        <option value="agent">Agent</option>
+                    </select>
+                    <input type="hidden" name="property_id" value="{{ property._id }}">
+                    <input type="hidden" name="property_title" value="{{ property.title }}">
+                    <div class="form-footer-side">
+                        <small>By submitting this form I agree to <a href="/terms-of-use" target="_blank">Terms of Use</a></small>
+                        <button type="button" class="btn-send-email" id="submitBtn" onclick="submitInquiry(document.getElementById('inquiryForm'))">Send Email</button>
+                    </div>
+                </form>
+
+                <!-- WHATSAPP CONTACT -->
+                <div class="side-whatsapp-contact">
+                    <p class="contact-label">Or chat with us on WhatsApp</p>
+                    <a href="https://wa.me/254784666927?text=Hello%20I%20am%20interested%20in%20{{ property.title | replace(' ', '%20') }}%20at%20{{ property.location | replace(' ', '%20') }}.%20KES%20{{ property.price }}" 
+                       target="_blank" rel="noopener noreferrer" class="whatsapp-btn">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </a>
+                </div>
+
+            </div>
+
+        </aside>
+
+        </div>
+
+    </div>
+
+    <!-- MAIN CONTENT SECTIONS -->
+    <div class="detail-left-column">
+
+        <!-- Overview removed as requested -->
+
+        <!-- PROPERTY TYPE / FEATURES SECTION -->
+        <div class="detail-section">
+            <div class="detail-row">
+                <div class="detail-col">
+                    <strong>Land</strong>
+                    <p>Property Type</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DESCRIPTION SECTION -->
+        <div class="detail-section">
+            <h2>Description</h2>
+            <p>{{ property.description }}</p>
+            {% if property.features %}
+                <h3 style="margin-top: 20px; margin-bottom: 15px;">Key Features of {{ property.title }}:</h3>
+                <ul class="features-bullets">
+                    {% for feature in property.features.split('\n') %}
+                        {% if feature.strip() %}
+                        <li>{{ feature.strip() }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <!-- ADDRESS SECTION -->
+        <div class="detail-section">
+            <h2>Address</h2>
+            <div class="address-grid">
+                <div>
+                    <strong>State/county:</strong>
+                    <p>{{ property.county if property.county else 'Mwingi' }}</p>
+                </div>
+                <div>
+                    <strong>Area:</strong>
+                    <p>{{ property.location }}</p>
+                </div>
+            </div>
+            <div class="address-grid">
+                <div>
+                    <strong>Country:</strong>
+                    <p>Kenya</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAILS SECTION -->
+        <div class="detail-section">
+            <h2>Details</h2>
+            <div class="details-boxes">
+                <div class="detail-box">
+                    <strong>Price</strong>
+                    <span class="detail-price">KES {{ "{:,}".format(property.price) }}</span>
+                </div>
+                <div class="detail-box">
+                    <strong>Property Type</strong>
+                    <span>Land</span>
+                </div>
+                <div class="detail-box">
+                    <strong>Property Status</strong>
+                    <span class="status-badge">Available</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEATURES CHECKLIST SECTION -->
+        <div class="detail-section">
+            <h2>Features</h2>
+            <div class="features-checklist">
+                {% if property.features %}
+                    {% for feature in property.features.split('\n') %}
+                        {% if feature.strip() %}
+                        <div class="feature-item">
+                            <span class="checkmark">✓</span> {{ feature.strip() }}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- INQUIRY FORM SECTION -->
+<section class="inquiry-form-section">
+    <div class="inquiry-form-container">
+        <h2>Interested in this property?</h2>
+        <p class="inquiry-subtitle">Fill out the form below and our team will get back to you shortly.</p>
+        
+        <form class="inquiry-form-full" id="inquiryFormFull">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" placeholder="Your Full Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" placeholder="Your Email" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="phone" placeholder="Your Phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="inquiry_type">Inquiry Type *</label>
+                    <select id="inquiry_type" name="inquiry_type" required>
+                        <option value="">Select Inquiry Type</option>
+                        <option value="buyer">Buyer</option>
+                        <option value="investor">Investor</option>
+                        <option value="agent">Agent</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="message">Message *</label>
+                <textarea id="message" name="message" rows="6" placeholder="Tell us more about your interest in this property..." required></textarea>
+            </div>
+            
+            <input type="hidden" name="property_id" value="{{ property._id }}">
+            <input type="hidden" name="property_title" value="{{ property.title }}">
+            
+            <div class="form-footer">
+                <small>By submitting this form I agree to <a href="#">Terms of Use</a></small>
+                <button type="button" class="btn-send-inquiry" id="submitBtnForm" onclick="submitInquiry(document.getElementById('inquiryFormFull'))">Send Inquiry</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- ADDITIONAL CONTACT SECTION -->
+<section class="additional-contact-section">
+    <div class="contact-section-container">
+        <div class="contact-option">
+            <div class="contact-icon">💬</div>
+            <h3>Quick Chat</h3>
+            <p>Prefer real-time conversation? Chat with us on WhatsApp</p>
+            <a href="https://wa.me/254784666927?text=Hello%20I%20am%20interested%20in%20{{ property.title | replace(' ', '%20') }}%20at%20{{ property.location | replace(' ', '%20') }}.%20KES%20{{ property.price }}" 
+               target="_blank" rel="noopener noreferrer" class="whatsapp-btn-large">
+                <i class="fab fa-whatsapp"></i> Message on WhatsApp
+            </a>
+        </div>
+        
+        <div class="trust-section">
+            <h3>Why Invest With LandVista?</h3>
+            <div class="trust-items">
+                <div class="trust-item">
+                    <div class="trust-icon">✓</div>
+                    <div>
+                        <strong>Verified Listings</strong>
+                        <p>All properties are thoroughly vetted and legally verified</p>
+                    </div>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">✓</div>
+                    <div>
+                        <strong>Transparent Pricing</strong>
+                        <p>No hidden fees. Clear pricing with honest transactions</p>
+                    </div>
+                </div>
+                <div class="trust-item">
+                    <div class="trust-icon">✓</div>
+                    <div>
+                        <strong>Expert Support</strong>
+                        <p>Dedicated team to guide you through every step</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function submitInquiry(form) {
+    const isMainForm = form.id === 'inquiryForm';
+    const submitBtn = isMainForm ? form.querySelector('#submitBtn') : form.querySelector('#submitBtnForm');
+    const originalText = submitBtn.textContent;
+    
+    // Get form data
+    const formData = new FormData(form);
+    
+    // Disable button and show loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+    
+    console.log('Submitting inquiry...');
+    
+    // Submit form via AJAX
+    fetch('/submit-inquiry', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            // Show success notification
+            showNotification('✓ ' + data.message, 'success');
+            
+            // Reset form
+            form.reset();
+            
+            // Reset button
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            
+            // Scroll to top
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 500);
+        } else {
+            showNotification('✗ Error: ' + (data.error || 'Failed to submit inquiry'), 'error');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        showNotification('✗ An error occurred while submitting the form', 'error');
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+    // Remove existing notification if present
+    const existing = document.getElementById('notification');
+    if (existing) existing.remove();
+    
+    const notification = document.createElement('div');
+    notification.id = 'notification';
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        background: ${type === 'success' ? '#10b981' : '#ef4444'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        font-weight: 500;
+        animation: slideIn 0.3s ease-out;
+        font-size: 14px;
+        font-weight: 600;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+
+// Add animation styles
+if (!document.getElementById('notificationStyles')) {
+    const style = document.createElement('style');
+    style.id = 'notificationStyles';
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Carousel functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    const mainImage = document.getElementById('mainImage');
+    const mainContainer = document.querySelector('.main-image-container');
+    
+    if (!thumbnails.length || !mainImage || !mainContainer) return;
+    
+    let currentIndex = 0;
+    const mediaFiles = {{ property.media | tojson }};
+    const mediaArray = Array.isArray(mediaFiles) ? mediaFiles : [mediaFiles];
+    
+    function isVideo(filename) {
+        return filename && (filename.endsWith('.mp4') || filename.endsWith('.webm') || filename.endsWith('.mov'));
+    }
+    
+    function updateCarousel(index) {
+        // Update active thumbnail
+        thumbnails.forEach((thumb, i) => {
+            thumb.classList.toggle('active', i === index);
+        });
+        
+        // Get the media file for this index
+        const mediaFile = mediaArray[index];
+        
+        if (isVideo(mediaFile)) {
+            // Display video
+            const videoSrc = "{{ url_for('static', filename='uploads/') }}" + mediaFile;
+            mainContainer.innerHTML = `
+                <video controls style="width: 100%; height: auto; object-fit: contain; display: block;">
+                    <source src="${videoSrc}">
+                    Your browser does not support the video tag.
+                </video>
+                <button class="carousel-nav prev">‹</button>
+                <button class="carousel-nav next">›</button>
+            `;
+            // Re-attach button listeners
+            attachButtonListeners();
+        } else {
+            // Display image
+            const activeThumb = thumbnails[index];
+            const thumbImg = activeThumb.querySelector('img');
+            const imageSrc = thumbImg.src;
+            mainImage.src = imageSrc;
+        }
+        
+        currentIndex = index;
+    }
+    
+    function attachButtonListeners() {
+        const prevBtn = document.querySelector('.carousel-nav.prev');
+        const nextBtn = document.querySelector('.carousel-nav.next');
+        
+        if (prevBtn) {
+            prevBtn.onclick = () => {
+                const newIndex = currentIndex === 0 ? thumbnails.length - 1 : currentIndex - 1;
+                updateCarousel(newIndex);
+            };
+        }
+        
+        if (nextBtn) {
+            nextBtn.onclick = () => {
+                const newIndex = currentIndex === thumbnails.length - 1 ? 0 : currentIndex + 1;
+                updateCarousel(newIndex);
+            };
+        }
+    }
+    
+    // Add click listeners to thumbnails
+    thumbnails.forEach((thumb, index) => {
+        thumb.addEventListener('click', () => updateCarousel(index));
+    });
+    
+    // Attach initial button listeners
+    attachButtonListeners();
+});
+</script>
+
+{% endblock %}

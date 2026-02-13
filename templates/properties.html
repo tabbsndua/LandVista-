@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Properties | LandVista{% endblock %}
+
+{% block content %}
+
+<div class="properties-page">
+
+<!-- PAGE HEADER -->
+<section class="properties-hero">
+    <div class="properties-hero-content">
+        <h1>Discover Available Properties</h1>
+        <p>Browse our verified land listings across Kenya's most promising investment regions</p>
+    </div>
+</section>
+
+<!-- FILTER BAR -->
+<section class="properties-filters">
+    <div class="filter-container">
+        <div class="filter-group">
+            <label for="locationFilter">Location</label>
+            <input type="text" id="locationFilter" class="filter-input" placeholder="Search by location...">
+        </div>
+        <div class="filter-group">
+            <label for="priceFilter">Price Range</label>
+            <select id="priceFilter" class="filter-input">
+                <option value="">All Prices</option>
+                <option value="0-500000">KSh 0 - 500K</option>
+                <option value="500000-1000000">KSh 500K - 1M</option>
+                <option value="1000000-5000000">KSh 1M - 5M</option>
+                <option value="5000000+">KSh 5M+</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="availabilityFilter">Availability</label>
+            <select id="availabilityFilter" class="filter-input" onchange="filterProperties()" value="available">
+                <option value="available" selected>For Sale Lands</option>
+                <option value="sold">Sold Out</option>
+            </select>
+        </div>
+        <button id="searchFilters" class="btn-search-filters" onclick="filterProperties()">Search</button>
+        <button id="resetFilters" class="btn-reset-filters" onclick="resetFiltersForm()">Reset Filters</button>
+    </div>
+</section>
+
+<!-- PROPERTIES GRID -->
+<section class="properties-section">
+    <div id="noResultsMessage" style="display: none; text-align: center; padding: 60px 20px; color: #666;">
+        <p style="font-size: 48px; margin-bottom: 20px;">🔍</p>
+        <h3 style="font-size: 24px; color: #0a3c28; margin-bottom: 10px;">No Properties Found</h3>
+        <p style="font-size: 16px; margin-bottom: 20px;">We couldn't find any properties matching your search criteria.</p>
+        <button onclick="resetFiltersForm()" style="background: #0a3c28; color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px;">Reset Filters</button>
+    </div>
+    <div class="properties-grid" id="propertiesGrid">
+
+        {% for p in properties %}
+        <!-- PROPERTY CARD -->
+        <div class="property-card">
+            <div class="property-image">
+                {% if p.get('media') %}
+                    {% if p.media is string %}
+                        {% if p.media.endswith(('.mp4', '.webm', '.mov')) %}
+                        <video muted style="width:100%; height:100%; object-fit:cover;">
+                            <source src="{{ url_for('static', filename='uploads/' ~ p.media) }}">
+                        </video>
+                        {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' ~ p.media) }}" alt="{{ p.title }}" style="object-fit: cover;">
+                        {% endif %}
+                    {% else %}
+                        {% set first_media = p.media[0] if p.media else None %}
+                        {% if first_media %}
+                            {% if first_media.endswith(('.mp4', '.webm', '.mov')) %}
+                            <video muted style="width:100%; height:100%; object-fit:cover;">
+                                <source src="{{ url_for('static', filename='uploads/' ~ first_media) }}">
+                            </video>
+                            {% else %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ first_media) }}" alt="{{ p.title }}" style="object-fit: cover;">
+                            {% endif %}
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}" style="object-fit: cover;">
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}" style="object-fit: cover;">
+                {% endif %}
+            </div>
+
+            <div class="property-details">
+                <h3>{{ p.title }}</h3>
+                <p class="property-location">{{ p.location }}</p>
+                <p class="property-size"><i class="fas fa-square"></i> {{ p.area }}</p>
+
+                <div class="property-footer">
+                    <span class="property-price">
+                        KSh {{ "{:,}".format(p.price) }}
+                    </span>
+                    <a href="/properties/{{ p._id }}" class="property-btn">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</section>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// Real-time properties update (Socket.IO + polling fallback)
+let __pv_socket = null;
+let allProperties = [];
+
+try {
+    if (typeof io !== 'undefined') {
+        __pv_socket = io();
+        __pv_socket.on('connect', () => console.log('Public socket connected'));
+        __pv_socket.on('property_created', () => loadProperties());
+        __pv_socket.on('property_updated', () => loadProperties());
+        __pv_socket.on('property_deleted', () => loadProperties());
+    }
+} catch (e) { console.warn('Socket.IO client not available', e); }
+
+function loadProperties(forceDisplay = false) {
+    fetch('/api/properties')
+        .then(response => response.json())
+        .then(data => {
+            allProperties = data;
+            // populate sold dropdown so sold items appear in the menu
+            try { populateSoldDropdown(allProperties); } catch(e){ console.warn('populateSoldDropdown error', e); }
+            // If the user has active filters, do not overwrite the displayed results unless forced
+            const locationVal = document.getElementById('locationFilter').value;
+            const priceVal = document.getElementById('priceFilter').value;
+            const availabilityVal = document.getElementById('availabilityFilter').value;
+            // Consider availability as an active filter so auto-refresh doesn't overwrite selected availability
+            const filtersActive = (locationVal && locationVal.trim() !== '') || (priceVal && priceVal !== '') || (availabilityVal && availabilityVal !== '');
+            if (forceDisplay || !filtersActive) displayProperties(data);
+            else filterProperties();
+        })
+        .catch(err => console.error('Failed to load properties:', err));
+}
+
+function displayProperties(properties) {
+    const grid = document.getElementById('propertiesGrid');
+    const noResultsMsg = document.getElementById('noResultsMessage');
+
+    if (!properties || properties.length === 0) {
+        if (grid) grid.innerHTML = '';
+        if (noResultsMsg) noResultsMsg.style.display = 'block';
+        return;
+    }
+
+    if (noResultsMsg) noResultsMsg.style.display = 'none';
+
+    // Robust rendering with fallback on error
+    try {
+        grid.innerHTML = properties.map(p => {
+            // Normalize media: support string or array
+            let media = null;
+            try {
+                if (Array.isArray(p.media) && p.media.length) media = p.media[0];
+                else if (typeof p.media === 'string') media = p.media;
+            } catch (e) { console.warn('Media parsing error:', e); }
+
+            // Build image/video HTML
+            let mediaHtml = '';
+            if (media) {
+                const isVideo = media.endsWith('.mp4') || media.endsWith('.webm') || media.endsWith('.mov');
+                const mediaUrl = `/static/uploads/${media}`;
+                if (isVideo) {
+                    mediaHtml = `<video muted style="width:100%; height:100%; object-fit:cover;"><source src="${mediaUrl}"></video>`;
+                } else {
+                    mediaHtml = `<img src="${mediaUrl}" alt="${escapeHTML(p.title)}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/static/images/placeholder.jpg'">`;
+                }
+            } else {
+                mediaHtml = `<img src="/static/images/placeholder.jpg" alt="${escapeHTML(p.title)}" style="width:100%; height:100%; object-fit:cover;">`;
+            }
+
+            return `
+            <div class="property-card">
+                <div class="property-image">
+                    ${mediaHtml}
+                </div>
+                <div class="property-details">
+                    <h3>${escapeHTML(p.title)}</h3>
+                    <p class="property-location">${escapeHTML(p.location)}</p>
+                    <p class="property-size">${escapeHTML(p.area)}</p>
+                    <div class="property-footer">
+                        <span class="property-price">
+                            KSh ${Number(p.price || 0).toLocaleString()}
+                        </span>
+                        <a href="/properties/${p._id}" class="property-btn">
+                            View Details
+                        </a>
+                        ${p.status === 'sold' ? '<span class="sold-badge" style="margin-left:8px;background:#ef4444;color:white;padding:6px 10px;border-radius:6px;font-weight:700;">SOLD</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        }).join('');
+    } catch (e) {
+        console.error('Render error, using fallback list:', e);
+        // Fallback simple list
+        grid.innerHTML = '<div class="properties-fallback">' + properties.map(p => `<div class="property-card"><h3>${escapeHTML(p.title || 'Untitled')}</h3><p>${escapeHTML(p.location || '')}</p></div>`).join('') + '</div>';
+    }
+}
+
+function escapeHTML(str) {
+    return (str || '').replace(/[&<>"']/g, c => (
+        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+    ));
+}
+
+// Populate sold properties dropdown menu
+function populateSoldDropdown(properties){
+    const soldContainer = document.getElementById('soldList');
+    if(!soldContainer) return;
+    soldContainer.innerHTML = '<div class="dropdown-loading">Loading...</div>';
+    try{
+        const sold = (properties || []).filter(p => (p.status || '') === 'sold');
+        if(!sold.length){
+            soldContainer.innerHTML = '<div class="dropdown-empty">No sold properties</div>';
+            return;
+        }
+        soldContainer.innerHTML = sold.map(p => {
+            const title = escapeHTML(p.title || 'Untitled');
+            return `<a class="sold-item" href="/properties/${p._id}">${title}</a>`;
+        }).join('');
+    }catch(e){
+        console.error('Error populating sold dropdown', e);
+        soldContainer.innerHTML = '<div class="dropdown-error">Error loading sold items</div>';
+    }
+}
+
+// FILTER PROPERTIES
+function filterProperties() {
+    const location = document.getElementById('locationFilter').value.toLowerCase();
+    const priceRange = document.getElementById('priceFilter').value;
+    
+    let filtered = allProperties;
+    
+    // Filter by location
+    if (location) {
+        filtered = filtered.filter(p => 
+            p.location.toLowerCase().includes(location) ||
+            p.title.toLowerCase().includes(location)
+        );
+    }
+    
+    // Filter by price range
+    if (priceRange) {
+        filtered = filtered.filter(p => {
+            const price = Number(p.price);
+            if (priceRange === '0-500000') return price >= 0 && price <= 500000;
+            if (priceRange === '500000-1000000') return price > 500000 && price <= 1000000;
+            if (priceRange === '1000000-5000000') return price > 1000000 && price <= 5000000;
+            if (priceRange === '5000000+') return price > 5000000;
+            return true;
+        });
+    }
+    // Filter by availability
+    const availability = document.getElementById('availabilityFilter').value;
+    if (availability) {
+        if (availability === 'sold') filtered = filtered.filter(p => (p.status || '') === 'sold');
+        if (availability === 'available') filtered = filtered.filter(p => (p.status || '') !== 'sold' && (p.status || '') !== 'draft');
+    }
+    
+    displayProperties(filtered);
+}
+
+// RESET FILTERS
+function resetFiltersForm() {
+    document.getElementById('locationFilter').value = '';
+    document.getElementById('priceFilter').value = '';
+    // Clear current grid and hide no-results while we fetch
+    const grid = document.getElementById('propertiesGrid');
+    const noResultsMsg = document.getElementById('noResultsMessage');
+    if (grid) grid.innerHTML = '';
+    if (noResultsMsg) noResultsMsg.style.display = 'none';
+
+    // Fetch fresh list and display all properties immediately
+    fetch('/api/properties')
+        .then(r => r.json())
+        .then(data => {
+            allProperties = data || [];
+            displayProperties(allProperties);
+        })
+        .catch(err => {
+            console.error('Failed to reload properties on reset:', err);
+            // fallback to whatever we have
+            displayProperties(allProperties);
+        });
+}
+
+// Real-time updates
+loadProperties();
+setInterval(loadProperties, 5000);
+
+// Handle URL parameters (from dropdown navigation)
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    
+    if (status === 'available') {
+        document.getElementById('availabilityFilter').value = 'available';
+    } else if (status === 'sold') {
+        document.getElementById('availabilityFilter').value = 'sold';
+    }
+});
+</script>
+
+{% endblock %}

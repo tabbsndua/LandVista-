@@ -1,0 +1,429 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Legal Guides Management{% endblock %}
+
+{% block content %}
+
+<div class="admin-news">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div>
+            <h1>Legal Guides Management</h1>
+            <p>Create, edit and publish legal guides and documentation.</p>
+        </div>
+
+        <button class="btn-primary" onclick="openGuideModal()">
+            + Create New Guide
+        </button>
+    </div>
+
+    <!-- SEARCH & FILTERS -->
+    <div class="filters">
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="guideSearch" 
+                placeholder="Search guides..."
+                onkeyup="filterGuides()"
+            >
+        </div>
+
+        <select id="categoryFilter" onchange="filterGuides()">
+            <option value="">All Categories</option>
+            <option value="Documentation">Documentation</option>
+            <option value="Legal">Legal</option>
+            <option value="Investment">Investment</option>
+            <option value="Property">Property</option>
+        </select>
+
+        <select id="statusFilter" onchange="filterGuides()">
+            <option value="">All Status</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+        </select>
+    </div>
+
+    <!-- GUIDES GRID -->
+    <div id="guidesGrid" class="articles-grid">
+        <!-- Guides will be loaded here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" style="display: none; text-align: center; padding: 40px;">
+        <p style="color: #6b7280; font-size: 14px;">No guides found.</p>
+    </div>
+
+</div>
+
+    <!-- View Modal -->
+    <div id="viewModal" class="modal" style="display:none;">
+        <div class="modal-box modal-box-large">
+            <div class="modal-header">
+                <h2>View Guide</h2>
+                <span class="modal-close" onclick="closeViewModal()">×</span>
+            </div>
+            <div class="modal-body" id="viewContent" style="padding: 30px;">
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeViewModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="guideModal" style="display:none;">
+        <div class="modal-box modal-box-large">
+
+            <div class="modal-header">
+                <h2 id="modalTitle">Create New Guide</h2>
+                <span class="modal-close" onclick="closeGuideModal()">×</span>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="form-group">
+                    <label for="guideTitle">Guide Title <span class="required">*</span></label>
+                    <input type="text" id="guideTitle" placeholder="e.g., Understanding Title Deeds" required style="width:100%">
+                </div>
+
+                <div class="form-group">
+                    <label for="guideSlug">URL Slug <span class="required">*</span></label>
+                    <input type="text" id="guideSlug" placeholder="e.g., title-deeds" required>
+                    <small class="helper-text">Used for the guide URL</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="guideAuthor">Author <span class="required">*</span></label>
+                        <input type="text" id="guideAuthor" placeholder="e.g., Legal Team" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guideCategory">Category</label>
+                        <input type="text" id="guideCategory" placeholder="e.g., Documentation">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="publishDate">Publish Date <span class="required">*</span></label>
+                        <input type="date" id="publishDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="readTime">Read Time (minutes) <span class="required">*</span></label>
+                        <input type="number" id="readTime" min="1" placeholder="e.g., 6" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="guideFeaturedImage">Featured Image</label>
+                    <input type="file" id="guideFeaturedImage" accept="image/*">
+                    <small class="helper-text">Recommended size: 800x600px</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="guideExcerpt">Short Excerpt <span class="required">*</span></label>
+                    <textarea id="guideExcerpt" rows="3" placeholder="Brief summary of the guide..." required style="width:100%"></textarea>
+                    <div class="char-count"><span id="guideExcerptCount">0</span> / 160 characters</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="guideContent">Guide Content <span class="required">*</span></label>
+                    <textarea id="guideContent" rows="12" placeholder="Write the full guide content here..." required style="width:100%"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="guideStatus">Status <span class="required">*</span></label>
+                    <select id="guideStatus" required>
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                    </select>
+                    <small class="helper-text">Draft guides are not visible on the website</small>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <label for="guideIsFeatured">
+                        <input type="checkbox" id="guideIsFeatured"> <span>Mark as Featured Guide</span>
+                    </label>
+                    <small class="helper-text">Featured guides appear prominently on the guides list</small>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeGuideModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveGuide()">Save Guide</button>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let guides = [];
+let editingId = null;
+
+document.addEventListener('DOMContentLoaded', () => { loadGuides(); setGuideTodayDate(); document.getElementById('guideExcerpt').addEventListener('input', updateExcerptCount); });
+
+function loadGuides(){
+    fetch('/api/legal-guides/admin').then(r=>r.json()).then(data=>{ guides = data || []; renderGuides(guides); }).catch(()=>{ guides = []; renderGuides([]); });
+}
+
+function renderGuides(list){
+    const grid = document.getElementById('guidesGrid');
+    const empty = document.getElementById('emptyState');
+    
+    if(!list || list.length===0){ 
+        grid.innerHTML=''; 
+        empty.style.display='block'; 
+        return; 
+    }
+    
+    empty.style.display='none';
+    grid.innerHTML = list.map(g => `
+        <div class="article-card" data-guide-id="${g._id}">
+            ${g.featured_image ? `<div class="card-image" style="background-image: url('${g.featured_image}')"></div>` : '<div class="card-image card-image-placeholder"></div>'}
+            <div class="card-content">
+                <div class="card-header">
+                    <h3>${escapeHTML(g.title)}</h3>
+                    <span class="status-badge ${g.status}">${capitalize(g.status)}</span>
+                </div>
+                <div class="card-meta">
+                    <span class="meta-item">📅 ${g.date}</span>
+                    <span class="meta-item">✍️ ${escapeHTML(g.author)}</span>
+                    <span class="meta-item">⏱️ ${g.readTime} min</span>
+                </div>
+                <p class="card-category">${g.category}</p>
+                <p class="card-excerpt">${escapeHTML(g.excerpt)}</p>
+                <div class="card-actions">
+                    <button class="btn-sm view-btn" onclick="viewGuide('${g._id}')">👁️ View</button>
+                    <button class="btn-sm edit-btn" onclick="editGuide('${g._id}')">✏️ Edit</button>
+                    <button class="btn-sm delete-btn" onclick="deleteGuide('${g._id}')">🗑️ Delete</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function viewGuide(id) {
+    const g = guides.find(x => x._id === id);
+    if (!g) return;
+    
+    const viewContent = document.getElementById('viewContent');
+    viewContent.innerHTML = `
+        <div class="article-view-container">
+            ${g.featured_image ? `
+                <div class="article-hero-image">
+                    <img src="${g.featured_image}" alt="${escapeHTML(g.title)}" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;">
+                </div>
+            ` : ''}
+            
+            <div class="article-view-header">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+                    <span class="status-badge ${g.status}">${capitalize(g.status)}</span>
+                    ${g.featured ? '<span style="background: #fbbf24; color: #78350f; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">⭐ Featured</span>' : ''}
+                </div>
+                
+                <h2 style="color: #0a3c28; margin: 0 0 15px 0; font-size: 1.8rem; line-height: 1.3;">
+                    ${escapeHTML(g.title)}
+                </h2>
+                
+                <div class="article-view-meta">
+                    <div class="meta-badge">📅 ${g.date}</div>
+                    <div class="meta-badge">✍️ ${escapeHTML(g.author)}</div>
+                    <div class="meta-badge">⏱️ ${g.readTime} min read</div>
+                    <div class="meta-badge">📂 ${g.category}</div>
+                </div>
+            </div>
+            
+            <hr style="border: none; border-top: 2px solid #e5e7eb; margin: 25px 0;">
+            
+            <div class="article-view-body">
+                <div class="article-excerpt-section">
+                    <h4 style="color: #6b7280; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 10px;">Summary</h4>
+                    <p style="color: #374151; font-size: 0.95rem; font-style: italic; line-height: 1.6; margin: 0;">
+                        ${escapeHTML(g.excerpt)}
+                    </p>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                
+                <div class="article-content-section">
+                    <h4 style="color: #6b7280; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 15px;">Full Content</h4>
+                    <div style="line-height: 1.8; color: #333; word-wrap: break-word; white-space: pre-wrap; font-size: 0.95rem;">
+                        ${escapeHTML(g.content || 'No additional content provided')}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="article-view-footer" style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-top: 25px; border-left: 4px solid #0a3c28;">
+                <h4 style="margin: 0 0 12px 0; color: #0a3c28;">Guide Information</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 0.9rem;">
+                    <div>
+                        <span style="color: #6b7280; font-weight: 600;">Author:</span>
+                        <span style="color: #374151;">${escapeHTML(g.author)}</span>
+                    </div>
+                    <div>
+                        <span style="color: #6b7280; font-weight: 600;">Category:</span>
+                        <span style="color: #374151;">${g.category}</span>
+                    </div>
+                    <div>
+                        <span style="color: #6b7280; font-weight: 600;">Published:</span>
+                        <span style="color: #374151;">${g.date}</span>
+                    </div>
+                    <div>
+                        <span style="color: #6b7280; font-weight: 600;">Reading Time:</span>
+                        <span style="color: #374151;">${g.readTime} minutes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('viewModal').style.display = 'flex';
+}
+function closeViewModal(){ document.getElementById('viewModal').style.display='none'; }
+
+function setGuideTodayDate() {
+    const today = new Date().toISOString().split('T')[0];
+    const el = document.getElementById('publishDate');
+    if (el) el.value = today;
+}
+
+function updateExcerptCount() {
+    const el = document.getElementById('guideExcerpt');
+    const cnt = document.getElementById('guideExcerptCount');
+    if (el && cnt) cnt.textContent = el.value.length;
+}
+
+function openGuideModal(){
+    editingId = null;
+    document.getElementById('modalTitle').innerText = 'Create New Guide';
+    clearGuideForm();
+    document.getElementById('guideModal').style.display = 'block';
+}
+
+function closeGuideModal(){
+    document.getElementById('guideModal').style.display = 'none';
+    clearGuideForm();
+}
+
+function editGuide(id){
+    const g = guides.find(x=>x._id===id);
+    if(!g) return;
+    editingId = id;
+    document.getElementById('modalTitle').innerText = 'Edit Guide';
+    document.getElementById('guideTitle').value = g.title || '';
+    document.getElementById('guideSlug').value = g.slug || '';
+    document.getElementById('guideExcerpt').value = g.excerpt || '';
+    document.getElementById('guideContent').value = g.content || '';
+    document.getElementById('guideAuthor').value = g.author || '';
+    document.getElementById('guideCategory').value = g.category || '';
+    document.getElementById('publishDate').value = g.date || '';
+    document.getElementById('readTime').value = g.readTime || '';
+    document.getElementById('guideStatus').value = g.status || 'draft';
+    document.getElementById('guideIsFeatured').checked = g.featured || false;
+    updateExcerptCount();
+    document.getElementById('guideModal').style.display = 'block';
+}
+
+function clearGuideForm(){
+    document.getElementById('guideTitle').value = '';
+    document.getElementById('guideSlug').value = '';
+    document.getElementById('guideAuthor').value = '';
+    document.getElementById('guideCategory').value = '';
+    setGuideTodayDate();
+    document.getElementById('readTime').value = '';
+    document.getElementById('guideExcerpt').value = '';
+    document.getElementById('guideContent').value = '';
+    document.getElementById('guideStatus').value = 'draft';
+    document.getElementById('guideIsFeatured').checked = false;
+    const f = document.getElementById('guideFeaturedImage'); if(f) f.value='';
+    updateExcerptCount();
+}
+
+function saveGuide(){
+    const title = document.getElementById('guideTitle').value.trim();
+    const slug = document.getElementById('guideSlug').value.trim();
+    const author = document.getElementById('guideAuthor').value.trim();
+    const category = document.getElementById('guideCategory').value.trim();
+    const date = document.getElementById('publishDate').value;
+    const readTime = parseInt(document.getElementById('readTime').value) || 5;
+    const excerpt = document.getElementById('guideExcerpt').value.trim();
+    const content = document.getElementById('guideContent').value.trim();
+    const status = document.getElementById('guideStatus').value;
+    const featured = document.getElementById('guideIsFeatured').checked;
+    const imageFile = document.getElementById('guideFeaturedImage').files ? document.getElementById('guideFeaturedImage').files[0] : null;
+
+    if (!title || !slug || !author || !date || !excerpt || !content) {
+        alert('Please fill in all required fields');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('slug', slug);
+    formData.append('author', author);
+    formData.append('category', category);
+    formData.append('date', date);
+    formData.append('read_time', readTime);
+    formData.append('excerpt', excerpt);
+    formData.append('content', content);
+    formData.append('status', status);
+    formData.append('featured', featured);
+    if (imageFile) formData.append('featured_image', imageFile);
+
+    const url = editingId ? `/admin/legal-guides/update/${editingId}` : '/admin/legal-guides/add';
+
+    fetch(url, { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.success) {
+                closeGuideModal();
+                loadGuides();
+                alert(editingId ? 'Guide updated!' : 'Guide created!');
+            } else {
+                alert('Error saving guide: ' + (data && data.error ? data.error : 'unknown'));
+            }
+        })
+        .catch(err => { console.error('Error saving guide', err); alert('Error saving guide'); });
+}
+
+function deleteGuide(id){ if(!confirm('Delete this guide?')) return; fetch(`/api/legal-guides/${id}`,{ method:'DELETE' }).then(()=>{ loadGuides(); }).catch(e=>{ alert('Delete failed'); console.error(e); }); }
+
+function filterGuides(){ 
+    const searchTerm = (document.getElementById('guideSearch').value || '').toLowerCase();
+    const categoryFilter = document.getElementById('categoryFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    const filtered = guides.filter(g => {
+        const matchesSearch = (g.title || '').toLowerCase().includes(searchTerm) || 
+                            (g.author || '').toLowerCase().includes(searchTerm) ||
+                            (g.excerpt || '').toLowerCase().includes(searchTerm);
+        const matchesCategory = !categoryFilter || g.category === categoryFilter;
+        const matchesStatus = !statusFilter || g.status === statusFilter;
+        
+        return matchesSearch && matchesCategory && matchesStatus;
+    });
+    
+    renderGuides(filtered);
+}
+
+function escapeHTML(str){ return (str||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// Optionally: Socket to auto-reload when guides updated elsewhere
+setTimeout(()=>{ if(typeof io!=='undefined'){ try{ const socket=io(); socket.on('guide_added',()=>loadGuides()); socket.on('guide_updated',()=>loadGuides()); socket.on('guide_deleted',()=>loadGuides()); }catch(e){}} },300);
+</script>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/news.css') }}">
+{% endblock %}

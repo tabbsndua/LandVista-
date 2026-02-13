@@ -1,0 +1,146 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f7f6;
+    padding: 30px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.btn-primary {
+    background: #0a3c28;
+    color: white;
+    padding: 10px 16px;
+    text-decoration: none;
+    border-radius: 5px;
+}
+/* =========================
+   CLIENTS TABLE – CLEAN SPACING
+========================= */
+
+.clients-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 14px; /* vertical row gap */
+}
+
+.clients-table thead th {
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+}
+
+.clients-table tbody tr {
+    background: #ffffff;
+    border-radius: 10px;
+}
+
+.clients-table tbody td {
+    padding: 18px 16px;
+    vertical-align: middle;
+}
+
+/* CLIENT NAME COLUMN */
+.client-name {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.client-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #d4af37;
+    color: #0a3c28;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.client-details strong {
+    display: block;
+    font-size: 14px;       /* reduced */
+    font-weight: 500;     /* less bold */
+    color: #1f2937;
+}
+
+.client-details small {
+    color: #9ca3af;
+    font-size: 12px;
+    font-weight: 400;
+}
+/* CONTACT COLUMN */
+.client-contact div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #4b5563;
+}
+.clients-table td {
+    font-size: 13px;
+    font-weight: 400;
+    color: #374151;
+}
+
+/* LOCATION */
+.client-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #374151;
+}
+
+/* STATUS */
+.status.active {
+    background: #e6f7ef;
+    color: #0a3c28;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.status.active {
+    background: #d4f8e8;
+    color: #0a3c28;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+.actions a {
+    margin-right: 8px;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.form-box {
+    background: white;
+    padding: 20px;
+    max-width: 400px;
+    border-radius: 6px;
+}
+
+.form-box input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.btn-secondary {
+    display: inline-block;
+    margin-top: 20px;
+    text-decoration: none;
+}

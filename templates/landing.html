@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Find Your Perfect Plot - LandVista Properties Limited{% endblock %}
+
+{% block content %}
+
+<div class="landing-page">
+
+<!-- =========================
+ LANDING HERO SECTION - PREMIUM
+========================= -->
+<section class="hero landing-hero">
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content hero-center">
+        <h1>Your Perfect Land Investment Awaits</h1>
+        <p class="hero-subtitle">Verified, secure and strategically located properties across Kenya's most promising growth regions</p>
+
+        <!-- CTA BUTTONS -->
+        <div class="hero-buttons">
+            <a href="/properties" class="cta-btn btn-primary">
+                <i class="fas fa-search"></i> Explore Properties
+            </a>
+            <a href="/contact" class="cta-btn btn-secondary">
+                <i class="fas fa-phone"></i> Contact Our Team
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- =========================
+ FEATURED PROPERTIES PREVIEW
+========================= -->
+<section class="featured-preview-section">
+    <div class="featured-preview-container">
+        <div class="section-header">
+            <h2>Featured Properties</h2>
+            <p>Handpicked opportunities for serious investors</p>
+        </div>
+
+        <div class="featured-cards-grid" id="featuredPropertiesGrid">
+            <div style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px 0;">
+                <i class="fas fa-spinner fa-spin"></i> Loading properties...
+            </div>
+        </div>
+
+        <div class="featured-cta">
+            <a href="/properties" class="btn-view-all">View All Properties →</a>
+        </div>
+    </div>
+</section>
+
+<!-- =========================
+ WHY CHOOSE LANDVISTA - FEATURES
+========================= -->
+<section class="why-us-section">
+    <div class="features-container">
+        <h2>Why Choose LandVista?</h2>
+        <p class="features-subtitle">Your trusted partner in verified land investment</p>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>100% Verified Properties</h3>
+                <p>Every property undergoes rigorous due diligence with complete legal documentation and title verification</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <h3>Transparent Transactions</h3>
+                <p>No hidden fees, clear pricing and honest communication from start to finish</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h3>Prime Locations</h3>
+                <p>Properties in high-growth areas with excellent infrastructure and long-term appreciation</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <h3>Expert Guidance</h3>
+                <p>Personalized advice, site visits and support throughout your investment journey</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <h3>Trusted by Thousands</h3>
+                <p>Join satisfied clients who have invested in their future</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <h3>Flexible Payment Plans</h3>
+                <p>Installment options and flexible terms to make land ownership accessible</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- =========================
+ TESTIMONIALS
+========================= -->
+<section class="testimonials-landing-section">
+    <h2>Success Stories from Our Investors</h2>
+    <p class="testimonials-subtitle">Real experiences from satisfied clients</p>
+
+    <div class="testimonials-carousel" id="testimonialsCarousel">
+        <div style="text-align: center; color: #999; padding: 40px 0;">
+            <i class="fas fa-spinner fa-spin"></i> Loading testimonials...
+        </div>
+    </div>
+</section>
+
+<!-- =========================
+ CALL TO ACTION SECTION
+========================= -->
+<section class="landing-cta-section">
+    <div class="landing-cta-content">
+        <h2>Ready to Start Your Land Investment Journey?</h2>
+        <p>Connect with our property experts today and discover your perfect plot</p>
+        <div class="cta-buttons-large">
+            <a href="/contact" class="btn-large btn-primary">Get Started</a>
+            <a href="/properties" class="btn-large btn-secondary">View Properties</a>
+        </div>
+    </div>
+</section>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// Load featured properties
+function loadFeaturedProperties() {
+    fetch('/api/properties')
+        .then(response => response.json())
+        .then(data => {
+            const grid = document.getElementById('featuredPropertiesGrid');
+            const featured = data.slice(0, 3);
+            
+            if (featured.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #999; padding: 40px 0;">No properties available yet</div>';
+                return;
+            }
+
+            grid.innerHTML = featured.map(p => {
+                // Handle media - support both arrays and strings
+                let media = '';
+                if (Array.isArray(p.media) && p.media.length) {
+                    media = p.media[0];
+                } else if (typeof p.media === 'string') {
+                    media = p.media;
+                }
+                
+                return `
+                <div class="featured-property-card">
+                    <div class="featured-image">
+                        ${media ? 
+                            (media.endsWith('.mp4') || media.endsWith('.webm') || media.endsWith('.mov')
+                                ? `<video muted style="width:100%; height:100%; object-fit:cover;"><source src="/static/uploads/${media}"></video>`
+                                : `<img src="/static/uploads/${media}" alt="${escapeHTML(p.title)}" onerror="this.src='/static/images/placeholder.jpg'" style="width:100%; height:100%; object-fit:cover;">`
+                            )
+                            : `<img src="/static/images/placeholder.jpg" alt="${escapeHTML(p.title)}" style="width:100%; height:100%; object-fit:cover;">`
+                        }
+                        <span class="featured-badge">Featured</span>
+                    </div>
+                    <div class="featured-info">
+                        <h3>${escapeHTML(p.title)}</h3>
+                        <p class="featured-location">${escapeHTML(p.location)}</p>
+                        <p class="featured-area">${escapeHTML(p.area)}</p>
+                        <div class="featured-footer">
+                            <span class="featured-price">KSh ${Number(p.price).toLocaleString()}</span>
+                            <a href="/properties/${p._id}" class="btn-view-details">Details</a>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        })
+        .catch(err => console.error('Failed to load featured properties:', err));
+}
+
+// Load testimonials
+function loadTestimonials() {
+    fetch('/api/testimonials')
+        .then(response => response.json())
+        .then(data => {
+            const carousel = document.getElementById('testimonialsCarousel');
+            
+            if (data.length === 0) {
+                carousel.innerHTML = '<div style="text-align: center; color: #999; padding: 40px 0;">No testimonials yet</div>';
+                return;
+            }
+
+            carousel.innerHTML = data.slice(0, 3).map(t => `
+                <div class="testimonial-slide">
+                    <div class="testimonial-stars">
+                        ${'⭐'.repeat(Math.min(t.rating || 5, 5))}
+                    </div>
+                    <p class="testimonial-text">"${escapeHTML(t.testimonial)}"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">${escapeHTML(t.name[0] || 'A').toUpperCase()}</div>
+                        <div class="author-info">
+                            <strong>${escapeHTML(t.name)}</strong>
+                            <p>${escapeHTML(t.location || 'Kenya')}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(err => console.error('Failed to load testimonials:', err));
+}
+
+function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// Load on page load
+loadFeaturedProperties();
+loadTestimonials();
+</script>
+
+{% endblock %}

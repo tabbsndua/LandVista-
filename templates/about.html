@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}About Us | LandVista Properties Limited{% endblock %}
+
+{% block content %}
+
+<div class="about-page">
+
+<!-- =========================
+ ABOUT HERO (FIRST SCREENSHOT)
+========================= -->
+<section class="hero about-hero"
+         style="background-image: url('{{ url_for('static', filename='images/about-hero.jpg') }}'); background-size: cover; background-position: center;">
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content" style="text-align:left; max-width:900px;">
+        <h1>About LandVista Properties Limited</h1>
+        <p>
+            Your trusted partner in land acquisition across Kenya.
+            We connect dreamers with prime land opportunities,
+            building futures one property at a time.
+        </p>
+    </div>
+</section>
+
+<!-- =========================
+ OUR STORY SECTION (SECOND SCREENSHOT)
+========================= -->
+<section class="about-story" style="padding:80px 10%; background:#ffffff;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:50px; align-items:center;">
+
+        <!-- TEXT -->
+        <div>
+            <h2 style="color:#0a3c28; margin-bottom:20px;">Our Story</h2>
+
+            <p>
+                Founded in the heart of Nairobi, LandVista Properties Limited
+                was born from a simple vision: to make land ownership accessible,
+                transparent and rewarding for every Kenyan.
+            </p>
+
+            <p>
+                With years of experience in the Kenyan real estate market,
+                we understand the unique challenges and opportunities that
+                come with land investment in our beautiful country.
+            </p>
+
+            <p>
+                From the bustling outskirts of Nairobi to the serene landscapes
+                of Kithyoko, Juja-farm and Kivandini, we’ve helped thousands of
+                families and investors find their perfect plot.
+            </p>
+
+            <p>
+                Our commitment goes beyond just selling land.
+                We believe in building lasting relationships, providing expert
+                guidance and ensuring every transaction is handled with the
+                utmost professionalism and care.
+            </p>
+        </div>
+
+        <!-- IMAGE + STAT -->
+        <div style="position:relative;">
+            <img src="{{ url_for('static', filename='images/about-story.jpg') }}"
+                 style="width:100%; border-radius:16px; box-shadow:0 15px 35px rgba(0,0,0,0.15);">
+
+            <div style="
+                position:absolute;
+                bottom:20px;
+                right:20px;
+                background:#d4af37;
+                color:#0a3c28;
+                padding:25px;
+                border-radius:12px;
+                text-align:center;
+                font-weight:bold;
+            ">
+                <h2 style="margin:0;">20+</h2>
+                <p style="margin:0;">Properties Sold</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- =========================
+ MISSION / VISION / VALUES
+========================= -->
+<section class="mv-section">
+    <div class="mv-grid">
+
+        <!-- OUR MISSION -->
+        <div class="mv-card mission-card">
+            <h3>Our Mission</h3>
+            <p>
+                To provide verified, prime land opportunities across Kenya
+                with complete transparency, exceptional customer service
+                and expert guidance throughout the entire acquisition process.
+            </p>
+        </div>
+
+        <!-- OUR VISION -->
+        <div class="mv-card vision-card">
+            <h3>Our Vision</h3>
+            <p>
+                To be Kenya's most trusted land investment partner,
+                empowering individuals and families to build their dreams
+                on solid ground through accessible and transparent
+                property solutions.
+            </p>
+        </div>
+
+        <!-- CORE VALUES -->
+        <div class="mv-card values-card">
+            <h3>Core Values</h3>
+
+            <ul class="values-list">
+                <li>✔ Integrity & Transparency</li>
+                <li>✔ Customer-First Approach</li>
+                <li>✔ Professional Excellence</li>
+                <li>✔ Quality & Verification</li>
+            </ul>
+        </div>
+
+    </div>
+</section>
+
+<!-- =========================
+ WHY CHOOSE US
+========================= -->
+<section class="why-choose-section">
+    <h2>Why Choose LandVista?</h2>
+    <p class="section-subtitle">Your land investment deserves a partner you can trust</p>
+    
+    <div class="why-choose-grid">
+        
+        <div class="why-card">
+            <div class="why-icon">✓</div>
+            <h4>Verified Properties</h4>
+            <p>Every property is thoroughly vetted with complete title deed verification and legal compliance checks.</p>
+        </div>
+
+        <div class="why-card">
+            <div class="why-icon">✓</div>
+            <h4>Prime Locations</h4>
+            <p>Strategic locations across Kenya with excellent growth potential and infrastructure development.</p>
+        </div>
+
+        <div class="why-card">
+            <div class="why-icon">✓</div>
+            <h4>Expert Guidance</h4>
+            <p>Our experienced team provides personalized support throughout your land acquisition journey.</p>
+        </div>
+
+        <div class="why-card">
+            <div class="why-icon">✓</div>
+            <h4>Transparent Process</h4>
+            <p>No hidden fees, clear documentation and honest communication at every step of the process.</p>
+        </div>
+
+    </div>
+</section>
+
+
+<section class="cta-section">
+    <h2>Ready to Find Your Perfect Plot?</h2>
+
+    <p>
+        Join hundreds of satisfied clients who have made their land ownership
+        dreams a reality with LandVista Properties Limited.
+    </p>
+
+    <div class="cta-buttons">
+        <a href="/properties" class="cta-primary">View Properties</a>
+        <a href="/contact" class="cta-secondary">Contact Us</a>
+    </div>
+</section>
+
+</div>
+
+{% endblock %}

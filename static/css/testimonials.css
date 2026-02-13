@@ -1,0 +1,292 @@
+/* ============================================================
+   TESTIMONIALS PAGE - ADD TESTIMONIAL FORM
+============================================================ */
+
+/* PAGE HEADER */
+.testimonial-page-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.testimonial-page-header .header-top {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+}
+
+.back-link {
+    font-size: 28px;
+    color: #6b7280;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.back-link:hover {
+    color: #111827;
+}
+
+.testimonial-page-header .header-content {
+    flex-grow: 1;
+}
+
+.testimonial-page-header h1 {
+    margin: 0 0 6px 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.testimonial-page-header p {
+    margin: 0;
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 400;
+}
+
+/* FORM CARDS */
+.testimonial-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 28px;
+    max-width: 760px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    margin-bottom: 24px;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 14px 0;
+}
+
+.card-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin-bottom: 24px;
+}
+
+/* FORM GRID */
+.form-grid-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin-bottom: 0;
+}
+
+/* FORM GROUP */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.label-icon {
+    font-size: 16px;
+}
+
+.required {
+    color: #dc2626;
+    font-weight: 500;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+    margin-top: 20px;
+}
+
+/* INPUT STYLES */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 12px 14px;
+    font-size: 14px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #9ca3af;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* TEXTAREA */
+.form-group textarea {
+    resize: none;
+    min-height: 140px;
+    line-height: 1.5;
+}
+
+/* RATING PREVIEW */
+.rating-preview {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.preview-label {
+    font-weight: 500;
+}
+
+.rating-preview .stars {
+    color: #d4a373;
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+/* CHARACTER COUNT */
+.char-count {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 6px;
+}
+
+/* HELPER TEXT */
+.helper-text {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* FORM ACTIONS */
+.testimonial-actions {
+    display: flex;
+    gap: 12px;
+    max-width: 760px;
+    margin-top: 32px;
+    justify-content: flex-end;
+}
+
+.testimonial-actions .btn-secondary,
+.testimonial-actions .btn-primary {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.testimonial-actions .btn-primary {
+    background: #0a3c28;
+    color: #ffffff;
+}
+
+.testimonial-actions .btn-primary:hover {
+    background: #083725;
+}
+
+.testimonial-actions .btn-secondary {
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #d1d5db;
+}
+
+.testimonial-actions .btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+}
+
+/* TESTIMONIAL GRID (for listing) */
+.testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.testimonial-list-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,.05);
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    background: #caa36a;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.badge.published {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.badge.featured {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* Modal should NOT block clicks when hidden */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    pointer-events: auto;
+}
+
+/* Modal content above overlay */
+.modal-content {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 10000;
+}
+
+/* Buttons must always accept clicks */
+.btn-primary,
+.btn-secondary {
+    pointer-events: auto;
+    cursor: pointer;
+}

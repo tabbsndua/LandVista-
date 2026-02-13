@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{{ guide.title if guide else 'Legal Guide' }}{% endblock %}
+
+{% block content %}
+<div class="guide-detail-page">
+    {% if guide %}
+    <!-- Hero Section with Title -->
+    <div class="guide-detail-hero">
+        <div class="guide-detail-container">
+            <a href="/legal-guides" class="guide-back-link">← Back to Guides</a>
+            
+            <h1 class="guide-detail-title">{{ guide.title }}</h1>
+            
+            <!-- Metadata Badges -->
+            <div class="guide-detail-meta">
+                <span class="meta-badge">
+                    <i class="fas fa-calendar"></i> {{ guide.date }}
+                </span>
+                <span class="meta-badge">
+                    <i class="fas fa-user"></i> {{ guide.author }}
+                </span>
+                <span class="meta-badge">
+                    <i class="fas fa-clock"></i> {{ guide.readTime or 5 }} min read
+                </span>
+                <span class="meta-badge">
+                    <i class="fas fa-folder"></i> {{ guide.category }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Image -->
+    {% if guide.featured_image %}
+    <div class="guide-featured-image-container">
+        <img src="{{ guide.featured_image }}" alt="{{ guide.title }}" class="guide-featured-image">
+    </div>
+    {% endif %}
+
+    <!-- Content Area -->
+    <div class="guide-content-area">
+        <div class="guide-content-container">
+            <!-- Summary Section -->
+            <div class="guide-summary-section">
+                <h3 class="summary-label">Summary</h3>
+                <p class="guide-excerpt-text">{{ guide.excerpt }}</p>
+            </div>
+
+            <!-- Full Content -->
+            <div class="guide-body">
+                {{ guide.content | safe }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Guides -->
+    <section class="related-guides" style="margin-top:28px;">
+        <div class="related-guides-container">
+            <h2 class="related-title">Related Legal Guides</h2>
+            <div class="related-grid" id="relatedGuidesGrid">
+                <p style="text-align: center; color: #6b7280; grid-column: 1 / -1;">Loading related guides...</p>
+            </div>
+        </div>
+    </section>
+
+    {% else %}
+        <div style="text-align:center; padding:80px 20px; color:#666;">Guide not found.</div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/legal-guides')
+        .then(response => response.json())
+        .then(data => {
+            const currentSlug = '{{ guide.slug or guide._id }}';
+            const related = (data || []).filter(g => (g.slug || g._id) !== currentSlug).slice(0, 3);
+            const grid = document.getElementById('relatedGuidesGrid');
+            if (!related.length) {
+                grid.innerHTML = '<p style="text-align:center;color:#6b7280;grid-column:1/-1;">No other guides available yet.</p>';
+                return;
+            }
+            grid.innerHTML = related.map(guide => `
+                <div class="related-card">
+                    ${guide.featured_image ? `<img src="${guide.featured_image}" alt="${guide.title}" class="related-image" onerror="this.src='/static/images/placeholder.jpg'">` : `<img src="/static/images/placeholder.jpg" alt="${guide.title}" class="related-image">`}
+                    <div class="related-body">
+                        <div class="related-category">${guide.category || 'Legal Guide'}</div>
+                        <h3 class="related-heading">${guide.title}</h3>
+                        <div class="related-meta">📅 ${guide.date} • ${guide.readTime || 5} min read</div>
+                        <a href="/legal-guides/${guide.slug || guide._id}" class="related-link">Read Guide →</a>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(err => {
+            console.error('Error loading related guides:', err);
+            const grid = document.getElementById('relatedGuidesGrid');
+            if (grid) grid.innerHTML = '<p style="text-align:center;color:#d63031;">Error loading related guides.</p>';
+        });
+});
+</script>
+
+{% endblock %}

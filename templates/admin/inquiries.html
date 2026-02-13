@@ -1,0 +1,518 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Inquiries Management{% endblock %}
+
+{% block content %}
+
+<div class="admin-inquiries">
+
+    <!-- HEADER -->
+    <div class="page-header">
+        <div>
+            <h1>Inquiries Management</h1>
+            <p>Manage and respond to client inquiries</p>
+        </div>
+
+        <div class="header-badges">
+            <span class="badge new-count">📥 0 New</span>
+            <span class="badge pending-count">⏳ 0 Pending</span>
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters">
+        <div class="search-box">
+            <input type="text" id="searchInquiries" placeholder="Search by name, email, or message..." onkeyup="filterInquiries()">
+        </div>
+
+        <select id="statusFilter" onchange="filterInquiries()">
+            <option value="">All Status</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="resolved">Resolved</option>
+        </select>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+        <table class="inquiries-table">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Property</th>
+                    <th>Message Preview</th>
+                    <th>Date Added</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="inquiriesBody"></tbody>
+        </table>
+    </div>
+
+    <!-- FOOTER WITH PAGINATION -->
+    <div class="table-footer">
+        <div class="showing-text">
+            Showing <span id="showStart">0</span> of <span id="showTotal">0</span> inquiries
+        </div>
+
+        <div class="pagination">
+            <button class="page-btn" id="prevBtn" onclick="previousPage()">Previous</button>
+            <div class="page-numbers">
+                <span id="pageNumbers"></span>
+            </div>
+            <button class="page-btn" id="nextBtn" onclick="nextPage()">Next</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- VIEW INQUIRY MODAL -->
+<div class="modal" id="viewInquiryModal" style="display: none;">
+    <div class="modal-content large" style="background: #ffffff; max-width: 700px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); max-height: 80vh; overflow-y: auto;">
+        <div class="modal-header" style="border-bottom: 1px solid #e5e7eb; padding: 20px; background: #ffffff;">
+            <h2 style="margin: 0; color: #0a3c28;">Inquiry Details</h2>
+            <span class="modal-close" onclick="closeViewModal()" style="cursor: pointer; font-size: 24px; color: #999;">×</span>
+        </div>
+        <div class="modal-body" id="viewInquiryContent" style="padding: 30px; background: #ffffff; color: #1f2937;">
+        </div>
+        <div class="modal-footer" style="border-top: 1px solid #e5e7eb; padding: 15px 20px; background: #f9fafb;">
+            <button class="btn-secondary" onclick="changeInquiryStatus(document.getElementById('inquiryId').value, 'contacted')" style="display:none; background: #dbeafe; color: #1e40af; padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;" id="markContactedBtn">Mark as Contacted</button>
+            <button class="btn-secondary" onclick="changeInquiryStatus(document.getElementById('inquiryId').value, 'resolved')" style="display:none; background: #d1fae5; color: #065f46; padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;" id="markResolvedBtn">Mark as Resolved</button>
+            <button class="btn-danger" onclick="deleteInquiry(document.getElementById('inquiryId').value)" style="display:none; background: #fee2e2; color: #b91c1c; padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;" id="deleteBtn">Delete Inquiry</button>
+            <button class="btn-secondary" onclick="closeViewModal()" style="background: #ffffff; border: 1px solid #d1d5db; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">Close</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/inquiries.css') }}">
+<style>
+.modal-content.large {
+    width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.inquiry-detail {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.inquiry-detail:last-child {
+    border-bottom: none;
+}
+
+.inquiry-label {
+    font-weight: 600;
+    color: #0a3c28;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.inquiry-value {
+    color: #374151;
+    font-size: 1rem;
+    line-height: 1.6;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.status-badge.new {
+    background: #dbeafe;
+    color: #0b63c8;
+}
+
+.status-badge.contacted {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.status-badge.resolved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.inquiry-actions-section {
+    background: #f3f4f6;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 25px;
+}
+
+.inquiry-actions-section h4 {
+    margin-top: 0;
+    color: #0a3c28;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-buttons a, .action-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.action-buttons .btn-email {
+    background: #3b82f6;
+    color: white;
+}
+
+.action-buttons .btn-email:hover {
+    background: #2563eb;
+}
+
+.action-buttons .btn-phone {
+    background: #10b981;
+    color: white;
+}
+
+.action-buttons .btn-phone:hover {
+    background: #059669;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// Real-time inquiries via Socket.IO
+let __inq_socket = null;
+try {
+    if (typeof io !== 'undefined') {
+        __inq_socket = io();
+        __inq_socket.on('connect', () => console.log('Inquiries socket connected'));
+        __inq_socket.on('inquiry_created', function(data){
+            if (!data) return;
+            inquiries.unshift(data);
+            currentPage = 1;
+            renderInquiries();
+            updateBadges();
+            updatePagination();
+        });
+    }
+} catch(e){ console.warn('Socket.IO not available for inquiries', e); }
+
+// Inquiries data and state
+let inquiries = [];
+let currentPage = 1;
+const itemsPerPage = 6;
+const tbody = document.getElementById('inquiriesBody');
+
+// Load inquiries on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadInquiries();
+    setInterval(loadInquiries, 5000);
+});
+
+function loadInquiries() {
+    fetch('/admin/inquiries/get-data')
+        .then(r => r.json())
+        .then(data => {
+            inquiries = data;
+            currentPage = 1;
+            renderInquiries();
+            updateBadges();
+            updatePagination();
+        })
+        .catch(err => console.error('Failed to load inquiries', err));
+}
+
+function renderInquiries() {
+    const search = document.getElementById('searchInquiries').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    const filtered = inquiries.filter(i => {
+        const matchesSearch = i.name.toLowerCase().includes(search) || 
+                            (i.email || '').toLowerCase().includes(search) || 
+                            (i.property || '').toLowerCase().includes(search) || 
+                            (i.message || '').toLowerCase().includes(search);
+        const matchesStatus = !statusFilter || i.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paged = filtered.slice(start, end);
+
+    document.getElementById('showStart').textContent = filtered.length > 0 ? start + 1 : 0;
+    document.getElementById('showTotal').textContent = filtered.length;
+
+    tbody.innerHTML = paged.map(i => `
+        <tr>
+            <td>
+                <div class="client-cell">
+                    <div class="client-name">${escapeHTML(i.name)}</div>
+                    <div class="client-meta">${escapeHTML(i.email || '')} • ${escapeHTML(i.phone || '')}</div>
+                </div>
+            </td>
+            <td>${escapeHTML(i.property || 'N/A')}</td>
+            <td class="message-preview">${escapeHTML((i.message || '').slice(0, 60))}...</td>
+            <td>${formatDate(i.created_at)}</td>
+            <td><span class="status-badge ${i.status || 'new'}">${capitalize(i.status || 'new')}</span></td>
+            <td class="actions">
+                <button class="action-btn" onclick="viewInquiry('${i._id}')" title="View Details">👁️</button>
+                <a href="mailto:${escapeHTML(i.email || '')}" class="action-btn" title="Send Email">✉️</a>
+                <a href="tel:${escapeHTML(i.phone || '')}" class="action-btn" title="Call">📞</a>
+                <button class="action-btn" onclick="deleteInquiry('${i._id}')" title="Delete" style="color:#dc2626;">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+
+    updatePaginationButtons();
+}
+
+function viewInquiry(id) {
+    const inq = inquiries.find(x => x._id === id);
+    if (!inq) return;
+    
+    document.getElementById('inquiryId').value = id;
+    
+    const viewContent = document.getElementById('viewInquiryContent');
+    viewContent.innerHTML = `
+        <div class="inquiry-detail">
+            <div class="inquiry-label">Client Name</div>
+            <div class="inquiry-value">${escapeHTML(inq.name)}</div>
+        </div>
+        
+        <div class="inquiry-detail">
+            <div class="inquiry-label">Email Address</div>
+            <div class="inquiry-value"><a href="mailto:${escapeHTML(inq.email || '')}">${escapeHTML(inq.email || 'N/A')}</a></div>
+        </div>
+        
+        <div class="inquiry-detail">
+            <div class="inquiry-label">Phone Number</div>
+            <div class="inquiry-value"><a href="tel:${escapeHTML(inq.phone || '')}">${escapeHTML(inq.phone || 'N/A')}</a></div>
+        </div>
+        
+        <div class="inquiry-detail">
+            <div class="inquiry-label">Property of Interest</div>
+            <div class="inquiry-value">${escapeHTML(inq.property || 'Not specified')}</div>
+        </div>
+        
+        <div class="inquiry-detail">
+            <div class="inquiry-label">Date Submitted</div>
+            <div class="inquiry-value">${formatDate(inq.created_at)}</div>
+        </div>
+        
+        <div class="inquiry-detail">
+            <div class="inquiry-label">Current Status</div>
+            <div class="inquiry-value"><span class="status-badge ${inq.status || 'new'}">${capitalize(inq.status || 'new')}</span></div>
+        </div>
+        
+        <div class="inquiry-detail">
+            <div class="inquiry-label">Message</div>
+            <div class="inquiry-value">${escapeHTML(inq.message || 'No message provided')}</div>
+        </div>
+        
+        <div class="inquiry-actions-section">
+            <h4>Admin Actions</h4>
+            <div class="action-buttons">
+                <a href="mailto:${escapeHTML(inq.email || '')}" class="btn-email">📧 Send Email</a>
+                <a href="https://wa.me/${escapeHTML((inq.phone || '').replace(/\\D/g, ''))}" target="_blank" class="btn-phone">💬 WhatsApp</a>
+                <button onclick="changeInquiryStatus('${inq._id}', 'contacted')" class="btn-secondary">✓ Mark Contacted</button>
+                <button onclick="changeInquiryStatus('${inq._id}', 'resolved')" class="btn-secondary">✓✓ Mark Resolved</button>
+                <button onclick="deleteInquiry('${inq._id}')" class="btn-danger">🗑️ Delete</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('viewInquiryModal').style.display = 'flex';
+}
+
+function closeViewModal() {
+    document.getElementById('viewInquiryModal').style.display = 'none';
+}
+
+function changeInquiryStatus(inquiryId, newStatus) {
+    if (!confirm(`Change status to "${capitalize(newStatus)}"?`)) return;
+    
+    fetch(`/admin/inquiries/update/${inquiryId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            loadInquiries();
+            closeViewModal();
+            alert('Status updated successfully!');
+        }
+    })
+    .catch(err => console.error('Error updating status:', err));
+}
+
+function deleteInquiry(inquiryId) {
+    if (!confirm('Are you sure you want to delete this inquiry? This cannot be undone.')) return;
+    
+    fetch(`/admin/inquiries/delete/${inquiryId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            loadInquiries();
+            closeViewModal();
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:16px 24px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;animation:slideIn 0.3s ease-out;font-weight:600;';
+            successDiv.textContent = '✓ Inquiry deleted successfully!';
+            document.body.appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 3000);
+        } else {
+            alert('Error: ' + (data.message || 'Failed to delete inquiry'));
+        }
+    })
+    .catch(err => {
+        console.error('Error deleting inquiry:', err);
+        alert('Failed to delete inquiry');
+    });
+}
+
+function filterInquiries() { 
+    currentPage = 1;
+    renderInquiries(); 
+}
+
+function updatePagination() {
+    const search = document.getElementById('searchInquiries').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    const filtered = inquiries.filter(i => {
+        const matchesSearch = i.name.toLowerCase().includes(search) || 
+                            (i.email || '').toLowerCase().includes(search) || 
+                            (i.property || '').toLowerCase().includes(search) || 
+                            (i.message || '').toLowerCase().includes(search);
+        const matchesStatus = !statusFilter || i.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const pageNumbers = document.getElementById('pageNumbers');
+    let html = '';
+
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<span class="page-num ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</span>`;
+    }
+
+    pageNumbers.innerHTML = html || '<span class="page-num">1</span>';
+}
+
+function updatePaginationButtons() {
+    const search = document.getElementById('searchInquiries').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    const filtered = inquiries.filter(i => {
+        const matchesSearch = i.name.toLowerCase().includes(search) || 
+                            (i.email || '').toLowerCase().includes(search) || 
+                            (i.property || '').toLowerCase().includes(search) || 
+                            (i.message || '').toLowerCase().includes(search);
+        const matchesStatus = !statusFilter || i.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    document.getElementById('prevBtn').disabled = currentPage === 1;
+    document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
+}
+
+function previousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        renderInquiries();
+    }
+}
+
+function nextPage() {
+    const search = document.getElementById('searchInquiries').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    const filtered = inquiries.filter(i => {
+        const matchesSearch = i.name.toLowerCase().includes(search) || 
+                            (i.email || '').toLowerCase().includes(search) || 
+                            (i.property || '').toLowerCase().includes(search) || 
+                            (i.message || '').toLowerCase().includes(search);
+        const matchesStatus = !statusFilter || i.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        renderInquiries();
+    }
+}
+
+function goToPage(page) {
+    currentPage = page;
+    renderInquiries();
+}
+
+function updateBadges() {
+    const newCount = inquiries.filter(i => i.status === 'new' || !i.status).length;
+    const pendingCount = inquiries.filter(i => i.status === 'contacted').length;
+    document.querySelector('.new-count').textContent = `📥 ${newCount} New`;
+    document.querySelector('.pending-count').textContent = `⏳ ${pendingCount} Pending`;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return 'N/A';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function escapeHTML(str){
+    return (str||'').replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];
+    });
+}
+
+function capitalize(s){ if(!s) return ''; return s.charAt(0).toUpperCase()+s.slice(1); }
+
+// Hidden input for inquiry ID
+document.addEventListener('DOMContentLoaded', function() {
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.id = 'inquiryId';
+    document.body.appendChild(hiddenInput);
+    
+    // Add slideIn animation
+    const style = document.createElement('style');
+    style.textContent = '@keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }';
+    document.head.appendChild(style);
+});
+</script>
+{% endblock %}

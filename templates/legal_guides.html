@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Legal Guides - LandVista{% endblock %}
+
+{% block content %}
+<section class="guides-hero">
+	<div class="guides-hero-inner">
+		<h1>Legal Guides & Documentation</h1>
+		<p class="lead">Practical, plain-language guides to help you understand property transactions and documentation.</p>
+	</div>
+</section>
+
+<section class="guides-list container">
+	<div class="tools" style="display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px;">
+		<div style="display:flex;gap:12px;align-items:center;">
+			<input id="guideSearchPublic" placeholder="Search guides..." class="input-search">
+			<select id="guideCategoryFilter" class="select-filter">
+				<option value="">All categories</option>
+			</select>
+		</div>
+		<div>
+			<a href="/contact" class="cta-btn btn-primary">Need Help? Contact Us</a>
+		</div>
+	</div>
+
+	<div id="guidesGridPublic" class="guides-grid"></div>
+	<div id="guidesEmptyPublic" class="empty-state">No guides found.</div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const publicGuides = [];
+function escapeHTML(str){ return (str||'').replace(/[&<>"]+/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c)); }
+function renderPublicGuides(list){
+	const grid = document.getElementById('guidesGridPublic');
+	const empty = document.getElementById('guidesEmptyPublic');
+	if(!list || list.length===0){ grid.innerHTML=''; empty.style.display='block'; return; }
+	empty.style.display='none';
+	grid.innerHTML = list.map(g=>`
+		<article class="guide-card">
+			<a href="/legal-guides/${g.slug||g._id}" class="guide-thumb-link">
+				<div class="guide-thumb" style="background-image:url('${g.featured_image||'/static/images/placeholder.jpg'}')"></div>
+			</a>
+			<div class="guide-card-body">
+				<div class="guide-meta"><span class="guide-category">${escapeHTML(g.category||'Guide')}</span><time>${g.date||''}</time></div>
+				<h3 class="guide-title"><a href="/legal-guides/${g.slug||g._id}">${escapeHTML(g.title)}</a></h3>
+				<p class="guide-excerpt">${escapeHTML((g.excerpt||'').slice(0,200))}</p>
+				<div class="guide-actions"><a class="read-more" href="/legal-guides/${g.slug||g._id}">Read More →</a></div>
+			</div>
+		</article>
+	`).join('');
+}
+
+function loadPublicGuides(){
+	fetch('/api/legal-guides')
+		.then(r=>r.json())
+		.then(data=>{
+			publicGuides.length=0; (data||[]).forEach(g=>publicGuides.push(g));
+			const cats = Array.from(new Set(publicGuides.map(g=>g.category).filter(Boolean)));
+			const sel = document.getElementById('guideCategoryFilter'); sel.innerHTML = '<option value="">All categories</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+			renderPublicGuides(publicGuides.filter(g=> (g.status||'published')==='published'));
+		})
+		.catch(err=>{ console.error('Failed loading guides', err); document.getElementById('guidesEmptyPublic').textContent='Error loading guides.'; });
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+	loadPublicGuides();
+	document.getElementById('guideSearchPublic').addEventListener('input', ()=>{
+		const q=(document.getElementById('guideSearchPublic').value||'').toLowerCase();
+		const cat=document.getElementById('guideCategoryFilter').value;
+		renderPublicGuides(publicGuides.filter(g=> (g.status||'published')==='published' && ( (!cat || g.category===cat) && ((g.title||'').toLowerCase().includes(q) || (g.excerpt||'').toLowerCase().includes(q)) ) ));
+	});
+	document.getElementById('guideCategoryFilter').addEventListener('change', ()=>{ document.getElementById('guideSearchPublic').dispatchEvent(new Event('input')); });
+});
+</script>
+{% endblock %}
+

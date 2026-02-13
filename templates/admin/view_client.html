@@ -1,0 +1,400 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}View Client | Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+.view-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.view-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.view-header a {
+    font-size: 24px;
+    color: #0a3c28;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.view-header a:hover {
+    background: #f3f4f6;
+}
+
+.view-header h2 {
+    margin: 0;
+    color: #0a3c28;
+    font-size: 2rem;
+}
+
+.client-details-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.info-card {
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+.info-card h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #0a3c28;
+    font-size: 1.1rem;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.info-value {
+    color: #0a3c28;
+    font-weight: 600;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-badge.Active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.Inactive {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+.status-badge.Pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.client-type-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.client-type-badge.buyer {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.client-type-badge.investor {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.client-type-badge.agent {
+    background: #e9d5ff;
+    color: #6b21a8;
+}
+
+.quick-actions {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+.quick-actions h3 {
+    margin: 0 0 15px;
+    color: #0a3c28;
+}
+
+.action-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.action-list a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    color: #0a3c28;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.action-list a:hover {
+    background: #e5e7eb;
+    transform: translateX(4px);
+}
+
+.action-list .action-email {
+    color: #1e40af;
+}
+
+.action-list .action-whatsapp {
+    color: #16a34a;
+}
+
+.action-list .action-edit {
+    color: #92400e;
+}
+
+.action-list .action-delete {
+    color: #991b1b;
+}
+
+.notes-section {
+    background: white;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.notes-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #0a3c28;
+}
+
+.notes-content {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 6px;
+    line-height: 1.6;
+    color: #4b5563;
+    border-left: 4px solid #10b981;
+}
+
+.buttons-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #10b981;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+.btn-danger {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.btn-danger:hover {
+    background: #fecaca;
+}
+
+@media (max-width: 768px) {
+    .client-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .buttons-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="view-container">
+    
+    <div class="view-header">
+        <a href="/admin/clients">←</a>
+        <h2>{{ client.name }}</h2>
+    </div>
+
+    <div class="client-details-grid">
+        
+        <!-- MAIN INFO CARD -->
+        <div class="info-card">
+            <h3>📋 Client Information</h3>
+
+            <div class="info-row">
+                <span class="info-label">Full Name</span>
+                <span class="info-value">{{ client.name }}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value" style="word-break: break-all;">{{ client.email }}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Phone</span>
+                <span class="info-value">{{ client.phone }}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Location</span>
+                <span class="info-value">{{ client.location }}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Client Type</span>
+                <span class="client-type-badge {{ client.client_type or 'buyer' }}">
+                    {{ (client.client_type or 'buyer').upper() }}
+                </span>
+            </div>
+
+            {% if client.budget %}
+            <div class="info-row">
+                <span class="info-label">Budget</span>
+                <span class="info-value">KES {{ client.budget }}</span>
+            </div>
+            {% endif %}
+
+            <div class="info-row">
+                <span class="info-label">Status</span>
+                <span class="status-badge {{ client.status }}">{{ client.status }}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label">Added</span>
+                <span class="info-value">{{ client.created_at.strftime('%B %d, %Y') }}</span>
+            </div>
+
+            {% if client.updated_at %}
+            <div class="info-row">
+                <span class="info-label">Last Updated</span>
+                <span class="info-value">{{ client.updated_at.strftime('%B %d, %Y') }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="quick-actions">
+            <h3>⚡ Quick Actions</h3>
+            <ul class="action-list">
+                <a href="mailto:{{ client.email }}" class="action-email">
+                    📧 Send Email
+                </a>
+                <a href="https://wa.me/{{ client.phone | replace(' ', '') | replace('-', '') }}?text=Hello%20{{ client.name | replace(' ', '%20') }}" target="_blank" class="action-whatsapp">
+                    💬 WhatsApp
+                </a>
+                <a href="/admin/clients/edit/{{ client._id }}" class="action-edit">
+                    ✏️ Edit Client
+                </a>
+                <a href="#" onclick="deleteClient('{{ client._id }}', '{{ client.name }}')" class="action-delete">
+                    🗑️ Delete Client
+                </a>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- NOTES SECTION -->
+    {% if client.notes %}
+    <div class="notes-section">
+        <h3>📝 Notes</h3>
+        <div class="notes-content">
+            {{ client.notes }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ACTION BUTTONS -->
+    <div class="buttons-row">
+        <a href="/admin/clients" class="btn btn-secondary">← Back to Clients</a>
+        <a href="/admin/clients/edit/{{ client._id }}" class="btn btn-primary">✏️ Edit Client</a>
+        <form action="/admin/clients/delete/{{ client._id }}" method="POST" style="width: 100%;">
+            <button type="submit" class="btn btn-danger" style="width: 100%;" onclick="return confirm('Delete {{ client.name }}? This action cannot be undone.');">
+                🗑️ Delete Client
+            </button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+function deleteClient(clientId, clientName) {
+    if (confirm(`Are you sure you want to delete ${clientName}? This action cannot be undone.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/clients/delete/${clientId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block title %}Site Visits - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <header class="admin-header">
+        <h1>Scheduled Site Visits</h1>
+        <div class="admin-actions">
+            <a class="btn" href="/admin/site-visits/create">Create Visit</a>
+        </div>
+    </header>
+
+    <section class="admin-section">
+        <table class="admin-table" id="visitsTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Property</th>
+                    <th>Visit Date</th>
+                    <th>Notes</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody id="visitsTbody">
+                <tr><td colspan="7">Loading...</td></tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin_site_visits.js') }}"></script>
+{% endblock %}

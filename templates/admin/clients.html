@@ -1,0 +1,519 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Clients Management | Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/inquiries.css') }}">
+<style>
+.client-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    border-left: 4px solid #10b981;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+}
+
+.client-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.client-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 20px;
+    align-items: start;
+    margin-bottom: 15px;
+}
+
+.client-name-section h3 {
+    margin: 0 0 5px;
+    font-size: 1.1rem;
+    color: #0a3c28;
+}
+
+.client-type-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.client-type-badge.buyer {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.client-type-badge.investor {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.client-type-badge.agent {
+    background: #e9d5ff;
+    color: #6b21a8;
+}
+
+.client-contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.client-contact-info p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #4b5563;
+}
+
+.client-contact-info strong {
+    color: #0a3c28;
+}
+
+.client-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: right;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-badge.Active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.Inactive {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+.status-badge.Pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.client-details-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+    padding: 15px 0;
+    border-top: 1px solid #e5e7eb;
+}
+
+.detail-item {
+    font-size: 0.9rem;
+}
+
+.detail-item strong {
+    color: #0a3c28;
+}
+
+.detail-item.notes {
+    grid-column: 1 / -1;
+}
+
+.detail-item.notes p {
+    margin: 5px 0;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.client-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-view {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.btn-view:hover {
+    background: #c7d2fe;
+}
+
+.btn-edit {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.btn-edit:hover {
+    background: #fde68a;
+}
+
+.btn-delete {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.btn-delete:hover {
+    background: #fecaca;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    color: #0a3c28;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: #6b7280;
+    margin-bottom: 30px;
+}
+
+.search-and-filters {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.search-box input::placeholder {
+    color: #9ca3af;
+}
+
+select {
+    padding: 10px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.success-message, .error-message {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.success-message {
+    background: #d1fae5;
+    color: #065f46;
+    border-left: 4px solid #10b981;
+}
+
+.error-message {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 4px solid #ef4444;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="admin-news">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div>
+            <h1>Clients Management</h1>
+            <p>Manage and track all client information and interactions</p>
+        </div>
+
+        <button class="btn-primary" onclick="location.href='/admin/clients/add'">
+            + Add New Client
+        </button>
+    </div>
+
+    <!-- SUCCESS/ERROR MESSAGES -->
+    {% if request.args.get('success') %}
+    <div class="success-message">
+        ✓ {{ request.args.get('success') }}
+    </div>
+    {% endif %}
+
+    {% if request.args.get('error') %}
+    <div class="error-message">
+        ✗ {{ request.args.get('error') }}
+    </div>
+    {% endif %}
+
+    <!-- SEARCH & FILTERS -->
+    <div class="search-and-filters">
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="clientSearch" 
+                placeholder="Search clients by name or email..."
+                onkeyup="filterClients()"
+            >
+        </div>
+
+        <select id="typeFilter" onchange="filterClients()">
+            <option value="">All Types</option>
+            <option value="buyer">Buyer</option>
+            <option value="investor">Investor</option>
+            <option value="agent">Agent</option>
+        </select>
+
+        <select id="statusFilter" onchange="filterClients()">
+            <option value="">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Pending">Pending</option>
+        </select>
+    </div>
+
+    <!-- CLIENTS LIST -->
+    <div id="clientsList">
+        {% if clients %}
+            {% for client in clients %}
+            <div class="client-card" data-type="{{ client.client_type or 'buyer' }}" data-status="{{ client.status }}">
+                <div class="client-header">
+                    <div class="client-name-section">
+                        <h3>{{ client.name }}</h3>
+                        <span class="client-type-badge {{ client.client_type or 'buyer' }}">
+                            {{ (client.client_type or 'buyer').upper() }}
+                        </span>
+                    </div>
+
+                    <div class="client-contact-info">
+                        <p><strong>📧 Email:</strong> {{ client.email }}</p>
+                        <p><strong>📞 Phone:</strong> {{ client.phone }}</p>
+                        <p><strong>📍 Location:</strong> {{ client.location }}</p>
+                    </div>
+
+                    <div class="client-meta">
+                        <div>
+                            <span class="status-badge {{ client.status }}">{{ client.status }}</span>
+                        </div>
+                        <small style="color: #9ca3af;">Added {{ client.created_at.strftime('%b %d, %Y') }}</small>
+                    </div>
+                </div>
+
+                <div class="client-details-row">
+                    {% if client.client_type == 'investor' and client.budget %}
+                    <div class="detail-item">
+                        <strong>💰 Budget:</strong> KES {{ client.budget }}
+                    </div>
+                    {% endif %}
+
+                    <div class="detail-item">
+                        <strong>📋 Inquiries:</strong> {{ client.inquiries_count or 0 }}
+                    </div>
+
+                    {% if client.notes %}
+                    <div class="detail-item notes">
+                        <strong>📝 Notes:</strong>
+                        <p>{{ client.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="client-actions">
+                    <button class="btn-sm btn-view" onclick="location.href='/admin/clients/view/{{ client._id }}'">
+                        👁️ View
+                    </button>
+                    <button class="btn-sm btn-edit" onclick="location.href='/admin/clients/edit/{{ client._id }}'">
+                        ✏️ Edit
+                    </button>
+                    <form action="/admin/clients/delete/{{ client._id }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn-sm btn-delete" onclick="return confirm('Delete this client? This action cannot be undone.');">
+                            🗑️ Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">👥</div>
+                <h3>No Clients Yet</h3>
+                <p>You haven't added any clients. Start by creating your first client.</p>
+                <button class="btn-primary" onclick="location.href='/admin/clients/add'">
+                    + Add First Client
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+let allClients = [];
+
+// Load clients on page load
+function loadClients() {
+    fetch('/admin/clients/get-data')
+        .then(response => response.json())
+        .then(data => {
+            allClients = data;
+            renderClients();
+        })
+        .catch(err => console.error('Error loading clients:', err));
+}
+
+// Render clients
+function renderClients() {
+    const list = document.getElementById('clientsList');
+    
+    if (allClients.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">👥</div>
+                <h3>No Clients Found</h3>
+                <p>You haven't added any clients. Start by creating your first client.</p>
+                <button class="btn-primary" onclick="location.href='/admin/clients/add'">
+                    + Add First Client
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = allClients.map(client => `
+        <div class="client-card" data-type="${client.client_type || 'buyer'}" data-status="${client.status}">
+            <div class="client-header">
+                <div class="client-name-section">
+                    <h3>${escapeHTML(client.name)}</h3>
+                    <span class="client-type-badge ${client.client_type || 'buyer'}">
+                        ${(client.client_type || 'buyer').toUpperCase()}
+                    </span>
+                </div>
+
+                <div class="client-contact-info">
+                    <p><strong>📧 Email:</strong> ${escapeHTML(client.email)}</p>
+                    <p><strong>📞 Phone:</strong> ${escapeHTML(client.phone)}</p>
+                    <p><strong>📍 Location:</strong> ${escapeHTML(client.location)}</p>
+                </div>
+
+                <div class="client-meta">
+                    <div>
+                        <span class="status-badge ${client.status}">${client.status}</span>
+                    </div>
+                    <small style="color: #9ca3af;">Added ${new Date(client.created_at).toLocaleDateString()}</small>
+                </div>
+            </div>
+
+            <div class="client-details-row">
+                ${client.client_type === 'investor' && client.budget ? `
+                <div class="detail-item">
+                    <strong>💰 Budget:</strong> KES ${escapeHTML(client.budget)}
+                </div>
+                ` : ''}
+
+                <div class="detail-item">
+                    <strong>📋 Inquiries:</strong> ${client.inquiries_count || 0}
+                </div>
+
+                ${client.notes ? `
+                <div class="detail-item notes">
+                    <strong>📝 Notes:</strong>
+                    <p>${escapeHTML(client.notes)}</p>
+                </div>
+                ` : ''}
+            </div>
+
+            <div class="client-actions">
+                <button class="btn-sm btn-view" onclick="location.href='/admin/clients/view/${client._id}'">
+                    👁️ View
+                </button>
+                <button class="btn-sm btn-edit" onclick="location.href='/admin/clients/edit/${client._id}'">
+                    ✏️ Edit
+                </button>
+                <form action="/admin/clients/delete/${client._id}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn-sm btn-delete" onclick="return confirm('Delete this client? This action cannot be undone.');">
+                        🗑️ Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Filter clients
+function filterClients() {
+    const searchText = document.getElementById('clientSearch').value.toLowerCase();
+    const typeFilter = document.getElementById('typeFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    const cards = document.querySelectorAll('.client-card');
+    cards.forEach(card => {
+        const name = card.textContent.toLowerCase();
+        const type = card.dataset.type;
+        const status = card.dataset.status;
+
+        const matchSearch = name.includes(searchText);
+        const matchType = !typeFilter || type === typeFilter;
+        const matchStatus = !statusFilter || status === statusFilter;
+
+        card.style.display = (matchSearch && matchType && matchStatus) ? '' : 'none';
+    });
+}
+
+// HTML escape function
+function escapeHTML(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load clients on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // loadClients(); // Uncomment if you want real-time loading
+});
+</script>
+
+{% endblock %}

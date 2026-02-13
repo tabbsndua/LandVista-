@@ -1,0 +1,686 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Properties Management{% endblock %}
+
+{% block content %}
+
+<div class="admin-properties">
+
+    <!-- HEADER -->
+    <div class="page-header">
+        <div>
+            <h1>Properties Management</h1>
+            <p>Manage all your land listings</p>
+        </div>
+
+        <button class="btn-primary"
+                onclick="document.getElementById('addPropertyModal').style.display='flex'">
+            + Add New Property
+        </button>
+    </div>
+
+    <!-- SEARCH & FILTERS -->
+    <div class="filters">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search properties..." onkeyup="filterProperties()">
+        </div>
+
+        <div class="filter-group">
+            <select id="statusFilter" onchange="filterProperties()">
+                <option value="">All Types</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrapper">
+        <table class="properties-table">
+            <thead>
+                <tr>
+                    <th>Property</th>
+                    <th>Location</th>
+                    <th>Price</th>
+                    <th>Area</th>
+                    <th>Date Added</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="propertiesBody">
+                {% for p in properties %}
+                <tr>
+                    <td>
+                        <div class="property-cell">
+                            <div class="property-thumb">
+                                {% if p.media %}
+                                    {% if p.media is string %}
+                                        {% if p.media.endswith(('.mp4', '.webm', '.mov')) %}
+                                            <video muted>
+                                                <source src="{{ url_for('static', filename='uploads/' ~ p.media) }}">
+                                            </video>
+                                        {% else %}
+                                            <img src="{{ url_for('static', filename='uploads/' ~ p.media) }}">
+                                        {% endif %}
+                                    {% else %}
+                                        {% set first_media = p.media[0] if p.media is iterable else p.media %}
+                                        {% if first_media.endswith(('.mp4', '.webm', '.mov')) %}
+                                            <video muted>
+                                                <source src="{{ url_for('static', filename='uploads/' ~ first_media) }}">
+                                            </video>
+                                        {% else %}
+                                            <img src="{{ url_for('static', filename='uploads/' ~ first_media) }}">
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+
+                            <div class="property-info">
+                                <strong>{{ p.title }}</strong>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td>{{ p.location }}</td>
+
+                    <td>Kshs {{ "{:,}".format(p.price) }}</td>
+
+                    <td>{{ p.area }}</td>
+
+                    <td>{{ p.created_at }}</td>
+
+                    <td class="actions">
+                        <a href="{{ url_for('view_property', property_id=p._id) }}" class="view" title="View">
+                            👁
+                        </a>
+
+                        <a href="{{ url_for('edit_property', property_id=p._id) }}" class="edit" title="Edit">
+                            ✏️
+                        </a>
+
+                        <form action="{{ url_for('delete_property', property_id=p._id) }}"
+                              method="POST"
+                              style="display:inline;"
+                              onsubmit="return confirm('Are you sure you want to delete this property?');">
+                            <button type="submit" class="delete" title="Delete">🗑</button>
+                        </form>
+                        {% if p.status == 'sold' %}
+                            <button class="mark-available" onclick="markAvailable('{{ p._id }}')" title="Mark Available">✅ Mark Available</button>
+                        {% else %}
+                            <button class="mark-sold" onclick="markSold('{{ p._id }}')" title="Mark Sold">🔒 Mark Sold</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FOOTER WITH PAGINATION -->
+    <div class="table-footer">
+        <div class="showing-text">
+            Showing <span id="showStart">0</span> to <span id="showEnd">0</span> of <span id="showTotal">0</span> properties
+        </div>
+
+        <div class="pagination">
+            <button class="page-btn" id="prevBtn" onclick="previousPage()">Previous</button>
+            <div class="page-numbers">
+                <span id="pageNumbers"></span>
+            </div>
+            <button class="page-btn" id="nextBtn" onclick="nextPage()">Next</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function markSold(id){
+    if(!confirm('Mark this property as SOLD?')) return;
+    fetch(`/admin/properties/mark-sold/${id}`, { method: 'POST', headers: {'Accept':'application/json'} })
+        .then(r=>r.json())
+        .then(j=>{ if(j.success) location.reload(); else alert(j.error || 'Failed'); })
+        .catch(e=>{ console.error(e); alert('Request failed'); });
+}
+
+function markAvailable(id){
+    if(!confirm('Mark this property as available again?')) return;
+    fetch(`/admin/properties/mark-available/${id}`, { method: 'POST', headers: {'Accept':'application/json'} })
+        .then(r=>r.json())
+        .then(j=>{ if(j.success) location.reload(); else alert(j.error || 'Failed'); })
+        .catch(e=>{ console.error(e); alert('Request failed'); });
+}
+</script>
+
+<!-- =========================
+ EDIT PROPERTY MODAL
+========================= -->
+<div class="modal" id="editPropertyModal" style="display:none;">
+    <div class="modal-box large">
+
+        <div class="modal-header">
+            <a class="back-link" href="javascript:void(0)" onclick="document.getElementById('editPropertyModal').style.display='none'">←</a>
+            <div>
+                <h2>Edit Property</h2>
+                <p class="modal-subtitle">Update property details</p>
+            </div>
+        </div>
+
+        <form method="POST"
+              id="editPropertyForm"
+              enctype="multipart/form-data"
+              class="modal-form">
+
+            <input type="hidden" id="editPropertyId">
+
+            <!-- BASIC INFORMATION -->
+            <div class="form-section">
+                <h3>Basic Information</h3>
+
+                <label>Property Title *</label>
+                <input id="editTitle" name="title" placeholder="e.g. Prime Agricultural Land" required>
+
+                <div class="form-grid">
+                    <div>
+                        <label>Location *</label>
+                        <input id="editLocation" name="location" placeholder="e.g. Naivasha, Kenya" required>
+                    </div>
+
+                    <div>
+                        <label>County/State</label>
+                        <input id="editCounty" name="county" placeholder="e.g. Mwingi, Kitui, etc.">
+                    </div>
+
+                    <div>
+                        <label>Property Type *</label>
+                        <input id="editPropertyType" name="property_type" placeholder="e.g. Land, House, Commercial" required>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div>
+                        <label>Price (KES) *</label>
+                        <input id="editPrice" name="price" type="number" placeholder="e.g. 850000" required>
+                    </div>
+
+                    <div>
+                        <label>Area *</label>
+                        <input id="editArea" name="area" placeholder="e.g. 2.5 acres or 50 by 100" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DESCRIPTION & FEATURES -->
+            <div class="form-section">
+                <h3>Description & Features</h3>
+
+                <label>Property Description *</label>
+                <textarea id="editDescription" name="description"
+                          placeholder="Provide a detailed description of the property..."
+                          rows="4"
+                          required></textarea>
+
+                <label>Key Features (one per line)</label>
+                <textarea id="editFeatures" name="features"
+                          placeholder="• Ready title deed&#10;• Water & electricity available&#10;• Gated community"
+                          rows="4"></textarea>
+            </div>
+
+            <!-- PROPERTY MEDIA -->
+            <div class="form-section">
+                <h3>Property Media</h3>
+                
+                <!-- Show current media if exists -->
+                <div id="currentMediaDisplay" style="margin-bottom: 15px;"></div>
+                
+                <label>Add/Update Media (Images or Videos) *</label>
+                <input type="file" id="editMediaInput" name="media" accept="image/*,video/*" multiple>
+                <small style="color: #6b7280; margin-top: 8px; display: block;">You can select multiple files. Leave empty to keep existing media</small>
+            </div>
+
+            <!-- CONTACT INFORMATION -->
+            <div class="form-section">
+                <h3>Contact Information</h3>
+
+                <div class="form-grid">
+                    <div>
+                        <label>Contact Name *</label>
+                        <input id="editContactName" name="contact_name" placeholder="e.g. John Doe" required>
+                    </div>
+
+                    <div>
+                        <label>Contact Email *</label>
+                        <input id="editContactEmail" name="contact_email" type="text"
+                               placeholder="e.g. contact@landvista.co.ke" required>
+                    </div>
+                </div>
+
+                <label>Contact Phone *</label>
+                <input id="editContactPhone" name="contact_phone" placeholder="e.g. +254 700 000000" required>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="form-actions">
+                <button type="button"
+                        class="btn-secondary"
+                        onclick="document.getElementById('editPropertyModal').style.display='none'">
+                    Cancel
+                </button>
+
+                <button type="submit" class="btn-primary">
+                    Save Changes
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- =========================
+ ADD PROPERTY MODAL
+========================= -->
+<div class="modal" id="addPropertyModal" style="display:none;">
+    <div class="modal-box large">
+
+        <div class="modal-header">
+            <a class="back-link" href="javascript:void(0)" onclick="document.getElementById('addPropertyModal').style.display='none'">←</a>
+            <div>
+                <h2>Add New Property</h2>
+                <p class="modal-subtitle">Fill in the details to list a new property</p>
+            </div>
+        </div>
+
+        <form method="POST"
+              action="/admin/properties/add"
+              enctype="multipart/form-data"
+              class="modal-form">
+
+            <!-- BASIC INFORMATION -->
+            <div class="form-section">
+                <h3>Basic Information</h3>
+
+                <label>Property Title *</label>
+                <input name="title" placeholder="e.g. Prime Agricultural Land" required>
+
+                <div class="form-grid">
+                    <div>
+                        <label>Location *</label>
+                        <input name="location" placeholder="e.g. Naivasha, Kenya" required>
+                    </div>
+
+                    <div>
+                        <label>County/State</label>
+                        <input name="county" placeholder="e.g. Mwingi, Kitui, etc.">
+                    </div>
+
+                    <div>
+                        <label>Property Type *</label>
+                        <input name="property_type" placeholder="e.g. Land, House, Commercial" required>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div>
+                        <label>Price (KES) *</label>
+                        <input name="price" type="number" placeholder="e.g. 850000" required>
+                    </div>
+
+                    <div>
+                        <label>Area *</label>
+                        <input name="area" placeholder="e.g. 2.5 acres or 50 by 100" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DESCRIPTION & FEATURES -->
+            <div class="form-section">
+                <h3>Description & Features</h3>
+
+                <label>Property Description *</label>
+                <textarea name="description"
+                          placeholder="Provide a detailed description of the property..."
+                          rows="4"
+                          required></textarea>
+
+                <label>Key Features (one per line)</label>
+                <textarea name="features"
+                          placeholder="• Ready title deed&#10;• Water & electricity available&#10;• Gated community"
+                          rows="4"></textarea>
+            </div>
+
+            <!-- PROPERTY MEDIA -->
+            <div class="form-section">
+                <h3>Property Media</h3>
+                <input type="file" name="media" accept="image/*,video/*" required>
+            </div>
+
+            <!-- CONTACT INFORMATION -->
+            <div class="form-section">
+                <h3>Contact Information</h3>
+
+                <div class="form-grid">
+                    <div>
+                        <label>Contact Name *</label>
+                        <input name="contact_name" placeholder="e.g. John Doe" required>
+                    </div>
+
+                    <div>
+                        <label>Contact Email *</label>
+                        <input name="contact_email" type="text"
+                               placeholder="e.g. contact@landvista.co.ke" required>
+                    </div>
+                </div>
+
+                <label>Contact Phone *</label>
+                <input name="contact_phone" placeholder="e.g. +254 700 000000" required>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="form-actions">
+                <button type="button"
+                        class="btn-secondary"
+                        onclick="document.getElementById('addPropertyModal').style.display='none'">
+                    Cancel
+                </button>
+
+                <button type="submit" name="draft" value="1" class="btn-outline">
+                    Save as Draft
+                </button>
+
+                <button type="submit" class="btn-primary">
+                    Publish Property
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/properties_add.css') }}">
+{% endblock %}
+
+{% block scripts %}
+<script src="/socket.io/socket.io.js"></script>
+<script>
+let allProperties = {{ properties | tojson }};
+// Socket.IO client for realtime updates (fallback polling still available)
+let socket = null;
+try {
+    if (typeof io !== 'undefined') {
+        socket = io();
+        socket.on('connect', () => console.log('Socket connected'));
+
+        socket.on('property_created', function(data) {
+            // prepend new property
+            if (data) {
+                allProperties.unshift(data);
+                currentPage = 1;
+                renderProperties();
+            }
+        });
+
+        socket.on('property_updated', function(data) {
+            if (!data) return;
+            const id = data._id || (data._id && data._id.$oid);
+            const idx = allProperties.findIndex(p => (p._id && (p._id.$oid || p._id)) == id || p._id == id);
+            if (idx !== -1) {
+                allProperties[idx] = data;
+                renderProperties();
+            } else {
+                // if not on current list, add to front
+                allProperties.unshift(data);
+                renderProperties();
+            }
+        });
+
+        socket.on('property_deleted', function(data) {
+            if (!data) return;
+            const id = data._id || (data._id && data._id.$oid);
+            allProperties = allProperties.filter(p => (p._id && (p._id.$oid || p._id)) != id && p._id != id);
+            currentPage = 1;
+            renderProperties();
+        });
+    }
+} catch (e) { console.warn('Socket.IO client not available', e); }
+let currentPage = 1;
+const itemsPerPage = 6;
+const tbody = document.getElementById('propertiesBody');
+
+// Handle edit form submission
+document.getElementById('editPropertyForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const propertyId = document.getElementById('editPropertyId').value;
+    const contactEmail = document.getElementById('editContactEmail').value;
+    
+    console.log('=== FORM SUBMISSION DEBUG ===');
+    console.log('Property ID:', propertyId);
+    console.log('Contact Email from field:', contactEmail);
+    console.log('Contact Email (raw):', document.getElementById('editContactEmail').value);
+    
+    const formData = new FormData(this);
+    
+    // Debug: log all form data
+    console.log('Full form data being sent:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${value}`);
+    }
+    
+    fetch(`/admin/properties/update/${propertyId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error('Network response was not ok: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            console.log('Update successful, closing modal and refreshing...');
+            document.getElementById('editPropertyModal').style.display = 'none';
+            setTimeout(() => {
+                refreshProperties();
+            }, 100);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to update property'));
+        }
+    })
+    .catch(err => {
+        console.error('Error updating property:', err);
+        alert('Error updating property: ' + err.message);
+    });
+});
+
+function filterProperties() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+
+    return allProperties.filter(p => {
+        const matchesSearch = p.title.toLowerCase().includes(search) || 
+                            p.location.toLowerCase().includes(search);
+        const matchesStatus = !statusFilter || (p.status || 'published') === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+}
+
+function renderProperties() {
+    const filtered = filterProperties();
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paged = filtered.slice(start, end);
+
+    // Update pagination footer: show start..end of total
+    const showStart = filtered.length > 0 ? start + 1 : 0;
+    const showEnd = filtered.length > 0 ? Math.min(end, filtered.length) : 0;
+    document.getElementById('showStart').textContent = showStart;
+    document.getElementById('showEnd').textContent = showEnd;
+    document.getElementById('showTotal').textContent = filtered.length;
+
+    tbody.innerHTML = paged.map(p => `
+        <tr>
+            <td>
+                <div class="property-cell">
+                    <div class="property-thumb">
+                        ${p.media && (p.media.endsWith('.mp4') || p.media.endsWith('.webm') || p.media.endsWith('.mov')) 
+                            ? `<video muted><source src="/static/uploads/${escapeHTML(p.media)}"></video>` 
+                            : `<img src="/static/uploads/${escapeHTML(p.media)}">`
+                        }
+                    </div>
+                    <div class="property-info">
+                        <strong>${escapeHTML(p.title)}</strong>
+                    </div>
+                </div>
+            </td>
+            <td>${escapeHTML(p.location)}</td>
+            <td>Kshs ${Number(p.price).toLocaleString()}</td>
+            <td>${escapeHTML(p.area)}</td>
+            <td>${escapeHTML(p.created_at)}</td>
+            <td class="actions">
+                <a href="/admin/properties/view/${p._id.$oid || p._id}" class="view" title="View">👁</a>
+                <button type="button" class="edit-btn" title="Edit" onclick="editProperty('${p._id.$oid || p._id}')">✏️</button>
+                <form action="/admin/properties/delete/${p._id.$oid || p._id}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure?');">
+                    <button type="submit" class="delete" title="Delete">🗑</button>
+                </form>
+            </td>
+        </tr>
+    `).join('');
+
+    updatePaginationButtons();
+}
+
+function updatePaginationButtons() {
+    const filtered = filterProperties();
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const pageNumbers = document.getElementById('pageNumbers');
+    let html = '';
+
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<span class="page-num ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</span>`;
+    }
+
+    pageNumbers.innerHTML = html || '<span class="page-num">1</span>';
+    document.getElementById('prevBtn').disabled = currentPage === 1;
+    document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
+}
+
+function previousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        renderProperties();
+    }
+}
+
+function nextPage() {
+    const filtered = filterProperties();
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    if (currentPage < totalPages) {
+        currentPage++;
+        renderProperties();
+    }
+}
+
+function goToPage(page) {
+    currentPage = page;
+    renderProperties();
+}
+
+function editProperty(propertyId) {
+    const property = allProperties.find(p => (p._id.$oid || p._id) === propertyId);
+    if (!property) return;
+
+    document.getElementById('editPropertyId').value = propertyId;
+    document.getElementById('editTitle').value = property.title || '';
+    document.getElementById('editLocation').value = property.location || '';
+    document.getElementById('editCounty').value = property.county || '';
+    document.getElementById('editPropertyType').value = property.property_type || '';
+    document.getElementById('editPrice').value = property.price || '';
+    document.getElementById('editArea').value = property.area || '';
+    document.getElementById('editDescription').value = property.description || '';
+    document.getElementById('editFeatures').value = property.features || '';
+    document.getElementById('editContactName').value = property.contact_name || '';
+    document.getElementById('editContactEmail').value = property.contact_email || '';
+    document.getElementById('editContactPhone').value = property.contact_phone || '';
+    
+    // Display current media (handle both string and array)
+    const mediaDisplay = document.getElementById('currentMediaDisplay');
+    if (property.media) {
+        let mediaHtml = `<div style="padding: 10px; background: #f3f4f6; border-radius: 8px; margin-bottom: 10px;">
+            <p style="margin: 0 0 8px 0; font-weight: 600;">Current Media:</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">`;
+        
+        // Handle both string and array media
+        const mediaArray = Array.isArray(property.media) ? property.media : [property.media];
+        
+        mediaArray.forEach(media => {
+            const isVideo = media.endsWith('.mp4') || media.endsWith('.webm') || media.endsWith('.mov');
+            if (isVideo) {
+                mediaHtml += `<video width="150" height="120" controls style="border-radius: 4px;">
+                    <source src="/static/uploads/${media}">
+                </video>`;
+            } else {
+                mediaHtml += `<img src="/static/uploads/${media}" style="max-width: 150px; max-height: 120px; border-radius: 4px;">`;
+            }
+        });
+        
+        mediaHtml += `</div></div>`;
+        mediaDisplay.innerHTML = mediaHtml;
+    } else {
+        mediaDisplay.innerHTML = '';
+    }
+    
+    document.getElementById('editPropertyModal').style.display = 'flex';
+}
+
+function refreshProperties() {
+    fetch('/admin/properties/get-data')
+        .then(response => response.json())
+        .then(data => {
+            allProperties = data;
+            currentPage = 1;
+            renderProperties();
+        })
+        .catch(err => console.error('Failed to refresh properties:', err));
+}
+
+function escapeHTML(str) {
+    return (str || '').replace(/[&<>"']/g, c => (
+        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+    ));
+}
+
+// Refresh every 3 seconds for real-time updates
+setInterval(refreshProperties, 3000);
+
+// Attach click handlers for pagination controls (delegated for page numbers)
+try {
+    const prevBtnEl = document.getElementById('prevBtn');
+    const nextBtnEl = document.getElementById('nextBtn');
+    const pageNumbersEl = document.getElementById('pageNumbers');
+
+    if (prevBtnEl) prevBtnEl.addEventListener('click', previousPage);
+    if (nextBtnEl) nextBtnEl.addEventListener('click', nextPage);
+
+    if (pageNumbersEl) {
+        pageNumbersEl.addEventListener('click', function(e) {
+            const target = e.target;
+            if (target && target.classList && target.classList.contains('page-num')) {
+                const page = Number(target.textContent.trim());
+                if (!isNaN(page)) goToPage(page);
+            }
+        });
+    }
+} catch (err) {
+    console.error('Failed to bind pagination handlers:', err);
+}
+
+// Initial render
+renderProperties();
+
+</script>
+{% endblock %}

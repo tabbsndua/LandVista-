@@ -1,0 +1,251 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}View Property{% endblock %}
+
+{% block content %}
+
+<style>
+    .property-view-container {
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .property-view-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+        padding: 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .property-view-header h1 {
+        font-size: 22px;
+        margin: 0;
+        color: #0a3c28;
+    }
+
+    .property-view-header p {
+        margin: 4px 0 0;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .property-view-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        padding: 25px;
+    }
+
+    .property-media {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .property-media video,
+    .property-media img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        display: block;
+    }
+
+    .property-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .property-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .detail-item {
+        background: #f9fafb;
+        padding: 12px;
+        border-radius: 8px;
+        border-left: 3px solid #0a3c28;
+    }
+
+    .detail-item strong {
+        display: block;
+        font-size: 12px;
+        color: #6b7280;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .detail-item p {
+        margin: 0;
+        color: #0a3c28;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .property-section {
+        margin-top: 20px;
+    }
+
+    .property-section h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0a3c28;
+        margin: 0 0 12px 0;
+        text-transform: none;
+        letter-spacing: 0;
+    }
+
+    .property-section ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .property-section li {
+        color: #4b5563;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .back-button {
+        background: #ffffff;
+        color: #0a3c28;
+        border: 1px solid #d6d6d6;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .back-button:hover {
+        background: #f9fafb;
+    }
+
+    @media (max-width: 768px) {
+        .property-view-content {
+            grid-template-columns: 1fr;
+        }
+
+        .property-details-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="property-view-container">
+
+    <div class="property-view-header">
+        <div>
+            <h1>{{ property.title }}</h1>
+            <p>📍 {{ property.location }}</p>
+        </div>
+        <a href="{{ url_for('admin_properties') }}" class="back-button">← Back</a>
+    </div>
+
+    <div class="property-view-content">
+
+        <!-- MEDIA -->
+        <div class="property-media">
+            {% if property.media %}
+                {% if property.media is string %}
+                    {% if property.media.endswith(('.mp4', '.webm', '.mov')) %}
+                        <video controls style="width: 100%; border-radius: 8px;">
+                            <source src="{{ url_for('static', filename='uploads/' ~ property.media) }}">
+                        </video>
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' ~ property.media) }}" style="width: 100%; border-radius: 8px;">
+                    {% endif %}
+                {% else %}
+                    {% for media_file in property.media %}
+                        {% if media_file.endswith(('.mp4', '.webm', '.mov')) %}
+                            <video controls style="width: 100%; border-radius: 8px;">
+                                <source src="{{ url_for('static', filename='uploads/' ~ media_file) }}">
+                            </video>
+                        {% else %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ media_file) }}" style="width: 100%; border-radius: 8px;">
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% else %}
+                <div style="width: 100%; padding: 40px; background: #f3f4f6; border-radius: 8px; text-align: center; color: #6b7280;">
+                    No media available
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- DETAILS -->
+        <div class="property-details">
+            
+            <div class="property-details-grid">
+                <div class="detail-item">
+                    <strong>Price</strong>
+                    <p>Kshs {{ "{:,}".format(property.price) }}</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Area</strong>
+                    <p>{{ property.area }}</p>
+                </div>
+                {% if property.county %}
+                <div class="detail-item">
+                    <strong>County</strong>
+                    <p>{{ property.county }}</p>
+                </div>
+                {% endif %}
+                {% if property.property_type %}
+                <div class="detail-item">
+                    <strong>Type</strong>
+                    <p>{{ property.property_type }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if property.description %}
+            <div class="property-section">
+                <h3>Description</h3>
+                <p style="color: #4b5563; font-size: 13px; line-height: 1.6; margin: 0;">{{ property.description }}</p>
+            </div>
+            {% endif %}
+
+            {% if property.features %}
+            <div class="property-section">
+                <h3>Key Features</h3>
+                <ul>
+                    {% for feature in property.features.splitlines() %}
+                        <li>{{ feature }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if property.contact_name or property.contact_email or property.contact_phone %}
+            <div class="property-section">
+                <h3>Contact Information</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    {% if property.contact_name %}
+                    <div style="font-size: 13px;"><strong>Name:</strong> {{ property.contact_name }}</div>
+                    {% endif %}
+                    {% if property.contact_email %}
+                    <div style="font-size: 13px;"><strong>Email:</strong> {{ property.contact_email }}</div>
+                    {% endif %}
+                    {% if property.contact_phone %}
+                    <div style="font-size: 13px;"><strong>Phone:</strong> {{ property.contact_phone }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

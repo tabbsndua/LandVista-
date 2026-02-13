@@ -1,0 +1,180 @@
+/* Styles for Add New Property modal to match admin design */
+.modal-box.large {
+    width: 760px;
+    max-width: 96%;
+    border-radius: 14px;
+    padding: 28px 32px;
+    box-shadow: 0 30px 60px rgba(2, 6, 23, 0.12);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.modal-header .back-link {
+    font-size: 26px;
+    color: #6b7280;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 6px;
+}
+
+.modal-header .back-link:hover {
+    color: #111827;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #0a3c28;
+}
+
+.modal-subtitle {
+    margin: 10px 0 20px 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.form-section {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 20px rgba(2,6,23,0.04);
+}
+
+.form-section h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.form-section label {
+    font-size: 13px;
+    color: #374151;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.form-section input[type="text"],
+.form-section input[type="number"],
+.form-section input[type="email"],
+.form-section input[type="file"],
+.form-section textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #e6e7ea;
+    background: #fff;
+    font-size: 14px;
+    color: #111827;
+    transition: box-shadow .15s ease, border-color .15s ease;
+}
+
+.form-section input:focus,
+.form-section textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(37,99,235,0.08);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px dashed rgba(9, 30, 25, 0.08);
+    color: #0a3c28;
+    padding: 10px 14px;
+    border-radius: 10px;
+}
+
+@media (max-width: 780px){
+    .form-grid { grid-template-columns: 1fr; }
+    .modal-box.large { padding: 20px; }
+}
+
+/* Footer override for admin properties page: show text at left and pagination at right
+   Keep the DOM order and button order as-is; style pagination as pills.
+*/
+.admin-properties .table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* text left, pagination right */
+    gap: 18px;
+    flex-direction: row;
+    flex-wrap: nowrap; /* keep the footer on a single line */
+    overflow: hidden;
+}
+
+/* Ensure the showing text stays on the left and doesn't shrink */
+.admin-properties .table-footer .showing-text {
+    flex: 0 0 auto;
+    color: #6b7280;
+    font-weight: 500;
+    margin: 0; /* spacing handled by gap */
+}
+
+.admin-properties .table-footer .pagination {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex: 0 0 auto;
+    overflow-x: auto; /* allow horizontal scroll if viewport is small */
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+}
+
+/* Pill-style for prev/next buttons */
+.admin-properties .page-btn {
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 1px solid #e6e7ea;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    color: #1f2937;
+    flex: 0 0 auto;
+}
+.admin-properties .page-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Number pills */
+.admin-properties .page-num {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid #e6e7ea;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    color: #374151;
+    flex: 0 0 auto;
+}
+.admin-properties .page-num:hover:not(.active){ background: #f8faf9; }
+.admin-properties .page-num.active{
+    background: #0a3c28;
+    color: #fff;
+    border-color: #0a3c28;
+}
+
+/* Make sure the footer doesn't wrap on smaller screens; allow horizontal scroll instead */
+@media (max-width: 560px) {
+    .admin-properties .table-footer { overflow-x: auto; }
+    .admin-properties .table-footer .pagination { gap: 8px; }
+}
+
+/* Pagination button order left as natural DOM order (Previous, numbers, Next) */

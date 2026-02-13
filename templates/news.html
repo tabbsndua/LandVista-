@@ -1,0 +1,311 @@
+{% extends "base.html" %} 
+
+{% block title %}News & Insights | LandVista{% endblock %}
+
+{% block content %}
+
+<!-- =========================
+   HERO SECTION
+========================= -->
+<section class="news-hero">
+    <div class="news-hero-overlay"></div>
+    <div class="news-hero-content">
+        <h1>News and Blogs</h1>
+    </div>
+</section>
+
+<div class="curve-divider"></div>
+
+
+<!-- =========================
+   LATEST ARTICLES
+========================= -->
+<section class="featured-articles container">
+    <div class="section-title">
+        <h2>Latest Articles</h2>
+    </div>
+
+    <div class="articles-grid" id="articlesContainer">
+        <!-- Articles will be loaded dynamically here -->
+    </div>
+</section>
+
+
+<!-- =========================
+   LATEST LEGAL GUIDES
+========================= -->
+<section class="featured-articles container">
+    <div class="section-title">
+        <h2>Latest Legal Guides</h2>
+    </div>
+
+    <div class="articles-grid" id="guidesContainer">
+        <!-- Legal guides will be loaded dynamically here -->
+    </div>
+</section>
+
+
+<!-- =========================
+   NEWSLETTER SECTION
+========================= -->
+<section class="newsletter-section">
+    <div class="newsletter-container">
+        <div class="newsletter-content">
+            <h2>Stay Updated</h2>
+            <p>Subscribe to our newsletter and get the latest insights on land investment delivered to your inbox.</p>
+
+            <form class="newsletter-form" id="newsNewsletterForm">
+                <input type="email" name="email" placeholder="Enter your email address" required>
+                <button type="submit" class="newsletter-btn">Subscribe Now</button>
+            </form>
+
+            <p class="sub-count">✓ Join 5,000+ investors getting weekly insights</p>
+        </div>
+    </div>
+</section>
+
+<script>
+// REAL-TIME: Socket.IO will be initialized when the socket script is available
+let socket = null;
+
+function setupSocketListeners(s) {
+    if (!s) return;
+
+    s.on('news_added', function(article) {
+        console.log('New article added via socket:', article);
+        loadArticles();
+    });
+
+    s.on('news_updated', function(article) {
+        console.log('Article updated via socket:', article);
+        loadArticles();
+    });
+
+    s.on('news_deleted', function(data) {
+        console.log('Article deleted via socket:', data._id);
+        loadArticles();
+    });
+
+    s.on('guide_added', function(guide) {
+        console.log('New guide added via socket:', guide);
+        loadLegalGuides();
+    });
+
+    s.on('guide_updated', function(guide) {
+        console.log('Guide updated via socket:', guide);
+        loadLegalGuides();
+    });
+
+    s.on('guide_deleted', function(data) {
+        console.log('Guide deleted via socket:', data._id);
+        loadLegalGuides();
+    });
+}
+
+function initSocket() {
+    if (typeof io === 'undefined') {
+        // Socket.IO script not loaded yet — try again shortly
+        setTimeout(initSocket, 200);
+        return;
+    }
+    try {
+        socket = io();
+        setupSocketListeners(socket);
+        console.log('Socket.IO initialized');
+    } catch (e) {
+        console.warn('Socket.IO init error, retrying...', e);
+        setTimeout(initSocket, 500);
+    }
+}
+
+// Load all published articles
+function loadArticles() {
+    console.log('Loading articles from /api/news');
+    fetch('/api/news')
+        .then(response => {
+            console.log('Articles API response:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            const container = document.getElementById('articlesContainer');
+            console.log('Articles data:', data);
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 40px;">No articles available yet.</div>';
+                return;
+            }
+            
+            container.innerHTML = data.map(article => `
+                <article class="blog-card" data-article-id="${article._id}">
+                    <div class="article-image">
+                        ${article.featured_image ? 
+                            `<img src="${article.featured_image}" alt="${article.title}" onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">`
+                            : `<img src="/static/images/placeholder.jpg" alt="${article.title}">`
+                        }
+                    </div>
+                    <div class="blog-content">
+                        <div class="metadata">
+                            <span>📅 ${article.date || new Date(article.created_at).toLocaleDateString()}</span>
+                            <span>• ${article.readTime || 5} min read</span>
+                        </div>
+                        <button class="category-tag">${article.category || 'Article'}</button>
+                        <h3>${article.title}</h3>
+                        <p>${article.excerpt}</p>
+                        <div class="blog-footer">
+                            <span class="author">✍️ ${article.author}</span>
+                            <a href="/news/${article.slug || article._id}" class="read-more">Read Article →</a>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+            console.log('Articles rendered:', data.length);
+        })
+        .catch(err => {
+            console.error('Failed to load articles:', err);
+            const container = document.getElementById('articlesContainer');
+            container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 40px;">Error loading articles.</div>';
+        });
+}
+
+// Load all published legal guides
+function loadLegalGuides() {
+    console.log('Loading legal guides from /api/legal-guides');
+    fetch('/api/legal-guides')
+        .then(response => {
+            console.log('Legal guides API response:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            const container = document.getElementById('guidesContainer');
+            console.log('Legal guides data:', data);
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 40px;">No legal guides available yet.</div>';
+                return;
+            }
+            
+            container.innerHTML = data.map(guide => `
+                <article class="blog-card" data-guide-id="${guide._id}">
+                    <div class="article-image">
+                        ${guide.featured_image ? 
+                            `<img src="${guide.featured_image}" alt="${guide.title}" onerror="this.onerror=null;this.src='/static/images/placeholder.jpg'">`
+                            : `<img src="/static/images/placeholder.jpg" alt="${guide.title}">`
+                        }
+                    </div>
+                    <div class="blog-content">
+                        <div class="metadata">
+                            <span>📅 ${guide.date || new Date(guide.created_at).toLocaleDateString()}</span>
+                            <span>• ${guide.readTime || 5} min read</span>
+                        </div>
+                        <button class="category-tag">${guide.category || 'Legal Guide'}</button>
+                        <h3>${guide.title}</h3>
+                        <p>${guide.excerpt}</p>
+                        <div class="blog-footer">
+                            <span class="author">✍️ ${guide.author}</span>
+                            <a href="/legal-guides/${guide.slug || guide._id}" class="read-more">Read Guide →</a>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+            console.log('Legal guides rendered:', data.length);
+        })
+        .catch(err => {
+            console.error('Failed to load legal guides:', err);
+            const container = document.getElementById('guidesContainer');
+            container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #6b7280; padding: 40px;">Error loading guides.</div>';
+        });
+}
+
+</script>
+<script>
+function viewArticle(id) {
+    fetch(`/api/news/${id}`)
+        .then(res => res.json())
+        .then(article => {
+            document.getElementById('articleViewContent').innerHTML = `
+                ${article.featured_image ? `
+                    <img src="${article.featured_image}" 
+                         style="width:100%;height:300px;object-fit:cover;border-radius:8px;margin-bottom:20px;">
+                ` : ''}
+
+                <h2 style="color:#0a3c28;margin-bottom:10px;">
+                    ${article.title}
+                </h2>
+
+                <p style="color:#6b7280;font-size:13px;margin-bottom:15px;">
+                    📅 ${article.date} • ✍️ ${article.author} • ⏱️ ${article.readTime} min
+                </p>
+
+                <hr>
+
+                <p style="font-style:italic;color:#374151;margin-bottom:20px;">
+                    ${article.excerpt}
+                </p>
+
+                <div style="line-height:1.8;white-space:pre-wrap;">
+                    ${article.content}
+                </div>
+            `;
+            document.getElementById('viewArticleModal').style.display = 'flex';
+        });
+}
+
+function closeArticleView() {
+    document.getElementById('viewArticleModal').style.display = 'none';
+}
+
+// Newsletter form handler
+document.getElementById('newsNewsletterForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = this.querySelector('input[name="email"]').value;
+    const btn = this.querySelector('.newsletter-btn');
+    const originalText = btn.textContent;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
+    
+    fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            alert('✓ Successfully subscribed! Check your email for confirmation.');
+            this.reset();
+            btn.textContent = originalText;
+            btn.disabled = false;
+        } else {
+            alert('Error: ' + (data.message || 'Failed to subscribe'));
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to subscribe. Please try again.');
+        btn.textContent = originalText;
+        btn.disabled = false;
+    });
+});
+</script>
+
+<script>
+// Ensure articles and guides are loaded when the page is ready
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        initSocket();
+    } catch (e) {
+        console.warn('initSocket() not available yet:', e);
+    }
+    try { loadArticles(); } catch (e) { console.warn('loadArticles() error', e); }
+    try { loadLegalGuides(); } catch (e) { console.warn('loadLegalGuides() error', e); }
+});
+</script>
+
+
+{% endblock %}

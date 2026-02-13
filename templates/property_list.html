@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Properties | LandVista{% endblock %}
+
+{% block content %}
+
+<div class="properties-page">
+
+<!-- PAGE HEADER -->
+<section class="properties-hero">
+    <div class="properties-hero-content">
+        <h1>Discover Available Properties</h1>
+        <p>Browse our verified land listings across Kenya's most promising investment regions</p>
+    </div>
+</section>
+
+<!-- FILTER BAR -->
+<section class="properties-filters">
+    <div class="filter-container">
+        <div class="filter-group">
+            <label for="locationFilter">Location</label>
+            <input type="text" id="locationFilter" class="filter-input" placeholder="Search by location...">
+        </div>
+        <div class="filter-group">
+            <label for="priceFilter">Price Range</label>
+            <select id="priceFilter" class="filter-input">
+                <option value="">All Prices</option>
+                <option value="0-500000">KSh 0 - 500K</option>
+                <option value="500000-1000000">KSh 500K - 1M</option>
+                <option value="1000000-5000000">KSh 1M - 5M</option>
+                <option value="5000000+">KSh 5M+</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="availabilityFilter">Availability</label>
+            <select id="availabilityFilter" class="filter-input" onchange="filterProperties()" value="available">
+                <option value="available" selected>For Sale Lands</option>
+                <option value="sold">Sold Out</option>
+            </select>
+        </div>
+        <button id="searchFilters" class="btn-search-filters" onclick="filterProperties()">Search</button>
+        <button id="resetFilters" class="btn-reset-filters" onclick="resetFiltersForm()">Reset Filters</button>
+    </div>
+</section>
+
+<!-- PROPERTIES GRID -->
+<section class="properties-section">
+    <div id="noResultsMessage" style="display: none; text-align: center; padding: 60px 20px; color: #666;">
+        <p style="font-size: 48px; margin-bottom: 20px;">🔍</p>
+        <h3 style="font-size: 24px; color: #0a3c28; margin-bottom: 10px;">No Properties Found</h3>
+        <p style="font-size: 16px; margin-bottom: 20px;">We couldn't find any properties matching your search criteria.</p>
+        <button onclick="resetFiltersForm()" style="background: #0a3c28; color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 16px;">Reset Filters</button>
+    </div>
+    <div class="properties-grid" id="propertiesGrid">
+
+        {% for p in properties %}
+        <!-- PROPERTY CARD -->
+        <div class="property-card">
+            <div class="property-image">
+                {% if p.get('media') %}
+                    {% if p.media is string %}
+                        {% if p.media.endswith(('.mp4', '.webm', '.mov')) %}
+                        <video muted style="width:100%; height:100%; object-fit:cover;">
+                            <source src="{{ url_for('static', filename='uploads/' ~ p.media) }}">
+                        </video>
+                        {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' ~ p.media) }}" alt="{{ p.title }}" style="object-fit: cover;">
+                        {% endif %}
+                    {% else %}
+                        {% set first_media = p.media[0] if p.media else None %}
+                        {% if first_media %}
+                            {% if first_media.endswith(('.mp4', '.webm', '.mov')) %}
+                            <video muted style="width:100%; height:100%; object-fit:cover;">
+                                <source src="{{ url_for('static', filename='uploads/' ~ first_media) }}">
+                            </video>
+                            {% else %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ first_media) }}" alt="{{ p.title }}" style="object-fit: cover;">
+                            {% endif %}
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}" style="object-fit: cover;">
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                <img src="{{ url_for('static', filename='images/placeholder.jpg') }}" alt="{{ p.title }}" style="object-fit: cover;">
+                {% endif %}
+            </div>
+
+            <div class="property-details">
+                <h3>{{ p.title }}</h3>
+                <p class="property-location">{{ p.location }}</p>
+                <p class="property-size">{{ p.area }}</p>
+
+                <div class="property-footer">
+                    <span class="property-price">
+                        KSh {{ "{:,}".format(p.price) }}
+                    </span>
+                    <a href="/properties/{{ p._id }}" class="property-btn">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</section>
+
+</div>
+
+<script>
+    let allProperties = [];
+
+    // Load properties via API on page load
+    async function loadProperties() {
+        try {
+            const response = await fetch('/api/properties');
+            const data = await response.json();
+            allProperties = data.properties || [];
+            displayProperties(allProperties);
+        } catch (error) {
+            console.error('Error loading properties:', error);
+        }
+    }
+
+    function displayProperties(props) {
+        const grid = document.getElementById('propertiesGrid');
+        const noResults = document.getElementById('noResultsMessage');
+
+        if (props.length === 0) {
+            grid.innerHTML = '';
+            noResults.style.display = 'block';
+            return;
+        }
+
+        noResults.style.display = 'none';
+        grid.innerHTML = props.map(p => {
+            const mediaHtml = p.media ? 
+                (p.media.endsWith('.mp4') || p.media.endsWith('.webm') || p.media.endsWith('.mov') ?
+                `<video muted style="width:100%; height:100%; object-fit:cover;"><source src="${window.location.origin}/static/uploads/${p.media}"></video>` :
+                `<img src="${window.location.origin}/static/uploads/${p.media}" alt="${p.title}" style="object-fit: cover;">`) :
+                `<img src="${window.location.origin}/static/images/placeholder.jpg" alt="Property" style="object-fit: cover;">`;
+
+            return `
+                <div class="property-card">
+                    <div class="property-image">
+                        ${mediaHtml}
+                    </div>
+                    <div class="property-details">
+                        <h3>${escapeHTML(p.title)}</h3>
+                        <p class="property-location">${escapeHTML(p.location)}</p>
+                        <p class="property-size">${escapeHTML(p.area)}</p>
+                        <div class="property-footer">
+                            <span class="property-price">
+                                KSh ${Number(p.price || 0).toLocaleString()}
+                            </span>
+                            <a href="/properties/${p._id}" class="property-btn">
+                                View Details
+                            </a>
+                            ${p.status === 'sold' ? '<span class="sold-badge" style="margin-left:8px;background:#ef4444;color:white;padding:6px 10px;border-radius:6px;font-weight:700;">SOLD</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function filterProperties() {
+        const location = document.getElementById('locationFilter').value.toLowerCase();
+        const price = document.getElementById('priceFilter').value;
+        const availability = document.getElementById('availabilityFilter').value;
+
+        let filtered = allProperties.filter(p => {
+            const matchLocation = !location || p.location.toLowerCase().includes(location);
+            const matchAvailability = p.status?.toLowerCase() === availability || availability === 'available';
+            return matchLocation && matchAvailability;
+        });
+
+        if (price) {
+            const [min, max] = price.split('-').map(Number);
+            filtered = filtered.filter(p => {
+                if (price.includes('+')) return p.price >= min;
+                return p.price >= min && p.price <= (max || Infinity);
+            });
+        }
+
+        displayProperties(filtered);
+    }
+
+    function resetFiltersForm() {
+        document.getElementById('locationFilter').value = '';
+        document.getElementById('priceFilter').value = '';
+        document.getElementById('availabilityFilter').value = 'available';
+        displayProperties(allProperties);
+    }
+
+    function escapeHTML(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', loadProperties);
+</script>
+
+{% endblock %}

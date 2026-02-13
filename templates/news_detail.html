@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} | LandVista{% endblock %}
+
+{% block content %}
+<style>
+    .article-detail-hero {
+        background: linear-gradient(135deg, #0a3c28 0%, #1a5c48 100%);
+        color: #ffffff;
+        padding: 60px 10%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .article-detail-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: rgba(212, 175, 55, 0.05);
+        border-radius: 50%;
+    }
+
+    .article-hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 900px;
+    }
+
+    .article-breadcrumb {
+        font-size: 0.95rem;
+        color: #d4af37;
+        margin-bottom: 20px;
+    }
+
+    .article-breadcrumb a {
+        color: #d4af37;
+        text-decoration: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .article-breadcrumb a:hover {
+        opacity: 0.8;
+    }
+
+    .article-detail-hero h1 {
+        font-size: 2.8rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        line-height: 1.2;
+    }
+
+    .article-meta {
+        display: flex;
+        gap: 25px;
+        flex-wrap: wrap;
+        font-size: 0.95rem;
+        color: #d4af37;
+        margin-bottom: 10px;
+    }
+
+    .article-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .article-category {
+        display: inline-block;
+        background: rgba(212, 175, 55, 0.2);
+        color: #d4af37;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 15px;
+    }
+
+    .article-content-wrapper {
+        background: #ffffff;
+        padding: 80px 10%;
+        position: relative;
+    }
+
+    .article-content-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .article-featured-image {
+        width: 100%;
+        height: auto;
+        max-height: 500px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-bottom: 50px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .article-body {
+        font-size: 1.1rem;
+        line-height: 1.9;
+        color: #374151;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .article-body p {
+        margin-bottom: 25px;
+    }
+
+    .article-body h2 {
+        color: #0a3c28;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 40px 0 20px 0;
+    }
+
+    .article-body h3 {
+        color: #1a5c48;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 30px 0 15px 0;
+    }
+
+    .article-footer {
+        margin-top: 60px;
+        padding-top: 40px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .article-share {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .article-share-label {
+        font-weight: 600;
+        color: #0a3c28;
+        font-size: 0.95rem;
+    }
+
+    .share-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: #ffffff;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .share-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .share-facebook { background-color: #1877f2; }
+    .share-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+
+    .back-to-articles {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #0a3c28;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .back-to-articles:hover {
+        color: #d4af37;
+    }
+
+    .related-articles {
+        background: #f4f7f5;
+        padding: 80px 10%;
+    }
+
+    .related-articles-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .related-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #0a3c28;
+        margin-bottom: 40px;
+        text-align: center;
+    }
+
+    .related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+    }
+
+    .related-card {
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .related-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .related-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+
+    .related-body {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .related-category {
+        font-size: 0.75rem;
+        color: #d4af37;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .related-heading {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0a3c28;
+        margin-bottom: 10px;
+        flex-grow: 1;
+    }
+
+    .related-meta {
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    .related-link {
+        color: #0a3c28;
+        text-decoration: none;
+        font-weight: 600;
+        margin-top: 12px;
+        transition: color 0.3s ease;
+    }
+
+    .related-link:hover {
+        color: #d4af37;
+    }
+
+    @media (max-width: 768px) {
+        .article-detail-hero {
+            padding: 40px 20px;
+        }
+
+        .article-detail-hero h1 {
+            font-size: 2rem;
+        }
+
+        .article-meta {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .article-content-wrapper {
+            padding: 40px 20px;
+        }
+
+        .article-footer {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+
+<!-- Article Hero Section -->
+<section class="article-detail-hero">
+    <div class="article-hero-content">
+        <div class="article-breadcrumb">
+            <a href="/news">News & Blogs</a> / <span>{{ article.category or 'Article' }}</span>
+        </div>
+        
+        <h1>{{ article.title }}</h1>
+        
+        <div class="article-meta">
+            <div class="article-meta-item">
+                <i class="fas fa-calendar"></i>
+                {{ article.date }}
+            </div>
+            <div class="article-meta-item">
+                <i class="fas fa-user"></i>
+                {{ article.author }}
+            </div>
+            <div class="article-meta-item">
+                <i class="fas fa-clock"></i>
+                {{ article.readTime or 5 }} min read
+            </div>
+        </div>
+        
+        <span class="article-category">{{ article.category or 'Article' }}</span>
+    </div>
+</section>
+
+<!-- Article Content -->
+<section class="article-content-wrapper">
+    <div class="article-content-container">
+        {% if article.featured_image %}
+        <img src="{{ article.featured_image }}" alt="{{ article.title }}" class="article-featured-image">
+        {% endif %}
+
+        <div class="article-body">
+            {{ article.content | safe }}
+        </div>
+
+        <!-- Article Footer with Share and Navigation -->
+        <div class="article-footer">
+            <a href="/news" class="back-to-articles">
+                <i class="fas fa-arrow-left"></i> Back to News & Blogs
+            </a>
+            
+            <div class="article-share">
+                <span class="article-share-label">Share:</span>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank" class="share-btn share-facebook" title="Share on Facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://www.instagram.com/landvistaproperties" target="_blank" class="share-btn share-instagram" title="Follow on Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Related Articles -->
+<section class="related-articles">
+    <div class="related-articles-container">
+        <h2 class="related-title">Related Articles</h2>
+        
+        <div class="related-grid" id="relatedArticlesGrid">
+            <p style="text-align: center; color: #6b7280; grid-column: 1 / -1;">Loading related articles...</p>
+        </div>
+    </div>
+</section>
+
+<script>
+// Load related articles
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/news')
+        .then(response => response.json())
+        .then(data => {
+            // Get up to 3 other articles (exclude current)
+            const currentSlug = '{{ article.slug or article._id }}';
+            const related = data.filter(a => (a.slug || a._id) !== currentSlug).slice(0, 3);
+            
+            const grid = document.getElementById('relatedArticlesGrid');
+            
+            if (related.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: #6b7280; grid-column: 1 / -1;">No other articles available yet.</p>';
+                return;
+            }
+            
+            grid.innerHTML = related.map(article => `
+                <div class="related-card">
+                    ${article.featured_image ? `
+                        <img src="${article.featured_image}" alt="${article.title}" class="related-image" onerror="this.src='/static/images/placeholder.jpg'">
+                    ` : `
+                        <img src="/static/images/placeholder.jpg" alt="${article.title}" class="related-image">
+                    `}
+                    <div class="related-body">
+                        <div class="related-category">${article.category || 'Article'}</div>
+                        <h3 class="related-heading">${article.title}</h3>
+                        <div class="related-meta">
+                            📅 ${article.date} • ${article.readTime || 5} min read
+                        </div>
+                        <a href="/news/${article.slug || article._id}" class="related-link">Read More →</a>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(err => {
+            console.error('Error loading related articles:', err);
+            document.getElementById('relatedArticlesGrid').innerHTML = '<p style="text-align: center; color: #d63031; grid-column: 1 / -1;">Error loading related articles.</p>';
+        });
+});
+</script>
+
+{% endblock %}
